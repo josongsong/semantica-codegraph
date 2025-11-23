@@ -1,0 +1,329 @@
+Semantica v2: 통합 CodeGraph 사양 (Rev. 2.1 - Final Contract)
+
+목표: IR v4 결과를 기반으로 SOTA 수준의 CodeGraph를 생성하고, Indexing Layer를 위한 GraphDocument (구조·호출·타입·데이터 흐름 포함)를 구축합니다. 이 문서는 Graph Construction Layer의 최종 스펙입니다.
+
+1. 목표 및 범위
+
+1-1. 목표
+
+IR v4 결과를 기반으로 SOTA 수준의 CodeGraph 생성. 구조·호출·타입·데이터 흐름·제어 흐름·외부 심볼까지 모두 포함한 GraphDocument 구축. Retriever / RepoMap / Index 레이어가 모두 이 그래프만 보면 되도록 설계.
+
+1-2. 입력
+
+IRDocument 리스트 (IR v4 스키마)
+
+ir_nodes (File, Class, Function, Method, Variable, Field, Import, Route, Service, Repo 등 CodeSymbol Node)
+
+ir_edges (CONTAINS, CALLS, IMPORTS, READS, WRITES 등)
+
+ir_types (IRTypeEntity)
+
+ir_signatures (IRSignatureEntity)
+
+cfg_graphs (IRCFGBlock, IRCFGEdge)
+
+1-3. 출력
+
+GraphDocument (최종 결과물)
+
+graph_nodes: dict[GraphNodeId, GraphNode]
+
+graph_edges: list[GraphEdge]
+
+cfg_graphs: list[CFGGraph] (IR에서 그대로 포함)
+
+indexes: GraphIndex (reverse index, adjacency 등)
+
+2. 데이터 모델 정의
+
+2-1. GraphNode
+
+IR v4의 모든 CodeSymbol + Type + Signature + CFGBlock + External 을 포함합니다.
+
+필드
+
+타입
+
+설명
+
+id
+
+str
+
+GraphNodeId (FQN 기반 안정 ID)
+
+kind
+
+Literal
+
+File, Class, Function, Method, Variable, Field, Import, Module, ExternalModule, ExternalFunction, Type, Signature, CfgBlock
+
+repo_id
+
+str
+
+저장소 ID
+
+snapshot_id
+
+Optional[str]
+
+스냅샷 ID
+
+fqn
+
+str
+
+Fully Qualified Name
+
+name
+
+str
+
+심볼 이름
+
+path
+
+Optional[str]
+
+파일 경로
+
+span_start_line, span_end_line
+
+Optional[int]
+
+위치 (가능하면 유지)
+
+attrs
+
+dict
+
+언어별 메타데이터 (py:decorators, py:is_dataclass, ts:exported, …)
+
+Module Node 생성 규칙
+
+Module 노드는 IR에서 주지 않는다.
+
+Graph Construction Layer가 File.path 기반으로 자동 생성하는 논리적 Node.
+
+예: src/search/retriever/query.py → module:src.search.retriever
+
+2-2. GraphEdge
+
+총 13종의 Edge Kind로 확장됩니다.
+
+필드
+
+타입
+
+설명
+
+id
+
+str
+
+EdgeId (kind + source + target + unique_signature)
+
+kind
+
+Literal
+
+CONTAINS, CALLS, IMPORTS, INHERITS, IMPLEMENTS, REFERENCES_TYPE, REFERENCES_SYMBOL, READS, WRITES, CFG_NEXT, CFG_BRANCH, CFG_LOOP, CFG_HANDLER
+
+source_id, target_id
+
+GraphNodeId
+
+노드 관계
+
+attrs
+
+dict
+
+호출 타입, alias, unresolved 플래그 등 부가 정보
+
+2-3. GraphDelta
+
+증분 업데이트를 위한 최소 단위.
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| target | GraphNodeRecord or GraphEdgeRecord | 변경된 대상 |
+| op | Literal["INSERT","UPDATE","DELETE"] | 변경 타입 |
+
+3. ID 규칙 및 안정성
+
+3-1. GraphNodeId 규칙
+
+ID 안정성 원칙: FQN 기반 ID → 코드 이동·행 번호 변경에도 ID 유지.
+
+내부 노드: {lang}:{repo_id}:{kind}:{fqn} (Kind: File, Class, Function, Method, Variable, Field, Import, Route, Service, Repo)
+
+외부 모듈: external:{lang}:module:{module_name}
+
+외부 함수: external:{lang}:function:{fqn}
+
+타입: {lang}:{repo_id}:type:{type_fqn}
+
+시그니처: {lang}:{repo_id}:sig:{symbol_fqn}
+
+CFGBlock: {lang}:{repo_id}:cfg:{func_fqn}:block:{block_id}
+
+미해결 Placeholder: unresolved://{repo_id}/{namespace}/{file_path}/{identifier_hash}
+
+namespace = "symbol" | "module" | "type" | "call"
+
+3-2. GraphEdgeId 규칙
+
+hash("{kind}:{source}->{target}:{unique_signature}")
+
+unique_signature:
+
+결정론적 attrs JSON hash
+
+or IR edge original ID (fallback)
+
+4. GraphNode 생성 계획 (IR → GraphNode)
+
+4-1. IR CodeSymbol $\to$ GraphNode
+
+대상: IR v4의 모든 $\text{CodeSymbol}$ ($\text{File, Class, Function, Method, Variable, Field, Import, Route, Service, Repo}$ 등)
+
+처리: 각 $\text{IR Node}$는 $\text{kind}$ 매핑을 통해 해당하는 $\text{GraphNode}$로 생성됨.
+
+4-2. IRType $\to$ GraphNode(Type)
+
+$\text{id} = \{lang\}:\{repo\_id\}:\text{type}:\{type\_fqn\}$
+
+$\text{kind} = \text{"Type"}$
+
+$\text{attrs} = \text{raw\_type}, \text{generic params}$ 등
+
+4-3. IRSignature $\to$ GraphNode(Signature)
+
+$\text{id} = \{lang\}:\{repo\_id\}:\text{sig}:\{symbol\_fqn\}$
+
+$\text{kind} = \text{"Signature"}$
+
+$\text{attrs} = \text{parameters}, \text{return\_type}, \text{is\_async}$ 등
+
+4-4. CFGBlock $\to$ GraphNode(CfgBlock)
+
+$\text{id} = \{lang\}:\{repo\_id\}:\text{cfg}:\{func\_fqn\}:\text{block}:\{block\_id\}$
+
+$\text{kind} = \text{"CfgBlock"}$
+
+4-5. External Node (Lazy 생성)
+
+$\text{CALL/IMPORT}$ 분석 중 미해결이면 생성.
+
+$\text{repo\_id} = \text{"external"}, \text{snapshot\_id} = \text{null}$
+
+$\text{kind} = \text{ExternalFunction}$ or $\text{ExternalModule}$
+
+5. GraphEdge 생성 계획 (IR Edge $\to$ GraphEdge)
+
+5-1. 구조적 Edge
+
+CONTAINS: $\text{IR CONTAINS}$ $\text{edge}$ 그대로 변환. (파일→클래스, 클래스→함수 등)
+
+IMPORTS: $\text{import}$ 대상이 로컬이면 해당 $\text{Node}$, 없는 경우 $\text{ExternalModule}$ 생성 후 연결.
+
+INHERITS / IMPLEMENTS: $\text{Class.bases FQN}$ 해석 후 연결.
+
+5-2. CALLS Edge
+
+핵심: $\text{IR CALLS Edge}$ 내용을 그대로 변환하여 $\text{callee}$ $\text{ID}$를 매핑.
+
+call 종류: $\text{identifier call, attribute call, alias call}$ 처리.
+
+미해결: $\text{ExternalFunction}$ 또는 $\text{Placeholder Node}$에 연결.
+
+5-3. REFERENCES_TYPE Edge
+
+대상: $\text{declared\_type, return\_type, parameter\_type}$ $\text{ID}$ 순회.
+
+처리: 해당 $\text{Type Node}$로 $\text{REFERENCES\_TYPE}$ $\text{Edge}$ 생성.
+
+5-4. REFERENCES_SYMBOL Edge (명시 추가)
+
+대상: $\text{variable use} \to \text{variable definition}, \text{function reference} \to \text{function def}$ 등 정의가 명확한 심볼 사용처.
+
+제외: $\text{dynamic}$ 사용($\text{getattr}$ 등)은 추후 $\text{Phase}$에서 처리.
+
+5-5. READS / WRITES Edge
+
+$\text{DFG}$ 또는 $\text{IR}$의 $\text{READS/WRITES Edge}$ 기반.
+
+$\text{source} = \text{CfgBlock}$ $\text{node}, \text{target} = \text{Variable/Field}$ $\text{node}$로 연결.
+
+5-6. CFG_ Edge*
+
+$\text{CFG\_NEXT, CFG\_BRANCH, CFG\_LOOP, CFG\_HANDLER}$ $\text{Edge}$ 생성.
+
+$\text{source/target}$은 모두 $\text{CfgBlock}$ $\text{Node}$.
+
+6. GraphDelta 생성
+
+6-1. Delta 알고리즘
+
+$\text{old\_graph}$ vs $\text{new\_graph}$ 비교.
+
+Node: $\text{ID}$ 동일 + $\text{attrs\_hash}$ 다르면 $\text{UPDATE}$.
+
+Edge: $\text{kind/source/target}$ 다르면 $\text{INSERT}$, $\text{ID}$ 동일 + $\text{attrs}$ 다르면 $\text{UPDATE}$.
+
+6-2. Delta 배치 단위
+
+$\text{snapshot\_id}$ (커밋) 단위로 $\text{delta}$ 묶음 생성.
+
+7. Normalization 및 GraphIndex
+
+7-1. Edge Dedupe
+
+$(\text{kind}, \text{source\_id}, \text{target\_id}, \text{unique\_signature})$ 기준 중복 제거.
+
+7-2. Reverse Index (GraphIndex 일부)
+
+called_by: $\text{target\_id} \to [\text{source\_ids}]$ ($\text{CALLS}$)
+
+imported_by: $\text{module\_id} \to [\text{importer\_ids}]$
+
+contains_children: $\text{parent\_id} \to [\text{child\_ids}]$
+
+type_users: $\text{type\_id} \to [\text{symbol\_ids}]$ ($\text{REFERENCES\_TYPE}$)
+
+reads_by: $\text{variable\_id} \to [\text{block\_ids}]$ ($\text{READS}$)
+
+writes_by: $\text{variable\_id} \to [\text{block\_ids}]$ ($\text{WRITES}$)
+
+7-3. Adjacency Index
+
+outgoing: $\text{node\_id} \to [\text{edge\_ids}]$
+
+incoming: $\text{node\_id} \to [\text{edge\_ids}]$
+
+7-4. Consistency Check
+
+$\text{dangling node/edge}$ 제거.
+
+$\text{FileNode}$가 여러 부모 $\text{CONTAINS}$를 가지지 않도록 검사.
+
+$\text{external node}$에 잘못된 $\text{repo\_id}$ 연결 금지 검사.
+
+8. GraphDocument 스키마 (정식 정의)
+
+class GraphDocument(BaseModel):
+  repo_id: str
+  graph_nodes: dict[GraphNodeId, GraphNode]
+  graph_edges: list[GraphEdge]
+  cfg_graphs: list[CFGGraph]
+  indexes:
+    called_by: dict[target_id, list[source_id]]
+    imported_by: dict[module_id, list[file_ids]]
+    contains_children: dict[parent_id, list[child_id]]
+    type_users: dict[type_id, list[symbol_ids]]
+    reads_by: dict[var_id, list[cfg_block_ids]]
+    writes_by: dict[var_id, list[cfg_block_ids]]
+    adjacency:
+      outgoing: dict[node_id, list[edge_id]]
+      incoming: dict[node_id, list[edge_id]]

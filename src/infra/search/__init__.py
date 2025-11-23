@@ -1,0 +1,1 @@
+"""Lexical search adapters."""

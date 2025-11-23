@@ -41,15 +41,18 @@ class Container:
         return QdrantAdapter(
             host=settings.vector_host,
             port=settings.vector_port,
+            collection=settings.vector_collection,
         )
 
     @cached_property
     def kuzu(self):
         """Kùzu Graph Store (Lazy)."""
-        # TODO: Implement KuzuGraphStore
-        # from .infra.graph.kuzu import KuzuGraphStore
-        # return KuzuGraphStore(settings)
-        raise NotImplementedError("Kùzu graph store not yet implemented")
+        from .infra.graph.kuzu import KuzuGraphStore
+
+        return KuzuGraphStore(
+            db_path=settings.kuzu_db_path,
+            buffer_pool_size=settings.kuzu_buffer_pool_size,
+        )
 
     @cached_property
     def postgres(self):
@@ -63,26 +66,24 @@ class Container:
     @cached_property
     def redis(self):
         """Redis Cache/Session Store (Lazy)."""
-        # TODO: Implement RedisAdapter
-        # from .infra.cache.redis import RedisAdapter
-        # return RedisAdapter(
-        #     host=settings.redis_host,
-        #     port=settings.redis_port,
-        #     password=settings.redis_password,
-        #     db=settings.redis_db,
-        # )
-        raise NotImplementedError("Redis adapter not yet implemented")
+        from .infra.cache.redis import RedisAdapter
+
+        return RedisAdapter(
+            host=settings.redis_host,
+            port=settings.redis_port,
+            password=settings.redis_password,
+            db=settings.redis_db,
+        )
 
     @cached_property
     def zoekt(self):
         """Zoekt Lexical Search (Lazy)."""
-        # TODO: Implement ZoektAdapter
-        # from .infra.search.zoekt import ZoektAdapter
-        # return ZoektAdapter(
-        #     host=settings.zoekt_host,
-        #     port=settings.zoekt_port,
-        # )
-        raise NotImplementedError("Zoekt adapter not yet implemented")
+        from .infra.search.zoekt import ZoektAdapter
+
+        return ZoektAdapter(
+            host=settings.zoekt_host,
+            port=settings.zoekt_port,
+        )
 
     @cached_property
     def git(self):

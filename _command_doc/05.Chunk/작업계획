@@ -1,0 +1,322 @@
+이 문서를 기준으로 바로 구현 단계로 넘어갈 수 있음.
+
+1. Chunking Architecture – High-Level Summary
+
+Chunk 계층은 6단계 Parent→Leaf 구조를 갖는다:
+
+Repository Chunk
+
+Project Chunk
+
+Module Chunk
+
+File Chunk
+
+Class Chunk
+
+Function/Method Chunk (Leaf)
+
+이 Chunk 계층은 GraphNode / IRNode / Symbol / File / RepoMap 등 모든 레이어의 최종 “RAG-ready representation”이다.
+
+2. Input → Output
+2-1. 입력(Input)
+
+Tree-sitter AST
+
+IRDocument, IRNode (type/signature/variable/reference)
+
+GraphNode (symbol-level graph)
+
+Git metadata (file path, project root)
+
+File text lines
+
+Config: chunk_rules, token_limit, stable_id_mode
+
+2-2. 출력(Output)
+
+ChunkRecord[] (6단계)
+
+chunk_to_graph map
+
+chunk_to_ir map
+
+chunk_hierarchy tree
+
+parent/child 관계
+
+ChunkImportanceScore (optional)
+
+ChunkSummary (optional)
+
+3. Chunk Data Model (확정)
+class Chunk(BaseModel):
+    chunk_id: str
+    repo_id: str
+    project_id: str | None
+    module_path: str | None
+    file_path: str | None
+    kind: Literal[
+        "repo", "project", "module", "file",
+        "class", "function"
+    ]
+    fqn: str                 # dotted name
+    start_line: int | None
+    end_line: int | None
+    content_hash: str | None
+    parent_id: str | None
+    children: list[str]
+    summary: str | None
+    importance: float | None
+    attrs: dict[str, Any]
+
+4. Chunk ID 규칙 (Stable ID Strategy)
+4-1. 기본 규칙: FQN 기반
+
+가장 단순하고 관리 용이한 방식.
+
+예:
+
+chunk:{repo_id}:class:myrepo.backend.search.MyClass
+chunk:{repo_id}:func:myrepo.backend.search.MyClass.run
+
+장점
+
+추적 쉬움
+
+인간 가독성 높음
+
+Rename/이동 시 ID도 변경 → 증분 업데이트로 처리 가능
+
+단점
+
+파일 이동/경로 변경에도 ID가 바뀜
+
+→ SOTA code intelligence 제품(예: Cursor, Aider, Sourcegraph)도 대부분 이 방식 사용.
+
+4-2. 선택 규칙: Name + Hash (경로 변경 안정)
+
+예:
+
+chunk:{repo_id}:class:MyClass:{hash_8}
+
+
+권장하지 않음(불필요한 complexity).
+우리는 기본 FQN 기반으로 확정.
+
+5. Chunk 계층 생성 알고리즘 (6단계 자동 생성)
+단계 1. Repository Chunk 생성
+repo_chunk.fqn = repo_id
+repo_chunk.start/end_line = None
+
+단계 2. Project Chunk 생성
+project_root = repo_config.project_roots
+relpath = relative(file_path, project_root)
+project_name = dotted(relpath)
+project_chunk.fqn = "{repo}.{project_name}"
+
+
+예:
+
+/repo/backend/search-service
+→ backend.search-service
+
+단계 3. Module Chunk 생성
+
+Project Root 기준 상대 경로에서 디렉토리만 추출.
+
+예:
+
+File Path = /root/backend/src/search/retriever/file.py
+Project Root = /root/backend
+Module Path = src/search/retriever
+Module FQN = backend.search-service.src.search.retriever
+
+단계 4. File Chunk 생성
+file_fqn = module_fqn + "." + filename_without_ext
+Chunk Range = [1, file_line_count]
+
+
+GraphNode(FILES) 전체를 이 Chunk에 매핑.
+
+단계 5. Class Chunk 생성
+
+Tree-sitter class 노드 span 사용.
+
+class_chunk.start_line = ts_node.start_line
+class_chunk.end_line = ts_node.end_line
+class_chunk.fqn = file_fqn + "." + class_name
+
+
+GraphNode(Class)를 이 Chunk에 연결.
+File Chunk → Class Chunk: parent-child 등록.
+
+단계 6. Function/Method Chunk 생성 (Leaf)
+6-1. Method
+parent = Class Chunk
+
+6-2. Top-level Function
+parent = File Chunk
+
+
+GraphNode(Function, Method)는 이 LeafChunk에 매핑.
+LeafChunk는 RAG의 최소 단위.
+
+6. Chunk ↔ IR / Graph 매핑 규칙 (강화판)
+6-1. Chunk → IRNode 매핑
+
+IRNode span 기준으로 chunk span을 채움.
+
+ir_node.start_line ∈ [chunk.start_line, chunk.end_line]
+⇒ chunk_to_ir[chunk_id].append(ir_node_id)
+
+6-2. Chunk → GraphNode (Symbol) 매핑
+Class Chunk
+
+클래스 Symbol Node
+
+클래스의 메서드/필드 Symbol도 optional 매핑
+
+Function Chunk
+
+함수/메서드 Symbol Node 1:1 매핑 (기본)
+
+File Chunk
+
+파일 내 모든 GraphNode를 매핑하는 것을 공식 정책으로 확정.
+
+장점:
+
+GraphRAG 확장 시 매우 유리
+
+Chunk-level semantic summarization 개선
+
+Module Chunk
+
+module 아래 모든 파일의 GraphNode 집계
+
+RepoMap 상위 Chunk reasoning 강화
+
+Project / Repo Chunk
+
+상위 집계
+
+7. Chunk Builder 설계 (권장 구조)
+class ChunkBuilder:
+
+    def build(self, ir_doc, graph_doc, file_text, repo_config):
+        repo = self.build_repo_chunk(repo_config)
+        projects = self.build_projects(repo)
+        modules = self.build_modules(projects)
+        files = self.build_files(modules)
+        classes = self.build_class_chunks(files, ir_doc)
+        funcs = self.build_func_chunks(classes, ir_doc)
+        
+        self.build_mappings(chunk_list, ir_doc, graph_doc)
+        self.link_hierarchy(chunk_list)
+        return chunk_list
+
+
+각 단계는 AST, IR, Graph, git path 중 필요한 것만 사용한다.
+
+8. 증분 업데이트 전략 (Incremental Chunk Refresh)
+8-1. 변경 파일 기반 처리
+changed_files = git.diff(prev_commit, curr_commit)
+
+
+변경 파일마다:
+
+File Chunk 삭제 후 재생성
+
+Class/Func Chunk 재생성
+
+chunk_to_graph 재매핑
+
+chunk_to_ir 재매핑
+
+8-2. 상위 Chunk 영향 처리
+
+File → Module → Project → Repo 요약을 bottom-up 갱신.
+
+9. Chunk Summary + Importance Score Hook (LLM 최적화)
+
+요약 및 중요도는 Hook Interface로 분리.
+
+class ChunkSummarizer:
+    def summarize(chunk, ir_nodes, graph_nodes) -> str: ...
+
+class ChunkRanker:
+    def score(chunk, summary, graph_degree, tokens) -> float: ...
+
+실행 순서
+
+Leaf → Function → Class → File → ... 순으로 요약
+
+Score 계산
+
+RepoMap에 반영
+
+10. RepoMap과의 연결
+
+Chunk 계층은 RepoMap의 Tree 입력.
+
+RepoMapNode:
+
+ref_id = chunk_id
+
+importance_score = chunk.importance
+
+summary = chunk.summary
+
+RepoMap은 PageRank 기반 가중으로 상위 Chunk의 중요도를 다시 계산.
+
+11. 테스트 계획
+11-1. 단위 테스트
+
+FQN 생성
+
+path → module 변환
+
+chunk span 계산
+
+parent/child 재귀 구조
+
+11-2. 통합 테스트
+
+AST → IR → Chunk end-to-end
+
+rename(TS: class/function rename)
+
+file move
+
+multi-project repo
+
+11-3. 시나리오 테스트
+
+특정 함수 chunk 찾기
+
+class chunk 내부 함수 검색
+
+File Chunk 내 모든 symbol ID 조회
+
+11-4. 품질 테스트
+
+Chunk overlap 없음 보장
+
+금지된 gap(빈 라인 범위) 없음
+
+12. 오늘 논의한 보완점을 반영한 최종 정책 요약
+12-1. File/Module Chunk에도 모든 GraphNode 매핑
+
+공식 정책으로 채택.
+
+12-2. Stable ID = FQN 기반
+
+가장 단순하고 견고하며, 증분 업데이트로 처리.
+
+12-3. Chunk → IRNode 매핑 강화
+
+모든 IRNode 사용.
+
+12-4. Chunk Builder 6단계 알고리즘 확정.
+12-5. 증분 업데이트: FQN 변경 시 rename 처리.

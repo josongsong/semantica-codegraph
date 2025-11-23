@@ -1,0 +1,391 @@
+SOTA CodeGraph Engine – 전체 작업계획 (최종본)
+1. Parsing Layer (TS 기반, 언어별 추가 가능)
+
+Tree-sitter registry 준비 (Python/TS/JS)
+
+per-language parser 어댑터 구현
+
+SourceFile → TS AST 생성
+
+byte offset → line/column 매핑기 생성
+
+AST error node 감지
+
+AST normalization (node type, children flatten)
+
+AST traversal API 작성
+
+SOTA 근거:
+Cursor, Bloop, Sourcegraph Cody 모두 TS 기반 구조 파싱 사용.
+
+2. IR Layer (언어 중립 표현; IR v4)
+2-1. Node 생성
+
+File/Class/Function/Method/Variable/Field/Import
+
+ExternalFunction / ExternalModule
+
+NodeID: <lang>:<repo>:<kind>:<span_hash>
+
+FQN 생성기 (module/class/function)
+
+2-2. Edge 생성
+
+CONTAINS
+
+IMPORTS
+
+CALLS(identifier/attribute/import-aware)
+
+READS/WRITES (CFG 기반 hook)
+
+REFERENCES_TYPE (IRType 기반)
+
+2-3. Type 생성
+
+raw type
+
+builtin type
+
+local type
+
+generic type 분해 (List[T], Dict[str,int])
+
+TypeEntity → GraphNode(Type)
+
+2-4. Signature 생성
+
+parameters(+ default, *args, **kwargs)
+
+return type
+
+decorators 기반 flag
+
+SHA1 signature_hash
+
+SignatureEntity → GraphNode(Signature)
+
+SOTA 근거:
+Sourcegraph SCIP, CodeQL IR, JetBrains UAST와 100% 정합.
+
+3. CFG Layer (Control Flow Graph)
+
+Function/Method 단위 CFGBlock 생성
+
+branch split(if/elif/match/ternary)
+
+loop(for/while)
+
+try/except/finally
+
+fallthrough edge
+
+branch edge
+
+loop back-edge
+
+handler edge
+
+CFGGraph → GraphDocument에 포함
+
+SOTA 근거:
+CodeQL, Semgrep, Pysa, CodeQL QLDB가 모두 CFG 기반.
+
+4. DFG Layer (Data Flow Graph, Phase2 Hook + Phase3 확장)
+
+statement 기반 read_var / write_var 분석기
+
+READS(block → variable)
+
+WRITES(block → variable)
+
+alias-based variable tracking
+
+SSA-form 준비(Hook만)
+
+Taint analysis 준비 단계
+
+SOTA 근거:
+CodeQL dataflow, Semgrep taint-mode, Pysa.
+
+5. Graph Construction Layer (IR → Graph)
+5-1. GraphNode
+
+IRNode → GraphNode 승격
+
+IRType → GraphNode(Type)
+
+IRSignature → GraphNode(Signature)
+
+External nodes 생성 규칙
+
+external::<lang>::<symbol>
+
+5-2. GraphEdge
+
+CONTAINS
+
+IMPORTS
+
+CALLS
+
+READS
+
+WRITES
+
+REFERENCES_TYPE
+
+(Phase3) INHERITS / IMPLEMENTS / MIXIN
+
+(Phase4) REFERENCES_SYMBOL(usage)
+
+5-3. Graph Normalization
+
+edge dedupe
+
+node dedupe
+
+reverse indexes
+
+neighbor map
+
+graph consistency check
+
+SOTA 근거:
+Sourcegraph GraphDB(SCIP), Bloop’s Tantivy graph layering.
+
+6. Chunk Layer (LLM Friendly 구조)
+
+LeafChunk = function/method-level
+
+ParentChunk = class/file-level
+
+chunk_id=fqn 기반 안정 ID
+
+token-split(semantic safe split)
+
+chunk↔graph↔IR 삼중 매핑
+
+chunk metadata (role, size, importance)
+
+SOTA 근거:
+Cursor, Aider, Continue, Bloop: “LLM-safe chunk hierarchy”.
+
+7. RepoMap Layer (Project Structural Summary)
+
+IR + Graph + Chunk 통합 트리 생성
+
+module/file/class/function 계층 생성
+
+PageRank / HybridRank
+
+summary_text 생성(LLM or template)
+
+상위/하위/동일 레벨 탐색 API
+
+neighbor expansion API
+
+SOTA 근거:
+Aider’s RepoMap, Bloop’s Repo Insights, Sourcegraph RepoTree.
+
+8. Index Layer (Lexical / Vector / Symbol / Fuzzy / Domain / Runtime)
+8-1. Lexical Index
+
+BM25/Zoekt 기반 substring
+
+8-2. Vector Index
+
+embedding (search_text)
+
+chunk-level vector 저장
+
+semantic search
+
+8-3. Symbol Index
+
+go-to-def
+
+find-refs
+
+구현체 목록
+
+export/import resolution
+
+8-4. Fuzzy Index
+
+identifier n-gram
+
+partial tokens
+
+8-5. Domain Metadata
+
+README, ADR, API spec
+
+API → code link
+
+8-6. Runtime Index
+
+trace span
+
+hot path
+
+error point
+
+runtime overlay → Graph 가중치
+
+SOTA 근거:
+Sourcegraph: Hybrid (symbol+text+vector)
+Bloop: semantic+lexical+symbol fusion
+Cursor: vector+symbol RAG
+
+9. Retriever Layer (LLM 최적화)
+9-1. Intent Router
+
+definition
+
+usage
+
+call chain
+
+refactoring
+
+E2E pipeline
+
+DTO/API 관련
+
+9-2. Multi-Index Query
+
+lexical/vector/symbol/fuzzy/domain/runtime parallel search
+
+score list 생성
+
+9-3. Graph Expansion
+
+caller/callee
+
+imports
+
+control-flow
+
+data-flow
+
+RepoMap 상위/하위
+
+runtime weighted graph
+
+9-4. Fusion
+
+weighted fusion(L:0.25 / S:0.45 / G:0.15 / F:0.15 etc)
+
+reranker(optional)
+
+9-5. Context Builder
+
+RepoMap 기반 chunk grouping
+
+token budget
+
+parent/leaf hierarchy
+
+LLM 최적 컨텍스트 구성
+
+SOTA 근거:
+Sourcegraph Cody hybrid ranking
+Bloop hybrid semantic
+Cursor hybrid context builder
+
+10. Incremental Pipeline (SOTA 필수)
+
+file diff → changed spans
+
+AST incremental parse
+
+IR delta
+
+Graph delta
+
+Chunk delta
+
+Index delta
+
+background workers
+
+snapshot metadata 관리
+
+SOTA 근거:
+SCIP incremental, JetBrains indexing, Bloop incremental.
+
+11. Infra / Storage
+
+KuzuGraph / Postgres / Qdrant / Meilisearch
+
+GraphStore API
+
+IndexStore API
+
+RepoSnapshot store
+
+versioned artifacts
+
+eviction & retention 정책
+
+12. Developer Tools
+
+Graph CLI (query/inspect/dump)
+
+IR dump
+
+RepoMap dump
+
+Index dump
+
+Graph diff viewer
+
+Playground (web UI)
+
+13. Validation & Benchmarks
+
+100K LOC, 1M LOC, 5M LOC 레포 성능 테스트
+
+call graph correctness 테스트
+
+import resolution 테스트
+
+cross-language 테스트
+
+LLM 평가: recall/precision/nDCG
+
+weighted fusion tuning
+
+14. SOTA 기능(선택적)
+
+Code Graph Embedding (GNN 기반)
+
+Neural Reranker (Cross-Encoder)
+
+Path-aware reranking (caller/callee sequences)
+
+ML 기반 importance (RepoMap auto-generation)
+
+GPT/Claude 기반 automated refactoring agent
+
+최종 요약
+
+위 전체 작업계획으로 구성된 파이프라인은:
+
+Sourcegraph SCIP
+
+CodeQL
+
+Bloop
+
+Cursor
+
+Aider RepoMap
+
+Zoekt
+
+JetBrains UAST
+
+Semgrep + Pysa
+이 모든 기술 흐름을 Semantica CodeGraph v4 구조로 흡수한 SOTA 파이프라인이다.

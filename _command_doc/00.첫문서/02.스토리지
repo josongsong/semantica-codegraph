@@ -1,0 +1,3 @@
+Kuzu  -> 코드그래프 전체 저장 (노드/엣지/타입/시그니처/CFG)
+Postgres → 운영 데이터 + 메타데이터 저장 -> Postgresql 
+Qdrant → 벡터 기반 의미 검색
