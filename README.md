@@ -255,6 +255,20 @@ pytest tests/ --cov=codegraph --cov-report=html
 open htmlcov/index.html
 ```
 
+### DB 마이그레이션 (Alembic)
+
+```bash
+# 새 리비전 생성 (모델 연결 전이라면 수동 작성)
+alembic revision -m "init schema"
+
+# 적용
+SEMANTICA_DB_CONNECTION_STRING=postgresql://user:pass@localhost:5432/codegraph \
+  alembic upgrade head
+
+# 롤백
+alembic downgrade -1
+```
+
 ### 코드 품질
 
 ```bash

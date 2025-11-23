@@ -17,12 +17,39 @@ from .relational_store import RelationalStorePort
 from .git_provider import GitProviderPort
 from .llm_provider import LLMProviderPort
 from .lexical_search_port import LexicalSearchPort
+from .parser_port import ParserPort, ParsedFileInput, ParserResult, CodeNode, ParserDiagnostic
+from .name_resolution_port import NameResolutionPort, ReferenceEdge, NameResolutionInput
+from .language_service_port import LanguageServicePort, Location, DefinitionResult, ReferencesResult
+from .framework_tagger_port import FrameworkTaggerPort, FrameworkType, FrameworkPattern, TaggedCodeNode
 
 __all__ = [
+    # Storage ports
     "VectorStorePort",
     "GraphStorePort",
     "RelationalStorePort",
+
+    # Service ports
     "GitProviderPort",
     "LLMProviderPort",
     "LexicalSearchPort",
+
+    # Parser ports (v2 extension)
+    "ParserPort",
+    "ParsedFileInput",
+    "ParserResult",
+    "CodeNode",
+    "ParserDiagnostic",
+
+    # Advanced analysis ports (v2 extension)
+    "NameResolutionPort",
+    "ReferenceEdge",
+    "NameResolutionInput",
+    "LanguageServicePort",
+    "Location",
+    "DefinitionResult",
+    "ReferencesResult",
+    "FrameworkTaggerPort",
+    "FrameworkType",
+    "FrameworkPattern",
+    "TaggedCodeNode",
 ]

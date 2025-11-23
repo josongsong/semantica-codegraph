@@ -27,6 +27,12 @@ class RelationshipType(str, Enum):
     IMPLEMENTS = "implements"       # class -> interface
     DEPENDS_ON = "depends_on"       # project -> project
 
+    # [Name Resolution - v2 Extension]
+    REFERS_TO = "refers_to"         # variable/function reference
+    OVERRIDES = "overrides"         # method override
+    SHADOWS = "shadows"             # name shadowing
+
+
     # [Cross-Asset]
     TESTS = "tests"                 # test code ↔ target code
     DOCUMENTS = "documents"         # documentation ↔ code
@@ -55,9 +61,11 @@ class BaseSemanticaNode(BaseModel):
     - attrs: schema-less extension pocket (no schema migration needed)
     - importance_score: RepoMap / importance calculation result (PageRank + Git + Runtime)
     - token_estimate: Token count estimate for this node and children (skeleton-based)
+    - schema_version: Schema version for A/B testing and experiments
     """
     node_id: str
     node_type: str
+    schema_version: str = "v2.0"
 
     relationships: List[Relationship] = Field(default_factory=list)
     attrs: Dict[str, Any] = Field(default_factory=dict)

@@ -15,9 +15,15 @@ from pydantic import BaseModel, Field
 
 
 class CodeRange(BaseModel):
-    """Line range for code location."""
+    """
+    Line and byte range for code location.
+
+    Supports both line-based (for display) and byte-offset (for LSP/compiler API).
+    """
     start_line: int
     end_line: int
+    start_byte: Optional[int] = None  # For LSP compatibility
+    end_byte: Optional[int] = None    # For LSP compatibility
 
 
 class GitContext(BaseModel):

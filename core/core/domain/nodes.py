@@ -146,6 +146,9 @@ class FileCategory(str, Enum):
     CONFIG = "config"
     DOC = "doc"
     TEST = "test"
+    GENERATED = "generated"  # Auto-generated files (DO NOT EDIT markers)
+    VENDOR = "vendor"        # Third-party dependencies (node_modules, vendor/)
+    BUILD = "build"          # Build artifacts (dist/, .min.js, etc.)
     OTHER = "other"
 
 
