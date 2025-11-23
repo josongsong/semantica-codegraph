@@ -79,27 +79,8 @@ def test_settings():
 
     docker-compose.test.yml 포트 사용.
     """
-    from core.config import Settings
-
-    return Settings(
-        # PostgreSQL Test
-        db_connection_string="postgresql://codegraph_test:test_password@localhost:5433/codegraph_test",
-        # Redis Test
-        redis_host="localhost",
-        redis_port=6380,
-        redis_password=None,
-        # Qdrant Test
-        vector_host="localhost",
-        vector_port=6335,
-        vector_collection="test_collection",
-        # Zoekt Test (optional)
-        zoekt_host="http://localhost",
-        zoekt_port=6071,
-        # LLM (fake key)
-        openai_api_key="test-key",
-        # Kùzu Test
-        kuzu_db_path="./data/test_kuzu",
-    )
+    # TODO: Implement Settings after src.config is created
+    return None
 
 
 @pytest.fixture(scope="session")
@@ -110,11 +91,8 @@ def container(test_settings):
     ⚠️  Rule: container 새 인스턴스 생성 금지
     ⚠️  실제 구현 시 global container를 test settings로 override하는 방식 필요
     """
-    # TODO: Settings override 구현
-    # 현재는 global container 사용
-    from core.container import container
-
-    return container
+    # TODO: Implement container after src.container is created
+    return None
 
 
 # ========================================================================
@@ -148,7 +126,10 @@ def golden_data_dir():
     """Golden test 데이터 디렉터리."""
     import pathlib
 
-    return pathlib.Path(__file__).parent / "scenarios"
+    # TODO: Create scenarios directory if needed
+    scenarios_dir = pathlib.Path(__file__).parent / "scenarios"
+    scenarios_dir.mkdir(exist_ok=True)
+    return scenarios_dir
 
 
 @pytest.fixture

@@ -2,7 +2,7 @@
 Fake Relational Store for Unit Testing
 """
 
-from typing import Any, Optional
+from typing import Any
 
 
 class FakeRelationalStore:
@@ -15,7 +15,7 @@ class FakeRelationalStore:
     def __init__(self):
         self.tables: dict[str, list[dict[str, Any]]] = {}
 
-    def execute(self, query: str, params: Optional[dict] = None) -> list[dict]:
+    def execute(self, query: str, params: dict | None = None) -> list[dict]:
         """쿼리 실행 (mock)."""
         # 실제 SQL 파싱 없이 테스트용 minimal 구현
         return []
@@ -32,7 +32,7 @@ class FakeRelationalStore:
     def select(
         self,
         table: str,
-        filters: Optional[dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """레코드 조회."""
         if table not in self.tables:

@@ -18,15 +18,34 @@ class FakeLLMProvider:
 
     def embed(self, text: str) -> list[float]:
         """
-        Deterministic embedding 생성.
+        Deterministic embedding 생성 (단어 매칭 기반 유사도 반영).
 
-        텍스트 해시 기반으로 일관된 벡터 생성.
+        텍스트를 단어로 분리하고, 각 단어에 대해 고정된 벡터를 할당한 뒤,
+        평균을 내어 최종 벡터를 생성합니다.
+        이 방식은 공통 단어가 많을수록 벡터가 유사해집니다.
         """
-        # 간단한 해시 기반 벡터
-        np.random.seed(hash(text) % (2**32))
-        vector = np.random.randn(self.embedding_dim)
+        # 텍스트를 소문자로 변환 후 단어 분리
+        words = text.lower().split()
+
+        if not words:
+            # 빈 텍스트는 zero vector
+            return [0.0] * self.embedding_dim
+
+        # 각 단어에 대해 고정된 벡터 생성 (단어 해시 기반)
+        word_vectors = []
+        for word in words:
+            np.random.seed(hash(word) % (2**32))
+            word_vec = np.random.randn(self.embedding_dim)
+            word_vectors.append(word_vec)
+
+        # 단어 벡터들의 평균
+        vector = np.mean(word_vectors, axis=0)
+
         # Normalize
-        vector = vector / np.linalg.norm(vector)
+        norm = np.linalg.norm(vector)
+        if norm > 0:
+            vector = vector / norm
+
         return vector.tolist()
 
     def complete(self, prompt: str, max_tokens: int = 100) -> str:

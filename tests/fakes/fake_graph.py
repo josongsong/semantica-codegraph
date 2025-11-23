@@ -5,7 +5,7 @@ Fake Graph Store for Unit Testing
 """
 
 from collections import defaultdict
-from typing import Any, Optional
+from typing import Any
 
 
 class FakeGraphStore:
@@ -36,7 +36,7 @@ class FakeGraphStore:
         from_id: str,
         to_id: str,
         edge_type: str,
-        properties: Optional[dict[str, Any]] = None,
+        properties: dict[str, Any] | None = None,
     ):
         """엣지 추가."""
         key = (from_id, edge_type)
@@ -48,7 +48,7 @@ class FakeGraphStore:
         if from_id not in self.reverse_edges[reverse_key]:
             self.reverse_edges[reverse_key].append(from_id)
 
-    def get_node(self, node_id: str) -> Optional[dict[str, Any]]:
+    def get_node(self, node_id: str) -> dict[str, Any] | None:
         """노드 조회."""
         return self.nodes.get(node_id)
 

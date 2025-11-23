@@ -1,11 +1,10 @@
 import logging
 import sys
-from typing import Optional
 
 from infra.config.settings import settings
 
 
-def setup_logging(log_level: Optional[str] = None):
+def setup_logging(log_level: str | None = None):
     """로깅 설정"""
     level = log_level or settings.log_level
     logging.basicConfig(

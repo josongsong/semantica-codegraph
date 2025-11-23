@@ -5,7 +5,7 @@ Fake Vector Store for Unit Testing
 Behavior-driven: 실제 유사도 검색 시뮬레이션.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -20,7 +20,7 @@ class FakeVectorStore:
     def __init__(self):
         self.vectors: dict[str, np.ndarray] = {}
         self.payloads: dict[str, dict[str, Any]] = {}
-        self.collection_name: Optional[str] = None
+        self.collection_name: str | None = None
 
     def create_collection(self, name: str, vector_size: int):
         """컬렉션 생성."""
@@ -47,7 +47,7 @@ class FakeVectorStore:
         collection_name: str,
         query_vector: list[float],
         limit: int = 10,
-        filter_: Optional[dict] = None,
+        filter_: dict | None = None,
     ) -> list[dict[str, Any]]:
         """
         Cosine similarity 기반 검색.
