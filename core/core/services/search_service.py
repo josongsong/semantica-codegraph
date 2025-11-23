@@ -5,15 +5,16 @@ Implements hybrid code search with semantic and lexical components.
 Orchestrates vector search, lexical search, and reranking.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
-from ..ports.vector_store import VectorStorePort
 from ..ports.lexical_search_port import LexicalSearchPort
 from ..ports.llm_provider import LLMProviderPort
+from ..ports.vector_store import VectorStorePort
 
 
 class SearchResult:
     """Search result data transfer object."""
+
     def __init__(
         self,
         chunk_id: str,
@@ -21,7 +22,7 @@ class SearchResult:
         content: str,
         file_path: str,
         uri: str,
-        metadata: Dict[str, Any],
+        metadata: dict[str, Any],
     ):
         self.chunk_id = chunk_id
         self.score = score
@@ -57,9 +58,9 @@ class SearchService:
         self,
         query: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[dict[str, Any]] = None,
         use_hybrid: bool = True,
-    ) -> List[SearchResult]:
+    ) -> list[SearchResult]:
         """
         Perform hybrid code search.
 
@@ -81,8 +82,8 @@ class SearchService:
         self,
         query: str,
         limit: int,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[SearchResult]:
+        filters: Optional[dict[str, Any]] = None,
+    ) -> list[SearchResult]:
         """Perform semantic search only."""
         # Generate query embedding
         query_vector = await self.llm_provider.embed_single(query)
@@ -103,8 +104,8 @@ class SearchService:
         self,
         query: str,
         limit: int,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[SearchResult]:
+        filters: Optional[dict[str, Any]] = None,
+    ) -> list[SearchResult]:
         """
         Perform hybrid search (semantic + lexical + fusion).
 
@@ -136,10 +137,10 @@ class SearchService:
 
     def _reciprocal_rank_fusion(
         self,
-        results_a: List[SearchResult],
-        results_b: List[Any],
+        results_a: list[SearchResult],
+        results_b: list[Any],
         k: int = 60,
-    ) -> List[SearchResult]:
+    ) -> list[SearchResult]:
         """
         Merge results using Reciprocal Rank Fusion.
 
@@ -159,7 +160,7 @@ class SearchService:
         query: str,
         repo_id: Optional[str] = None,
         limit: int = 50,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Search for symbols by name.
 

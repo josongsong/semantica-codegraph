@@ -8,14 +8,15 @@ Enables IDE-level code intelligence features.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
 
 class SymbolKind(str, Enum):
     """LSP symbol kinds."""
+
     FILE = "file"
     MODULE = "module"
     NAMESPACE = "namespace"
@@ -42,6 +43,7 @@ class Location(BaseModel):
 
     Compatible with LSP textDocument/definition and textDocument/references.
     """
+
     file_path: str
     line: int  # 0-indexed (LSP format)
     character: int  # 0-indexed (LSP format)
@@ -52,12 +54,14 @@ class Location(BaseModel):
 
 class Range(BaseModel):
     """Code range in LSP format."""
+
     start: Location
     end: Location
 
 
 class SymbolInformation(BaseModel):
     """Symbol information from LSP."""
+
     name: str
     kind: SymbolKind
     location: Location
@@ -66,20 +70,23 @@ class SymbolInformation(BaseModel):
 
 class DefinitionResult(BaseModel):
     """Result from textDocument/definition."""
-    locations: List[Location]
+
+    locations: list[Location]
     success: bool = True
     error: Optional[str] = None
 
 
 class ReferencesResult(BaseModel):
     """Result from textDocument/references."""
-    locations: List[Location]
+
+    locations: list[Location]
     success: bool = True
     error: Optional[str] = None
 
 
 class HoverResult(BaseModel):
     """Result from textDocument/hover."""
+
     content: str
     range: Optional[Range] = None
     success: bool = True
@@ -112,9 +119,7 @@ class LanguageServicePort(ABC):
 
     @abstractmethod
     def get_references(
-        self,
-        location: Location,
-        include_declaration: bool = True
+        self, location: Location, include_declaration: bool = True
     ) -> ReferencesResult:
         """
         Get all references to a symbol.
@@ -154,7 +159,7 @@ class LanguageServicePort(ABC):
         """
         pass
 
-    def get_document_symbols(self, file_path: str) -> List[SymbolInformation]:
+    def get_document_symbols(self, file_path: str) -> list[SymbolInformation]:
         """
         Get all symbols in a document.
 

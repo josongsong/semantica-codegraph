@@ -4,11 +4,10 @@ Git CLI Adapter
 Implements GitProviderPort using GitPython or subprocess.
 """
 
-from typing import List, Optional, Dict, Any
-from datetime import datetime
 from pathlib import Path
+from typing import Any, Optional
 
-from ...core.ports.git_provider import GitProviderPort, GitCommit, GitDiff
+from ...core.ports.git_provider import GitCommit, GitDiff, GitProviderPort
 
 
 class GitCLIAdapter(GitProviderPort):
@@ -26,7 +25,7 @@ class GitCLIAdapter(GitProviderPort):
         # TODO: Implement
         raise NotImplementedError
 
-    async def list_branches(self, repo_path: Path) -> List[str]:
+    async def list_branches(self, repo_path: Path) -> list[str]:
         """List branches."""
         # TODO: Implement
         raise NotImplementedError
@@ -36,7 +35,7 @@ class GitCLIAdapter(GitProviderPort):
         repo_path: Path,
         branch: str,
         max_count: Optional[int] = None,
-    ) -> List[GitCommit]:
+    ) -> list[GitCommit]:
         """Get commit history."""
         # TODO: Implement
         raise NotImplementedError
@@ -51,7 +50,7 @@ class GitCLIAdapter(GitProviderPort):
         repo_path: Path,
         from_ref: str,
         to_ref: str,
-    ) -> List[GitDiff]:
+    ) -> list[GitDiff]:
         """Get diff between refs."""
         # TODO: Implement
         raise NotImplementedError
@@ -61,7 +60,7 @@ class GitCLIAdapter(GitProviderPort):
         repo_path: Path,
         file_path: str,
         ref: str = "HEAD",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get file blame."""
         # TODO: Implement
         raise NotImplementedError
@@ -80,7 +79,7 @@ class GitCLIAdapter(GitProviderPort):
         self,
         repo_path: Path,
         commit_hash: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """Get changed files in commit."""
         # TODO: Implement
         raise NotImplementedError

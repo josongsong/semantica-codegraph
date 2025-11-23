@@ -1,4 +1,3 @@
-import pytest
 
 from core.chunking.hcr import HCRChunker
 
@@ -23,4 +22,3 @@ def test_hierarchical_chunks():
 
     assert len(all_chunks) >= len(base_chunks)
     assert any(c.level > 0 for c in all_chunks)
-

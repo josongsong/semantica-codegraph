@@ -5,13 +5,13 @@ Git history, branch, and PR analysis.
 Provides temporal context for code.
 """
 
-from typing import List, Optional, Dict, Any
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional
 
-from ..domain.nodes import CommitNode, BranchNode, PullRequestNode
 from ..domain.context import GitContext
-from ..ports.git_provider import GitProviderPort, GitCommit
+from ..domain.nodes import CommitNode
+from ..ports.git_provider import GitProviderPort
 from ..ports.relational_store import RelationalStorePort
 
 
@@ -40,7 +40,7 @@ class GitService:
         repo_path: Path,
         branch: str,
         max_count: Optional[int] = 100,
-    ) -> List[CommitNode]:
+    ) -> list[CommitNode]:
         """
         Get commit history for a branch.
 
@@ -81,7 +81,7 @@ class GitService:
         repo_path: Path,
         file_path: str,
         since: Optional[datetime] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Analyze change history for a file.
 
@@ -101,7 +101,7 @@ class GitService:
         repo_path: Path,
         file_path: str,
         ref: str = "HEAD",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get blame information for a file.
 
@@ -143,7 +143,7 @@ class GitService:
         self,
         repo_path: Path,
         pr_number: int,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Get files changed in a pull request.
 
@@ -157,7 +157,7 @@ class GitService:
         # TODO: Implement PR change detection
         raise NotImplementedError
 
-    async def list_branches(self, repo_path: Path) -> List[str]:
+    async def list_branches(self, repo_path: Path) -> list[str]:
         """
         List all branches in repository.
 

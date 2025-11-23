@@ -6,13 +6,14 @@ Implementations: GitPython, git CLI wrapper, etc.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Optional
 
 
 class GitCommit:
     """Git commit data transfer object."""
+
     def __init__(
         self,
         hash: str,
@@ -20,7 +21,7 @@ class GitCommit:
         author_email: str,
         authored_at: datetime,
         message: str,
-        parents: List[str],
+        parents: list[str],
     ):
         self.hash = hash
         self.author = author
@@ -32,6 +33,7 @@ class GitCommit:
 
 class GitDiff:
     """Git diff data transfer object."""
+
     def __init__(
         self,
         file_path: str,
@@ -63,7 +65,7 @@ class GitProviderPort(ABC):
         pass
 
     @abstractmethod
-    async def list_branches(self, repo_path: Path) -> List[str]:
+    async def list_branches(self, repo_path: Path) -> list[str]:
         """List all branches in the repository."""
         pass
 
@@ -73,7 +75,7 @@ class GitProviderPort(ABC):
         repo_path: Path,
         branch: str,
         max_count: Optional[int] = None,
-    ) -> List[GitCommit]:
+    ) -> list[GitCommit]:
         """
         Get commit history for a branch.
 
@@ -98,7 +100,7 @@ class GitProviderPort(ABC):
         repo_path: Path,
         from_ref: str,
         to_ref: str,
-    ) -> List[GitDiff]:
+    ) -> list[GitDiff]:
         """
         Get diff between two refs (commits, branches, tags).
 
@@ -118,7 +120,7 @@ class GitProviderPort(ABC):
         repo_path: Path,
         file_path: str,
         ref: str = "HEAD",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get blame information for a file.
 
@@ -147,6 +149,6 @@ class GitProviderPort(ABC):
         self,
         repo_path: Path,
         commit_hash: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """Get list of files changed in a commit."""
         pass

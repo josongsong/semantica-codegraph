@@ -6,13 +6,14 @@ Provides access to services and ports.
 """
 
 from typing import Annotated
+
 from fastapi import Depends
 
 from ...core.services import (
+    GitService,
+    GraphService,
     IndexingService,
     SearchService,
-    GraphService,
-    GitService,
 )
 
 # TODO: Import container and wire dependencies

@@ -11,35 +11,37 @@ Following the Dependency Inversion Principle:
 - This allows core to remain independent of external dependencies
 """
 
-from .vector_store import VectorStorePort
-from .graph_store import GraphStorePort
-from .relational_store import RelationalStorePort
+from .framework_tagger_port import (
+    FrameworkPattern,
+    FrameworkTaggerPort,
+    FrameworkType,
+    TaggedCodeNode,
+)
 from .git_provider import GitProviderPort
-from .llm_provider import LLMProviderPort
+from .graph_store import GraphStorePort
+from .language_service_port import DefinitionResult, LanguageServicePort, Location, ReferencesResult
 from .lexical_search_port import LexicalSearchPort
-from .parser_port import ParserPort, ParsedFileInput, ParserResult, CodeNode, ParserDiagnostic
-from .name_resolution_port import NameResolutionPort, ReferenceEdge, NameResolutionInput
-from .language_service_port import LanguageServicePort, Location, DefinitionResult, ReferencesResult
-from .framework_tagger_port import FrameworkTaggerPort, FrameworkType, FrameworkPattern, TaggedCodeNode
+from .llm_provider import LLMProviderPort
+from .name_resolution_port import NameResolutionInput, NameResolutionPort, ReferenceEdge
+from .parser_port import CodeNode, ParsedFileInput, ParserDiagnostic, ParserPort, ParserResult
+from .relational_store import RelationalStorePort
+from .vector_store import VectorStorePort
 
 __all__ = [
     # Storage ports
     "VectorStorePort",
     "GraphStorePort",
     "RelationalStorePort",
-
     # Service ports
     "GitProviderPort",
     "LLMProviderPort",
     "LexicalSearchPort",
-
     # Parser ports (v2 extension)
     "ParserPort",
     "ParsedFileInput",
     "ParserResult",
     "CodeNode",
     "ParserDiagnostic",
-
     # Advanced analysis ports (v2 extension)
     "NameResolutionPort",
     "ReferenceEdge",

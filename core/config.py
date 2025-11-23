@@ -6,6 +6,7 @@ Loads configuration from environment variables and .env files.
 """
 
 from typing import Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

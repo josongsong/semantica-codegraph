@@ -1,6 +1,7 @@
 """Graph API Router - GraphRAG operations."""
 
 from fastapi import APIRouter
+
 from ..dependencies import GraphServiceDep
 
 router = APIRouter()

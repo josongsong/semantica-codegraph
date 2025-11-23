@@ -22,16 +22,12 @@ async def dump_call_graph(symbol_id: str, direction: str = "both"):
     if direction in ["both", "in"]:
         callers_query = CallersQuery(node_id=symbol_id, depth=2)
         callers = await call_graph.get_callers(callers_query)
-        results["callers"] = [
-            {"node": r["node"].id, "edge": r["edge"].id} for r in callers
-        ]
+        results["callers"] = [{"node": r["node"].id, "edge": r["edge"].id} for r in callers]
 
     if direction in ["both", "out"]:
         callees_query = CalleesQuery(node_id=symbol_id, depth=2)
         callees = await call_graph.get_callees(callees_query)
-        results["callees"] = [
-            {"node": r["node"].id, "edge": r["edge"].id} for r in callees
-        ]
+        results["callees"] = [{"node": r["node"].id, "edge": r["edge"].id} for r in callees]
 
     print(json.dumps(results, indent=2, ensure_ascii=False))
 
@@ -44,4 +40,3 @@ if __name__ == "__main__":
     symbol_id = sys.argv[1]
     direction = sys.argv[2] if len(sys.argv) > 2 else "both"
     asyncio.run(dump_call_graph(symbol_id, direction))
-

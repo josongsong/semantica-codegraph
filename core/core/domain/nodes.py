@@ -8,27 +8,28 @@ This module contains all node types for the codegraph system:
 
 from __future__ import annotations
 
-from typing import List, Optional, Literal
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Literal, Optional
 
 from pydantic import Field
 
+from .context import GitContext, Parameter, RuntimeStats, SecurityContext
 from .graph import BaseSemanticaNode
-from .context import GitContext, SecurityContext, RuntimeStats, Parameter
-
 
 # ==============================================================================
 # Git Workflow Nodes
 # ==============================================================================
 
+
 class RepositoryNode(BaseSemanticaNode):
     """Level 0: Repository Root"""
+
     node_type: Literal["repository"] = "repository"
     repo_name: str
     remote_url: str
     default_branch: str = "main"
-    monorepo_layout: List[str] = Field(default_factory=list)
+    monorepo_layout: list[str] = Field(default_factory=list)
     summary: Optional[str] = None
     git_context: Optional[GitContext] = None
     security_context: Optional[SecurityContext] = None
@@ -36,6 +37,7 @@ class RepositoryNode(BaseSemanticaNode):
 
 class BranchNode(BaseSemanticaNode):
     """Git Branch (Logical View)"""
+
     node_type: Literal["branch"] = "branch"
     repo_id: str
     name: str
@@ -45,6 +47,7 @@ class BranchNode(BaseSemanticaNode):
 
 class CommitNode(BaseSemanticaNode):
     """Git Commit History"""
+
     node_type: Literal["commit"] = "commit"
     repo_id: str
     hash: str
@@ -52,11 +55,12 @@ class CommitNode(BaseSemanticaNode):
     author_email: Optional[str] = None
     authored_at: datetime
     message: str
-    parents: List[str] = Field(default_factory=list)
+    parents: list[str] = Field(default_factory=list)
 
 
 class PullRequestState(str, Enum):
     """Pull request lifecycle states."""
+
     OPEN = "open"
     CLOSED = "closed"
     MERGED = "merged"
@@ -65,6 +69,7 @@ class PullRequestState(str, Enum):
 
 class PullRequestNode(BaseSemanticaNode):
     """Code Review Context"""
+
     node_type: Literal["pull_request"] = "pull_request"
     repo_id: str
     pr_number: int
@@ -80,6 +85,7 @@ class PullRequestNode(BaseSemanticaNode):
 
 class TagNode(BaseSemanticaNode):
     """Release / Git Tag"""
+
     node_type: Literal["tag"] = "tag"
     repo_id: str
     name: str
@@ -90,23 +96,27 @@ class TagNode(BaseSemanticaNode):
 
 from pydantic import BaseModel
 
+
 class BranchChunkMapping(BaseModel):
     """
     [Deduplication Layer]
     Maps which chunks each branch references (prevents duplicate storage).
     """
+
     repo_id: str
     branch_name: str
     commit_hash: str
-    chunk_id: str      # References CanonicalLeafChunk.node_id
+    chunk_id: str  # References CanonicalLeafChunk.node_id
 
 
 # ==============================================================================
 # Logical Structure Nodes
 # ==============================================================================
 
+
 class ProjectType(str, Enum):
     """Project classification types."""
+
     APPLICATION = "application"
     LIBRARY = "library"
     TOOL = "tool"
@@ -115,6 +125,7 @@ class ProjectType(str, Enum):
 
 class ProjectNode(BaseSemanticaNode):
     """Level 1: Project (Workspace/Build Unit)"""
+
     node_type: Literal["project"] = "project"
     repo_id: str
     name: str
@@ -122,7 +133,7 @@ class ProjectNode(BaseSemanticaNode):
     project_type: ProjectType
     language: str
     framework: Optional[str] = None
-    dependencies: List[str] = Field(default_factory=list)
+    dependencies: list[str] = Field(default_factory=list)
     summary: Optional[str] = None
     git_context: Optional[GitContext] = None
     security_context: Optional[SecurityContext] = None
@@ -130,6 +141,7 @@ class ProjectNode(BaseSemanticaNode):
 
 class ModuleNode(BaseSemanticaNode):
     """Level 2: Module (Architectural Group)"""
+
     node_type: Literal["module"] = "module"
     project_id: str
     name: str
@@ -142,18 +154,20 @@ class ModuleNode(BaseSemanticaNode):
 
 class FileCategory(str, Enum):
     """File classification categories."""
+
     SOURCE = "source"
     CONFIG = "config"
     DOC = "doc"
     TEST = "test"
     GENERATED = "generated"  # Auto-generated files (DO NOT EDIT markers)
-    VENDOR = "vendor"        # Third-party dependencies (node_modules, vendor/)
-    BUILD = "build"          # Build artifacts (dist/, .min.js, etc.)
+    VENDOR = "vendor"  # Third-party dependencies (node_modules, vendor/)
+    BUILD = "build"  # Build artifacts (dist/, .min.js, etc.)
     OTHER = "other"
 
 
 class FileNode(BaseSemanticaNode):
     """Level 3: Physical File (Parsing Strategy Anchor)"""
+
     node_type: Literal["file"] = "file"
     project_id: str
     module_id: Optional[str] = None
@@ -170,6 +184,7 @@ class FileNode(BaseSemanticaNode):
 
 class SymbolKind(str, Enum):
     """Symbol types in code."""
+
     FUNCTION = "function"
     METHOD = "method"
     CLASS = "class"
@@ -184,6 +199,7 @@ class SymbolKind(str, Enum):
 
 class Visibility(str, Enum):
     """Symbol visibility levels."""
+
     PUBLIC = "public"
     PRIVATE = "private"
     PROTECTED = "protected"
@@ -192,6 +208,7 @@ class Visibility(str, Enum):
 
 class SymbolNode(BaseSemanticaNode):
     """Level 4: Symbol (Logical Unit / Agent Tool)"""
+
     node_type: Literal["symbol"] = "symbol"
     file_id: str
     file_path: str
@@ -199,7 +216,7 @@ class SymbolNode(BaseSemanticaNode):
     kind: SymbolKind
     signature: Optional[str] = None
     visibility: Visibility = Visibility.PUBLIC
-    parameters: List[Parameter] = Field(default_factory=list)
+    parameters: list[Parameter] = Field(default_factory=list)
     return_type: Optional[str] = None
     skeleton_code: Optional[str] = None
     summary: Optional[str] = None

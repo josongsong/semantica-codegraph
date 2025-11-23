@@ -8,8 +8,8 @@ Supports pluggable backends (Stack Graphs, LSP, language-specific analyzers).
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -18,6 +18,7 @@ from ..domain.graph import RelationshipType
 
 class ReferenceKind(str, Enum):
     """Types of symbol references."""
+
     DEFINITION = "definition"
     REFERENCE = "reference"
     CALL = "call"
@@ -27,6 +28,7 @@ class ReferenceKind(str, Enum):
 
 class SymbolLocation(BaseModel):
     """Location of a symbol in code."""
+
     file_path: str
     start_line: int
     end_line: int
@@ -40,6 +42,7 @@ class ReferenceEdge(BaseModel):
 
     Used to build accurate symbol graphs with Stack Graphs or LSP.
     """
+
     source_symbol_id: str
     target_symbol_id: str
     kind: ReferenceKind
@@ -56,12 +59,13 @@ class ReferenceEdge(BaseModel):
 
 class NameResolutionInput(BaseModel):
     """Input for name resolution."""
+
     repo_id: str
-    file_paths: List[str]
+    file_paths: list[str]
     language: str
 
     # Optional: Already parsed code nodes
-    code_nodes: List[dict] = []
+    code_nodes: list[dict] = []
 
     # Optional: File dependency information
     import_graph: dict = {}
@@ -69,9 +73,10 @@ class NameResolutionInput(BaseModel):
 
 class NameResolutionResult(BaseModel):
     """Output from name resolution."""
-    edges: List[ReferenceEdge]
-    unresolved_references: List[dict] = []
-    warnings: List[str] = []
+
+    edges: list[ReferenceEdge]
+    unresolved_references: list[dict] = []
+    warnings: list[str] = []
     success: bool = True
 
 
@@ -86,10 +91,7 @@ class NameResolutionPort(ABC):
     """
 
     @abstractmethod
-    def resolve_names(
-        self,
-        input_data: NameResolutionInput
-    ) -> NameResolutionResult:
+    def resolve_names(self, input_data: NameResolutionInput) -> NameResolutionResult:
         """
         Resolve symbol names and build reference edges.
 

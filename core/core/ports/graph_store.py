@@ -6,7 +6,7 @@ Implementations: Neo4j, NetworkX (in-memory), etc.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
 from ..domain.graph import BaseSemanticaNode, RelationshipType
 
@@ -32,7 +32,7 @@ class GraphStorePort(ABC):
         source_id: str,
         target_id: str,
         rel_type: RelationshipType,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> None:
         """Create a relationship between two nodes."""
         pass
@@ -49,7 +49,7 @@ class GraphStorePort(ABC):
         rel_type: Optional[RelationshipType] = None,
         direction: str = "outgoing",
         depth: int = 1,
-    ) -> List[BaseSemanticaNode]:
+    ) -> list[BaseSemanticaNode]:
         """
         Get neighboring nodes.
 
@@ -70,7 +70,7 @@ class GraphStorePort(ABC):
         start_id: str,
         end_id: str,
         max_depth: int = 5,
-    ) -> List[List[str]]:
+    ) -> list[list[str]]:
         """
         Find paths between two nodes.
 
@@ -88,8 +88,8 @@ class GraphStorePort(ABC):
     async def query(
         self,
         query: str,
-        parameters: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        parameters: Optional[dict[str, Any]] = None,
+    ) -> list[dict[str, Any]]:
         """
         Execute a custom graph query.
 

@@ -50,4 +50,3 @@ CREATE INDEX IF NOT EXISTS idx_edges_target_type ON edges(target_id, type);
 -- Full-text search index (PostgreSQL)
 CREATE INDEX IF NOT EXISTS idx_nodes_content_fts ON nodes USING gin(to_tsvector('english', content));
 CREATE INDEX IF NOT EXISTS idx_nodes_name_fts ON nodes USING gin(to_tsvector('english', name));
-

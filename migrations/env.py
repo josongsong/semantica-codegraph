@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import sys
 from logging.config import fileConfig
-from typing import Any, Dict
+from typing import Any
 
 from alembic import context
 from sqlalchemy import pool
@@ -32,7 +32,7 @@ if config.config_file_name is not None:
 settings = Settings()
 
 # Allow overriding DB URL via `-x db_url=...`
-x_args: Dict[str, Any] = context.get_x_argument(as_dictionary=True)
+x_args: dict[str, Any] = context.get_x_argument(as_dictionary=True)
 db_url: str = x_args.get("db_url") or settings.db_connection_string
 config.set_main_option("sqlalchemy.url", db_url)
 

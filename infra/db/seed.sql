@@ -14,4 +14,3 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO nodes (id, type, name, path, language, start_line, end_line, signature, file_id) VALUES
 ('symbol:test_func', 'symbol', 'test_func', '/path/to/repo/test.py', 'python', 1, 10, 'def test_func():', 'file:test.py')
 ON CONFLICT (id) DO NOTHING;
-

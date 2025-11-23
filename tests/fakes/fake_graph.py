@@ -4,8 +4,8 @@ Fake Graph Store for Unit Testing
 외부 Kùzu 없이 in-memory 그래프로 동작하는 GraphStorePort 구현.
 """
 
-from typing import List, Dict, Any, Optional
 from collections import defaultdict
+from typing import Any, Optional
 
 
 class FakeGraphStore:
@@ -17,13 +17,13 @@ class FakeGraphStore:
 
     def __init__(self):
         # node_id -> node data
-        self.nodes: Dict[str, Dict[str, Any]] = {}
+        self.nodes: dict[str, dict[str, Any]] = {}
         # (from_id, edge_type) -> [to_id, ...]
-        self.edges: Dict[tuple, List[str]] = defaultdict(list)
+        self.edges: dict[tuple, list[str]] = defaultdict(list)
         # (to_id, edge_type) -> [from_id, ...] (reverse index)
-        self.reverse_edges: Dict[tuple, List[str]] = defaultdict(list)
+        self.reverse_edges: dict[tuple, list[str]] = defaultdict(list)
 
-    def add_node(self, node_id: str, node_type: str, properties: Dict[str, Any]):
+    def add_node(self, node_id: str, node_type: str, properties: dict[str, Any]):
         """노드 추가."""
         self.nodes[node_id] = {
             "id": node_id,
@@ -36,7 +36,7 @@ class FakeGraphStore:
         from_id: str,
         to_id: str,
         edge_type: str,
-        properties: Optional[Dict[str, Any]] = None,
+        properties: Optional[dict[str, Any]] = None,
     ):
         """엣지 추가."""
         key = (from_id, edge_type)
@@ -48,7 +48,7 @@ class FakeGraphStore:
         if from_id not in self.reverse_edges[reverse_key]:
             self.reverse_edges[reverse_key].append(from_id)
 
-    def get_node(self, node_id: str) -> Optional[Dict[str, Any]]:
+    def get_node(self, node_id: str) -> Optional[dict[str, Any]]:
         """노드 조회."""
         return self.nodes.get(node_id)
 
@@ -57,7 +57,7 @@ class FakeGraphStore:
         node_id: str,
         edge_type: str,
         direction: str = "outgoing",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         이웃 노드 조회.
 
@@ -79,9 +79,9 @@ class FakeGraphStore:
     def traverse(
         self,
         start_id: str,
-        edge_types: List[str],
+        edge_types: list[str],
         max_depth: int = 3,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Multi-hop 그래프 탐색 (BFS).
 
@@ -117,7 +117,7 @@ class FakeGraphStore:
 
         return result
 
-    def query(self, cypher_like: str) -> List[Dict[str, Any]]:
+    def query(self, cypher_like: str) -> list[dict[str, Any]]:
         """
         간단한 쿼리 시뮬레이션.
 

@@ -8,19 +8,20 @@ Pytest Configuration and Fixtures
 """
 
 import pytest
-from tests.fakes import (
-    FakeVectorStore,
-    FakeGraphStore,
-    FakeRelationalStore,
-    FakeLexicalSearch,
-    FakeGitProvider,
-    FakeLLMProvider,
-)
 
+from tests.fakes import (
+    FakeGitProvider,
+    FakeGraphStore,
+    FakeLexicalSearch,
+    FakeLLMProvider,
+    FakeRelationalStore,
+    FakeVectorStore,
+)
 
 # ========================================================================
 # Unit Test Fixtures (Fake Implementations)
 # ========================================================================
+
 
 @pytest.fixture
 def fake_vector():
@@ -70,6 +71,7 @@ def fake_llm():
 # Integration Test Fixtures (Container Singleton)
 # ========================================================================
 
+
 @pytest.fixture(scope="session")
 def test_settings():
     """
@@ -111,12 +113,14 @@ def container(test_settings):
     # TODO: Settings override 구현
     # 현재는 global container 사용
     from core.container import container
+
     return container
 
 
 # ========================================================================
 # Database Fixtures (Integration Test)
 # ========================================================================
+
 
 @pytest.fixture(scope="function")
 def clean_db(container):
@@ -138,10 +142,12 @@ def clean_db(container):
 # Scenario Test Fixtures
 # ========================================================================
 
+
 @pytest.fixture
 def golden_data_dir():
     """Golden test 데이터 디렉터리."""
     import pathlib
+
     return pathlib.Path(__file__).parent / "scenarios"
 
 
@@ -166,6 +172,7 @@ def load_golden(golden_data_dir):
 # ========================================================================
 # Helpers
 # ========================================================================
+
 
 @pytest.fixture
 def sample_code():

@@ -8,21 +8,21 @@ structures into flat storage payloads.
 
 from __future__ import annotations
 
-from typing import List, Dict, Any, Optional, Literal
 from datetime import datetime
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from .graph import BaseSemanticaNode, RelationshipType
 from .context import (
-    CodeRange,
-    LexicalFeatures,
-    SemanticFeatures,
     BehavioralTags,
+    CodeRange,
     ErrorContext,
     GitContext,
+    LexicalFeatures,
     SecurityContext,
+    SemanticFeatures,
 )
+from .graph import BaseSemanticaNode, RelationshipType
 
 
 class CanonicalLeafChunk(BaseSemanticaNode):
@@ -35,6 +35,7 @@ class CanonicalLeafChunk(BaseSemanticaNode):
     - content_hash: Ensures deduplication across branches
     - canonical_commit: Tracks the origin commit of this chunk
     """
+
     node_type: Literal["leaf_chunk"] = "leaf_chunk"
 
     # Hierarchy Links
@@ -47,8 +48,8 @@ class CanonicalLeafChunk(BaseSemanticaNode):
     # Location & Content
     language: str
     code_range: CodeRange
-    content_hash: str           # Hash of raw_code (Deduplication Key)
-    canonical_commit: str       # Origin commit of this chunk
+    content_hash: str  # Hash of raw_code (Deduplication Key)
+    canonical_commit: str  # Origin commit of this chunk
 
     raw_code: Optional[str] = None
 
@@ -75,6 +76,7 @@ class VectorChunkPayload(BaseModel):
 
     Following the "Logical Tree, Physical Flat" principle from the manifesto.
     """
+
     id: str  # Chunk ID
     repo_id: str
     project_id: str
@@ -88,14 +90,14 @@ class VectorChunkPayload(BaseModel):
     embedding_source: str
 
     # Flattened Meta
-    tags: Dict[str, bool]
-    identifiers: List[str] = []
+    tags: dict[str, bool]
+    identifiers: list[str] = []
 
     # Flattened Graph Relations (promoted from relationships for fast access)
-    rel_calls: List[str] = []
-    rel_tests: List[str] = []
-    rel_touches: List[str] = []  # PR/Commit connections
-    rel_documents: List[str] = []
+    rel_calls: list[str] = []
+    rel_tests: list[str] = []
+    rel_touches: list[str] = []  # PR/Commit connections
+    rel_documents: list[str] = []
 
     # Contexts
     last_modified_at: Optional[datetime] = None
@@ -103,7 +105,7 @@ class VectorChunkPayload(BaseModel):
     content_hash: Optional[str] = None
 
     # Safety Net (everything else goes here)
-    extra: Dict[str, Any] = {}
+    extra: dict[str, Any] = {}
 
 
 def canonical_leaf_to_vector_payload(chunk: CanonicalLeafChunk) -> VectorChunkPayload:
@@ -174,7 +176,7 @@ def canonical_leaf_to_vector_payload(chunk: CanonicalLeafChunk) -> VectorChunkPa
         change_frequency=freq,
         content_hash=chunk.content_hash,
         # Merge attrs and extra_rels into extra (the safety net)
-        extra={**chunk.attrs, **extra_rels}
+        extra={**chunk.attrs, **extra_rels},
     )
 
     return payload

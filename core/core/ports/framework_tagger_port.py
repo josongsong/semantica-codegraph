@@ -8,8 +8,8 @@ Recognizes framework-specific patterns (FastAPI routes, React components, etc.).
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
 from enum import Enum
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -18,6 +18,7 @@ from ..ports.parser_port import CodeNode
 
 class FrameworkType(str, Enum):
     """Supported framework types."""
+
     # Web frameworks
     FASTAPI = "fastapi"
     DJANGO = "django"
@@ -42,12 +43,13 @@ class FrameworkType(str, Enum):
 
 class FrameworkPattern(BaseModel):
     """A recognized framework pattern."""
+
     framework: FrameworkType
     pattern_type: str  # e.g., "route", "component", "test", "model"
     confidence: float = 1.0
 
     # Pattern-specific metadata
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
     # Examples:
     # FastAPI route: {"route": "/users", "method": "GET", "tags": ["users"]}
@@ -57,22 +59,25 @@ class FrameworkPattern(BaseModel):
 
 class TaggedCodeNode(BaseModel):
     """CodeNode with framework tags."""
+
     node: CodeNode
-    patterns: List[FrameworkPattern] = []
+    patterns: list[FrameworkPattern] = []
 
 
 class FrameworkTaggerInput(BaseModel):
     """Input for framework tagger."""
-    nodes: List[CodeNode]
+
+    nodes: list[CodeNode]
     language: str
-    repo_context: Optional[Dict[str, Any]] = None  # e.g., package.json, requirements.txt
+    repo_context: Optional[dict[str, Any]] = None  # e.g., package.json, requirements.txt
 
 
 class FrameworkTaggerResult(BaseModel):
     """Output from framework tagger."""
-    tagged_nodes: List[TaggedCodeNode]
-    detected_frameworks: List[FrameworkType] = []
-    warnings: List[str] = []
+
+    tagged_nodes: list[TaggedCodeNode]
+    detected_frameworks: list[FrameworkType] = []
+    warnings: list[str] = []
     success: bool = True
 
 
@@ -115,10 +120,8 @@ class FrameworkTaggerPort(ABC):
 
     @abstractmethod
     def detect_frameworks(
-        self,
-        nodes: List[CodeNode],
-        repo_context: Optional[Dict[str, Any]] = None
-    ) -> List[FrameworkType]:
+        self, nodes: list[CodeNode], repo_context: Optional[dict[str, Any]] = None
+    ) -> list[FrameworkType]:
         """
         Detect which frameworks are used in the codebase.
 
@@ -147,11 +150,8 @@ class FrameworkAttrs:
 
     @staticmethod
     def add_framework_info(
-        attrs: Dict[str, Any],
-        framework: FrameworkType,
-        pattern_type: str,
-        metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        attrs: dict[str, Any], framework: FrameworkType, pattern_type: str, metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Add framework information to attrs dict.
 
@@ -167,19 +167,12 @@ class FrameworkAttrs:
         if "framework" not in attrs:
             attrs["framework"] = {}
 
-        attrs["framework"][framework.value] = {
-            "pattern_type": pattern_type,
-            **metadata
-        }
+        attrs["framework"][framework.value] = {"pattern_type": pattern_type, **metadata}
 
         return attrs
 
     @staticmethod
-    def add_domain_tag(
-        attrs: Dict[str, Any],
-        domain: str,
-        tags: List[str]
-    ) -> Dict[str, Any]:
+    def add_domain_tag(attrs: dict[str, Any], domain: str, tags: list[str]) -> dict[str, Any]:
         """
         Add domain tags to attrs dict.
 
@@ -200,10 +193,8 @@ class FrameworkAttrs:
 
     @staticmethod
     def add_analysis_result(
-        attrs: Dict[str, Any],
-        analysis_type: str,
-        result: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        attrs: dict[str, Any], analysis_type: str, result: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Add static analysis results to attrs dict.
 

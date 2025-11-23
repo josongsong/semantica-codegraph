@@ -5,7 +5,8 @@ GraphRAG operations for exploring code relationships.
 Provides graph traversal and neighbor discovery.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Optional
+
 from pydantic import BaseModel, Field
 
 from ..domain.graph import BaseSemanticaNode, RelationshipType
@@ -20,12 +21,13 @@ class RepoMapNode(BaseModel):
     Represents a node in the repository map tree with importance scoring
     and token estimation for LLM context budget management.
     """
+
     node_id: str
     label: str
     node_type: str
     importance_score: float
     token_estimate: int
-    children: List["RepoMapNode"] = Field(default_factory=list)
+    children: list["RepoMapNode"] = Field(default_factory=list)
 
 
 class GraphService:
@@ -53,7 +55,7 @@ class GraphService:
         rel_type: Optional[RelationshipType] = None,
         direction: str = "outgoing",
         depth: int = 1,
-    ) -> List[BaseSemanticaNode]:
+    ) -> list[BaseSemanticaNode]:
         """
         Get neighboring nodes.
 
@@ -73,7 +75,7 @@ class GraphService:
             depth,
         )
 
-    async def find_callers(self, symbol_id: str) -> List[BaseSemanticaNode]:
+    async def find_callers(self, symbol_id: str) -> list[BaseSemanticaNode]:
         """
         Find all callers of a symbol.
 
@@ -90,7 +92,7 @@ class GraphService:
             1,
         )
 
-    async def find_callees(self, symbol_id: str) -> List[BaseSemanticaNode]:
+    async def find_callees(self, symbol_id: str) -> list[BaseSemanticaNode]:
         """
         Find all symbols called by a symbol.
 
@@ -111,7 +113,7 @@ class GraphService:
         self,
         node_id: str,
         max_depth: int = 3,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Find all dependencies of a node.
 
@@ -130,7 +132,7 @@ class GraphService:
         start_id: str,
         end_id: str,
         max_depth: int = 5,
-    ) -> List[List[str]]:
+    ) -> list[list[str]]:
         """
         Find paths between two nodes.
 
@@ -148,7 +150,7 @@ class GraphService:
         self,
         node_id: str,
         depth: int = 2,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Analyze the impact radius of a node.
 

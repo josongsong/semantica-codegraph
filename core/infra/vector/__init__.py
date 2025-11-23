@@ -1,6 +1,6 @@
 """Vector store adapter implementations."""
 
-from .qdrant import QdrantAdapter
 from .mock import MockVectorStore
+from .qdrant import QdrantAdapter
 
 __all__ = ["QdrantAdapter", "MockVectorStore"]

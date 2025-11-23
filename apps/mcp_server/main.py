@@ -2,7 +2,6 @@
 """MCP 서버 엔트리포인트"""
 
 import asyncio
-import sys
 
 from mcp.server import Server
 from mcp.server.models import InitializationOptions
@@ -147,4 +146,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

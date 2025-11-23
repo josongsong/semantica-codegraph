@@ -88,9 +88,9 @@
     - validator_id, dto_name, location(symbol_id or file_id), attrs
 15. LOG_CALL
     - log_id, symbol_id, log_level, log_message_template, attrs
-        
+
         (정적 문자열 기반 역추적용)
-        
+
 
 ### 2-2. Kùzu 엣지(그래프 관계)
 
@@ -208,9 +208,9 @@
 2. 루프 정보
     - AST 기준으로 loop(for/while/map/filter 등) 내부의 호출을 분석
     - SYMBOL.attrs.uses_in_loop / heavy_call_in_loop 설정
-        
+
         (GraphStore, 외부 서비스 호출 등이 루프 내에 있는지 표시)
-        
+
 
 ## 4. 인덱싱 파이프라인 요구사항
 
@@ -287,9 +287,9 @@
 2. Kùzu/Qdrant/Zoekt 쿼리에서
     - security_level ≤ caller_level
     - tenant_id 일치
-        
+
         필터를 적용
-        
+
 3. ACL 테스트 시나리오(1-20, 2-17)를 만족할 수 있도록 설계
 
 ## 6. Fallback 계층 요구사항
@@ -469,9 +469,9 @@
         - 더 단순한 모델
         - 낮은 fallback 레벨 (예: semantic-only)
         - context 축소
-            
+
             로 강등
-            
+
 
 ## 12. 비기능 요구사항
 

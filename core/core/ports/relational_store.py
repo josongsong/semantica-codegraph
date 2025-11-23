@@ -6,15 +6,15 @@ Implementations: PostgreSQL (SQLAlchemy), SQLite, etc.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
+from typing import Any, Optional
 
+from ..domain.chunks import CanonicalLeafChunk
 from ..domain.nodes import (
-    RepositoryNode,
-    ProjectNode,
     FileNode,
+    ProjectNode,
+    RepositoryNode,
     SymbolNode,
 )
-from ..domain.chunks import CanonicalLeafChunk
 
 
 class RelationalStorePort(ABC):
@@ -39,7 +39,7 @@ class RelationalStorePort(ABC):
         pass
 
     @abstractmethod
-    async def list_repositories(self) -> List[RepositoryNode]:
+    async def list_repositories(self) -> list[RepositoryNode]:
         """List all repositories."""
         pass
 
@@ -50,7 +50,7 @@ class RelationalStorePort(ABC):
         pass
 
     @abstractmethod
-    async def get_projects_by_repo(self, repo_id: str) -> List[ProjectNode]:
+    async def get_projects_by_repo(self, repo_id: str) -> list[ProjectNode]:
         """Get all projects in a repository."""
         pass
 
@@ -61,7 +61,7 @@ class RelationalStorePort(ABC):
         pass
 
     @abstractmethod
-    async def get_files_by_project(self, project_id: str) -> List[FileNode]:
+    async def get_files_by_project(self, project_id: str) -> list[FileNode]:
         """Get all files in a project."""
         pass
 
@@ -77,7 +77,7 @@ class RelationalStorePort(ABC):
         pass
 
     @abstractmethod
-    async def get_symbols_by_file(self, file_id: str) -> List[SymbolNode]:
+    async def get_symbols_by_file(self, file_id: str) -> list[SymbolNode]:
         """Get all symbols in a file."""
         pass
 
@@ -87,7 +87,7 @@ class RelationalStorePort(ABC):
         query: str,
         repo_id: Optional[str] = None,
         limit: int = 50,
-    ) -> List[SymbolNode]:
+    ) -> list[SymbolNode]:
         """Search symbols by name."""
         pass
 
@@ -103,7 +103,7 @@ class RelationalStorePort(ABC):
         pass
 
     @abstractmethod
-    async def get_chunks_by_file(self, file_id: str) -> List[CanonicalLeafChunk]:
+    async def get_chunks_by_file(self, file_id: str) -> list[CanonicalLeafChunk]:
         """Get all chunks in a file."""
         pass
 
@@ -114,7 +114,7 @@ class RelationalStorePort(ABC):
 
     # Bulk Operations
     @abstractmethod
-    async def bulk_create(self, entities: List[Any]) -> None:
+    async def bulk_create(self, entities: list[Any]) -> None:
         """Bulk create multiple entities."""
         pass
 

@@ -7,7 +7,7 @@ Main FastAPI application with all routers.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import search, index, graph, repos, chunks, nodes
+from .routers import chunks, graph, index, nodes, repos, search
 
 # Create FastAPI app
 app = FastAPI(

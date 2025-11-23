@@ -2,7 +2,7 @@
 Fake LLM Provider for Unit Testing
 """
 
-from typing import List, Dict
+
 import numpy as np
 
 
@@ -16,7 +16,7 @@ class FakeLLMProvider:
     def __init__(self, embedding_dim: int = 1536):
         self.embedding_dim = embedding_dim
 
-    def embed(self, text: str) -> List[float]:
+    def embed(self, text: str) -> list[float]:
         """
         Deterministic embedding 생성.
 
@@ -37,7 +37,7 @@ class FakeLLMProvider:
         """
         return f"Mock response to: {prompt[:50]}"
 
-    def chat(self, messages: List[Dict]) -> str:
+    def chat(self, messages: list[dict]) -> str:
         """Mock chat completion."""
         last_message = messages[-1]["content"] if messages else ""
         return f"Mock chat response to: {last_message[:50]}"

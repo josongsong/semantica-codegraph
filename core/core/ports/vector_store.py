@@ -6,7 +6,7 @@ Implementations: Qdrant, Pinecone, Weaviate, etc.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
 from ..domain.chunks import VectorChunkPayload
 
@@ -25,8 +25,8 @@ class VectorStorePort(ABC):
     async def upsert_chunks(
         self,
         collection_name: str,
-        chunks: List[VectorChunkPayload],
-        vectors: List[List[float]],
+        chunks: list[VectorChunkPayload],
+        vectors: list[list[float]],
     ) -> None:
         """
         Insert or update chunks with their vector embeddings.
@@ -42,10 +42,10 @@ class VectorStorePort(ABC):
     async def search(
         self,
         collection_name: str,
-        query_vector: List[float],
+        query_vector: list[float],
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: Optional[dict[str, Any]] = None,
+    ) -> list[dict[str, Any]]:
         """
         Perform vector similarity search.
 
@@ -64,7 +64,7 @@ class VectorStorePort(ABC):
     async def delete_by_filter(
         self,
         collection_name: str,
-        filters: Dict[str, Any],
+        filters: dict[str, Any],
     ) -> int:
         """
         Delete chunks matching filters.
@@ -105,7 +105,7 @@ class VectorStorePort(ABC):
         self,
         collection_name: str,
         chunk_id: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """
         Retrieve a specific chunk by ID.
 

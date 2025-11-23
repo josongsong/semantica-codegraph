@@ -1,4 +1,3 @@
-from typing import List
 
 import tree_sitter_python as tspython
 from tree_sitter import Language, Parser
@@ -14,7 +13,7 @@ class PythonParser(BaseParser):
         self.language = Language(tspython.language())
         self.parser.language = self.language
 
-    def parse(self, source_code: str, file_path: str) -> List[CodeNode]:
+    def parse(self, source_code: str, file_path: str) -> list[CodeNode]:
         """Python 소스 코드 파싱"""
         tree = self.parser.parse(bytes(source_code, "utf8"))
         nodes = []
@@ -32,7 +31,7 @@ class PythonParser(BaseParser):
         traverse(tree.root_node)
         return nodes
 
-    def extract_imports(self, source_code: str) -> List[str]:
+    def extract_imports(self, source_code: str) -> list[str]:
         """import 구문 추출"""
         tree = self.parser.parse(bytes(source_code, "utf8"))
         imports = []
@@ -46,7 +45,7 @@ class PythonParser(BaseParser):
         find_imports(tree.root_node)
         return imports
 
-    def extract_definitions(self, source_code: str) -> List[CodeNode]:
+    def extract_definitions(self, source_code: str) -> list[CodeNode]:
         """함수, 클래스 정의 추출"""
         return self.parse(source_code, "")
 
@@ -70,4 +69,3 @@ class PythonParser(BaseParser):
             if child.type == "identifier":
                 return source_code[child.start_byte : child.end_byte]
         return ""
-

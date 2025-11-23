@@ -4,11 +4,12 @@ Mock Vector Store for Testing
 In-memory implementation of VectorStorePort.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
+
 import numpy as np
 
-from ...core.ports.vector_store import VectorStorePort
 from ...core.domain.chunks import VectorChunkPayload
+from ...core.ports.vector_store import VectorStorePort
 
 
 class MockVectorStore(VectorStorePort):
@@ -18,29 +19,29 @@ class MockVectorStore(VectorStorePort):
 
     def __init__(self):
         """Initialize mock storage."""
-        self.collections: Dict[str, Dict[str, Any]] = {}
+        self.collections: dict[str, dict[str, Any]] = {}
 
     async def upsert_chunks(
         self,
         collection_name: str,
-        chunks: List[VectorChunkPayload],
-        vectors: List[List[float]],
+        chunks: list[VectorChunkPayload],
+        vectors: list[list[float]],
     ) -> None:
         """Store chunks in memory."""
         if collection_name not in self.collections:
             self.collections[collection_name] = {"vectors": [], "payloads": []}
 
-        for chunk, vector in zip(chunks, vectors):
+        for chunk, vector in zip(chunks, vectors, strict=False):
             self.collections[collection_name]["vectors"].append(vector)
             self.collections[collection_name]["payloads"].append(chunk.model_dump())
 
     async def search(
         self,
         collection_name: str,
-        query_vector: List[float],
+        query_vector: list[float],
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: Optional[dict[str, Any]] = None,
+    ) -> list[dict[str, Any]]:
         """Perform cosine similarity search."""
         if collection_name not in self.collections:
             return []
@@ -58,17 +59,19 @@ class MockVectorStore(VectorStorePort):
 
         results = []
         for idx in top_indices:
-            results.append({
-                "score": float(similarities[idx]),
-                "payload": self.collections[collection_name]["payloads"][idx],
-            })
+            results.append(
+                {
+                    "score": float(similarities[idx]),
+                    "payload": self.collections[collection_name]["payloads"][idx],
+                }
+            )
 
         return results
 
     async def delete_by_filter(
         self,
         collection_name: str,
-        filters: Dict[str, Any],
+        filters: dict[str, Any],
     ) -> int:
         """Delete matching chunks."""
         # TODO: Implement filtering
@@ -91,7 +94,7 @@ class MockVectorStore(VectorStorePort):
         self,
         collection_name: str,
         chunk_id: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """Get chunk by ID."""
         if collection_name not in self.collections:
             return None

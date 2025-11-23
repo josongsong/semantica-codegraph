@@ -4,12 +4,13 @@ Tree-sitter Python Parser
 Implements Python-specific parsing logic using Tree-sitter.
 """
 
-from typing import List, Optional, Dict, Any, Set
+from typing import Any, Optional
 
 import tree_sitter_python as tspython
 from tree_sitter import Node
 
-from core.core.ports.parser_port import ParsedFileInput, CodeNode
+from core.core.ports.parser_port import CodeNode, ParsedFileInput
+
 from .tree_sitter_base import TreeSitterParserBase
 
 
@@ -31,11 +32,7 @@ class TreeSitterPythonParser(TreeSitterParserBase):
         "async_function_definition",
     }
 
-    def _extract_nodes(
-        self,
-        root_node: Node,
-        file_input: ParsedFileInput
-    ) -> List[CodeNode]:
+    def _extract_nodes(self, root_node: Node, file_input: ParsedFileInput) -> list[CodeNode]:
         """
         Extract code nodes from Python AST.
 
@@ -46,7 +43,7 @@ class TreeSitterPythonParser(TreeSitterParserBase):
         Returns:
             List of extracted code nodes
         """
-        nodes: List[CodeNode] = []
+        nodes: list[CodeNode] = []
 
         # Create file-level node
         file_node = self._create_file_node(root_node, file_input)
@@ -63,11 +60,7 @@ class TreeSitterPythonParser(TreeSitterParserBase):
 
         return nodes
 
-    def _create_file_node(
-        self,
-        root_node: Node,
-        file_input: ParsedFileInput
-    ) -> CodeNode:
+    def _create_file_node(self, root_node: Node, file_input: ParsedFileInput) -> CodeNode:
         """Create a file-level node."""
         return self._create_code_node(
             node=root_node,
@@ -85,7 +78,7 @@ class TreeSitterPythonParser(TreeSitterParserBase):
         self,
         node: Node,
         file_input: ParsedFileInput,
-        nodes: List[CodeNode],
+        nodes: list[CodeNode],
         parent_id: str,
         current_class: Optional[str] = None,
     ) -> None:
@@ -161,7 +154,7 @@ class TreeSitterPythonParser(TreeSitterParserBase):
             return None
 
         # Extract attributes
-        attrs: Dict[str, Any] = {}
+        attrs: dict[str, Any] = {}
 
         # Decorators
         if self.config.extract_decorators:
@@ -211,7 +204,7 @@ class TreeSitterPythonParser(TreeSitterParserBase):
         node_type = "method" if is_method else "function"
 
         # Extract attributes
-        attrs: Dict[str, Any] = {
+        attrs: dict[str, Any] = {
             "is_async": is_async,
             "is_method": is_method,
         }
@@ -246,7 +239,7 @@ class TreeSitterPythonParser(TreeSitterParserBase):
             attrs=attrs,
         )
 
-    def _extract_decorators(self, node: Node, source_code: str) -> List[str]:
+    def _extract_decorators(self, node: Node, source_code: str) -> list[str]:
         """Extract decorators from a node."""
         decorators = []
         for child in node.children:
@@ -264,11 +257,11 @@ class TreeSitterPythonParser(TreeSitterParserBase):
                     if stmt.type == "expression_statement":
                         for expr_child in stmt.children:
                             if expr_child.type == "string":
-                                return self._get_node_text(expr_child, source_code).strip('"\'')
+                                return self._get_node_text(expr_child, source_code).strip("\"'")
                 break
         return None
 
-    def _extract_base_classes(self, node: Node, source_code: str) -> List[str]:
+    def _extract_base_classes(self, node: Node, source_code: str) -> list[str]:
         """Extract base classes from a class definition."""
         bases = []
         for child in node.children:
@@ -294,7 +287,7 @@ class TreeSitterPythonParser(TreeSitterParserBase):
 
         return ""
 
-    def _extract_parameters(self, node: Node, source_code: str) -> List[Dict[str, Any]]:
+    def _extract_parameters(self, node: Node, source_code: str) -> list[dict[str, Any]]:
         """Extract function parameters."""
         params = []
         for child in node.children:
@@ -306,11 +299,11 @@ class TreeSitterPythonParser(TreeSitterParserBase):
                             params.append(param_info)
         return params
 
-    def _parse_parameter(self, param_node: Node, source_code: str) -> Optional[Dict[str, Any]]:
+    def _parse_parameter(self, param_node: Node, source_code: str) -> Optional[dict[str, Any]]:
         """Parse a single parameter node."""
         param_text = self._get_node_text(param_node, source_code)
 
-        param_info: Dict[str, Any] = {
+        param_info: dict[str, Any] = {
             "name": "",
             "type": None,
             "default": None,

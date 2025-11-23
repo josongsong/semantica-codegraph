@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 
 import numpy as np
 
@@ -28,7 +27,7 @@ class HCRChunker:
         self.chunk_size = chunk_size
         self.overlap = overlap
 
-    def chunk_code(self, content: str, file_path: str) -> List[Chunk]:
+    def chunk_code(self, content: str, file_path: str) -> list[Chunk]:
         """코드를 청크로 분할"""
         lines = content.split("\n")
         chunks = []
@@ -51,7 +50,7 @@ class HCRChunker:
 
         return chunks
 
-    def build_hierarchical_chunks(self, chunks: List[Chunk]) -> List[Chunk]:
+    def build_hierarchical_chunks(self, chunks: list[Chunk]) -> list[Chunk]:
         """계층적 청크 구성"""
         all_chunks = chunks.copy()
         current_level = chunks
@@ -61,9 +60,7 @@ class HCRChunker:
             next_level = []
             for i in range(0, len(current_level), 2):
                 if i + 1 < len(current_level):
-                    merged = self._merge_chunks(
-                        current_level[i], current_level[i + 1], level
-                    )
+                    merged = self._merge_chunks(current_level[i], current_level[i + 1], level)
                 else:
                     merged = Chunk(
                         content=current_level[i].content,

@@ -8,19 +8,20 @@ Separates parsing logic from infrastructure implementation.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
 from enum import Enum
 from pathlib import Path
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
-
 
 # ==============================================================================
 # Data Models
 # ==============================================================================
 
+
 class DiagnosticLevel(str, Enum):
     """Diagnostic severity levels."""
+
     INFO = "info"
     WARN = "warn"
     ERROR = "error"
@@ -32,6 +33,7 @@ class ParserDiagnostic(BaseModel):
 
     Tracks issues encountered during parsing (errors, warnings, info).
     """
+
     file_path: str
     level: DiagnosticLevel
     message: str
@@ -46,6 +48,7 @@ class ParsedFileInput(BaseModel):
 
     Contains all information needed to parse a single file.
     """
+
     file_path: Path
     content: str
     language: str
@@ -58,7 +61,7 @@ class ParsedFileInput(BaseModel):
     analysis_budget_ms: Optional[int] = None  # Time budget for parsing
 
     # Context
-    config_context: Dict[str, Any] = Field(default_factory=dict)  # Hints like "is_generated"
+    config_context: dict[str, Any] = Field(default_factory=dict)  # Hints like "is_generated"
 
 
 class CodeNode(BaseModel):
@@ -68,6 +71,7 @@ class CodeNode(BaseModel):
     This is the parser's internal representation, separate from domain models.
     Will be converted to FileNode/SymbolNode/CanonicalLeafChunk later.
     """
+
     node_id: str
     node_type: str  # "file", "class", "function", "method", etc.
     name: str
@@ -84,10 +88,10 @@ class CodeNode(BaseModel):
 
     # Hierarchy
     parent_id: Optional[str] = None
-    children_ids: List[str] = Field(default_factory=list)
+    children_ids: list[str] = Field(default_factory=list)
 
     # Attributes (language-specific metadata)
-    attrs: Dict[str, Any] = Field(default_factory=dict)
+    attrs: dict[str, Any] = Field(default_factory=dict)
 
     # Examples of attrs:
     # - signature: str
@@ -105,10 +109,11 @@ class ParserResult(BaseModel):
 
     Contains parsed nodes and diagnostic information.
     """
+
     file_path: str
     language: str
-    nodes: List[CodeNode]
-    diagnostics: List[ParserDiagnostic] = Field(default_factory=list)
+    nodes: list[CodeNode]
+    diagnostics: list[ParserDiagnostic] = Field(default_factory=list)
 
     # Statistics
     parse_time_ms: Optional[float] = None
@@ -121,6 +126,7 @@ class ParserResult(BaseModel):
 # ==============================================================================
 # Port Interface
 # ==============================================================================
+
 
 class ParserPort(ABC):
     """
@@ -168,9 +174,7 @@ class ParserPort(ABC):
         return False
 
     def parse_incremental(
-        self,
-        prev_result: ParserResult,
-        edits: List[Dict[str, Any]]
+        self, prev_result: ParserResult, edits: list[dict[str, Any]]
     ) -> ParserResult:
         """
         Parse incrementally based on previous result and edits.
@@ -190,14 +194,17 @@ class ParserPort(ABC):
 
 class ParserError(Exception):
     """Base exception for parser errors."""
+
     pass
 
 
 class ParserConfigError(ParserError):
     """Configuration error."""
+
     pass
 
 
 class ParserRuntimeError(ParserError):
     """Runtime parsing error."""
+
     pass

@@ -2,7 +2,7 @@
 Fake Relational Store for Unit Testing
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
 
 class FakeRelationalStore:
@@ -13,14 +13,14 @@ class FakeRelationalStore:
     """
 
     def __init__(self):
-        self.tables: Dict[str, List[Dict[str, Any]]] = {}
+        self.tables: dict[str, list[dict[str, Any]]] = {}
 
-    def execute(self, query: str, params: Optional[Dict] = None) -> List[Dict]:
+    def execute(self, query: str, params: Optional[dict] = None) -> list[dict]:
         """쿼리 실행 (mock)."""
         # 실제 SQL 파싱 없이 테스트용 minimal 구현
         return []
 
-    def insert(self, table: str, data: Dict[str, Any]) -> str:
+    def insert(self, table: str, data: dict[str, Any]) -> str:
         """레코드 삽입."""
         if table not in self.tables:
             self.tables[table] = []
@@ -32,8 +32,8 @@ class FakeRelationalStore:
     def select(
         self,
         table: str,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: Optional[dict[str, Any]] = None,
+    ) -> list[dict[str, Any]]:
         """레코드 조회."""
         if table not in self.tables:
             return []
@@ -41,14 +41,11 @@ class FakeRelationalStore:
         records = self.tables[table]
 
         if filters:
-            records = [
-                r for r in records
-                if all(r.get(k) == v for k, v in filters.items())
-            ]
+            records = [r for r in records if all(r.get(k) == v for k, v in filters.items())]
 
         return records
 
-    def update(self, table: str, record_id: str, data: Dict[str, Any]):
+    def update(self, table: str, record_id: str, data: dict[str, Any]):
         """레코드 업데이트."""
         if table not in self.tables:
             return
@@ -63,10 +60,7 @@ class FakeRelationalStore:
         if table not in self.tables:
             return
 
-        self.tables[table] = [
-            r for r in self.tables[table]
-            if str(r["id"]) != record_id
-        ]
+        self.tables[table] = [r for r in self.tables[table] if str(r["id"]) != record_id]
 
     def clear(self):
         """모든 테이블 삭제."""

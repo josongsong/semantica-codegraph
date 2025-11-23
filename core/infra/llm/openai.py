@@ -4,9 +4,9 @@ OpenAI LLM Provider Adapter
 Implements LLMProviderPort using OpenAI API.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
-from ...core.ports.llm_provider import LLMProviderPort, EmbeddingModel
+from ...core.ports.llm_provider import EmbeddingModel, LLMProviderPort
 
 
 class OpenAIAdapter(LLMProviderPort):
@@ -23,9 +23,9 @@ class OpenAIAdapter(LLMProviderPort):
 
     async def embed_texts(
         self,
-        texts: List[str],
+        texts: list[str],
         model: EmbeddingModel = EmbeddingModel.OPENAI_SMALL,
-    ) -> List[List[float]]:
+    ) -> list[list[float]]:
         """Generate embeddings for texts."""
         # TODO: Implement OpenAI embeddings
         raise NotImplementedError
@@ -34,7 +34,7 @@ class OpenAIAdapter(LLMProviderPort):
         self,
         text: str,
         model: EmbeddingModel = EmbeddingModel.OPENAI_SMALL,
-    ) -> List[float]:
+    ) -> list[float]:
         """Generate single embedding."""
         results = await self.embed_texts([text], model)
         return results[0]
@@ -62,9 +62,9 @@ class OpenAIAdapter(LLMProviderPort):
 
     async def batch_summarize(
         self,
-        code_snippets: List[Dict[str, Any]],
+        code_snippets: list[dict[str, Any]],
         language: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """Batch summarize code."""
         # TODO: Implement batch summarization
         raise NotImplementedError

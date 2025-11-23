@@ -5,17 +5,14 @@ Splits code into semantic chunks for RAG.
 Implements SOTA chunking strategies based on AST structure.
 """
 
-from typing import List, Optional
 import hashlib
 
-from ...domain.nodes import SymbolNode, FileNode
 from ...domain.chunks import CanonicalLeafChunk
 from ...domain.context import (
-    CodeRange,
-    SemanticFeatures,
     BehavioralTags,
     LexicalFeatures,
 )
+from ...domain.nodes import FileNode, SymbolNode
 from ...ports.llm_provider import LLMProviderPort
 
 
@@ -41,9 +38,9 @@ class CodeChunker:
     async def create_chunks(
         self,
         file: FileNode,
-        symbols: List[SymbolNode],
+        symbols: list[SymbolNode],
         file_content: str,
-    ) -> List[CanonicalLeafChunk]:
+    ) -> list[CanonicalLeafChunk]:
         """
         Create chunks from a file and its symbols.
 

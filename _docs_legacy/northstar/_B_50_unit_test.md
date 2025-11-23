@@ -1,7 +1,7 @@
 # Semantica Codegraph – Test Rules (SOTA Version)
 
-**Purpose:**  
-Semantica Codegraph 개발 시 테스트 품질을 SOTA 수준으로 유지하기 위한 공식 테스트 규칙이다.  
+**Purpose:**
+Semantica Codegraph 개발 시 테스트 품질을 SOTA 수준으로 유지하기 위한 공식 테스트 규칙이다.
 모든 개발자 및 AI 에이전트는 이 문서의 규칙을 반드시 준수해야 한다.
 
 ---
@@ -10,54 +10,54 @@ Semantica Codegraph 개발 시 테스트 품질을 SOTA 수준으로 유지하�
 
 Semantica는 아래 3단 테스트 계층을 mandatory로 사용한다.
 
-## 1-1. Unit Tests  
-**목표:** Core 로직의 정확성 검증  
-**특징:**  
-- Core domain / parser / chunking / fallback / config override 등  
-- 외부 IO 없음  
-- Ports는 mock/fake 이용  
+## 1-1. Unit Tests
+**목표:** Core 로직의 정확성 검증
+**특징:**
+- Core domain / parser / chunking / fallback / config override 등
+- 외부 IO 없음
+- Ports는 mock/fake 이용
 - 빠른 실행
 
-**필수 테스트 영역:**  
-- Chunking 알고리즘  
-- Parser 트리 변환  
-- Graph edge 생성 규칙  
-- Hybrid scoring  
-- Fallback level 계산  
-- Config + RepoConfig overlay 로직  
+**필수 테스트 영역:**
+- Chunking 알고리즘
+- Parser 트리 변환
+- Graph edge 생성 규칙
+- Hybrid scoring
+- Fallback level 계산
+- Config + RepoConfig overlay 로직
 
 ---
 
-## 1-2. Integration Tests  
-**목표:** Service + Adapter + DB 간 end-to-end 연결 검증  
-**특징:**  
-- container.py의 lazy singleton 사용  
-- Qdrant / Kùzu / Meili / Postgres 실제 기동  
-- docker-compose.test.yml 기반 환경 사용  
+## 1-2. Integration Tests
+**목표:** Service + Adapter + DB 간 end-to-end 연결 검증
+**특징:**
+- container.py의 lazy singleton 사용
+- Qdrant / Kùzu / Meili / Postgres 실제 기동
+- docker-compose.test.yml 기반 환경 사용
 - indexing → search → graph 흐름 검증
 
-**필수 경로:**  
-- IndexingService 전체 파이프라인  
-- SearchService hybrid search  
-- GraphService multi-hop traversal  
-- LLMProvider mocking 기반 semantic alignment  
+**필수 경로:**
+- IndexingService 전체 파이프라인
+- SearchService hybrid search
+- GraphService multi-hop traversal
+- LLMProvider mocking 기반 semantic alignment
 
 ---
 
-## 1-3. Scenario / Golden Tests  
-**목표:** 검색 품질 회귀 방지  
-**특징:**  
-- 질문 → expected retrieval 세트 유지  
-- Symbol-level / Graph-level / Hybrid-level  
-- 순서(order) strict match  
+## 1-3. Scenario / Golden Tests
+**목표:** 검색 품질 회귀 방지
+**특징:**
+- 질문 → expected retrieval 세트 유지
+- Symbol-level / Graph-level / Hybrid-level
+- 순서(order) strict match
 - golden 파일(JSON) 기반
 
-**필수 시나리오 세트:**  
-- symbol_level: 10  
-- graph_dependency: 10  
-- semantic_vector: 10  
-- hybrid: 10  
-- call/import/override chain scenarios  
+**필수 시나리오 세트:**
+- symbol_level: 10
+- graph_dependency: 10
+- semantic_vector: 10
+- hybrid: 10
+- call/import/override chain scenarios
 
 ---
 
@@ -73,24 +73,24 @@ scenarios/
 shell
 Copy code
 
-## 2-2. 파일 이름  
+## 2-2. 파일 이름
 test_<module>.py
 
 shell
 Copy code
 
-## 2-3. 테스트 함수 이름  
+## 2-3. 테스트 함수 이름
 test_<method><behavior><case>()
 
 markdown
 Copy code
 
-예:  
-`test_chunker_splits_large_function()`  
-`test_graph_service_multihop_calls()`  
-`test_search_hybrid_combines_lexical_and_vector()`  
+예:
+`test_chunker_splits_large_function()`
+`test_graph_service_multihop_calls()`
+`test_search_hybrid_combines_lexical_and_vector()`
 
-## 2-4. Golden Test 파일 구조  
+## 2-4. Golden Test 파일 구조
 tests/scenarios/<scenario_name>.json
 
 pgsql
@@ -225,4 +225,3 @@ Core에서 infra import
 hybrid ranking을 fuzzy matching으로 대체
 
 E2E 테스트를 core 폴더에 배치
-

@@ -82,4 +82,3 @@ if __name__ == "__main__":
 
     repo_path = sys.argv[1]
     asyncio.run(index_repository(repo_path))
-

@@ -1,4 +1,3 @@
-import pytest
 
 from core.graph.builder import GraphBuilder
 from core.parsers.base import CodeNode
@@ -35,4 +34,3 @@ def test_add_call_edges():
 
     assert builder.graph.number_of_edges() == 1
     assert builder.graph.has_edge("func1", "func2")
-

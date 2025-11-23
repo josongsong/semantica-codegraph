@@ -10,10 +10,10 @@ Following Clean Architecture:
 - All external dependencies are injected via ports
 """
 
+from .git_service import GitService
+from .graph_service import GraphService, RepoMapNode
 from .indexing_service import IndexingService
 from .search_service import SearchService
-from .graph_service import GraphService, RepoMapNode
-from .git_service import GitService
 
 __all__ = [
     "IndexingService",

@@ -4,12 +4,13 @@ AST Node Type Mapping
 Maps language-specific AST node types to unified node types and attributes.
 """
 
-from typing import Dict, Any
 from enum import Enum
+from typing import Any
 
 
 class UnifiedNodeType(str, Enum):
     """Unified node types across all languages."""
+
     FILE = "file"
     MODULE = "module"
     CLASS = "class"
@@ -31,7 +32,7 @@ class ASTNodeMapper:
     """
 
     # Python AST → Unified mapping
-    PYTHON_NODE_MAP: Dict[str, str] = {
+    PYTHON_NODE_MAP: dict[str, str] = {
         "module": UnifiedNodeType.FILE,
         "class_definition": UnifiedNodeType.CLASS,
         "function_definition": UnifiedNodeType.FUNCTION,
@@ -41,7 +42,7 @@ class ASTNodeMapper:
     }
 
     # TypeScript AST → Unified mapping
-    TYPESCRIPT_NODE_MAP: Dict[str, str] = {
+    TYPESCRIPT_NODE_MAP: dict[str, str] = {
         "program": UnifiedNodeType.FILE,
         "class_declaration": UnifiedNodeType.CLASS,
         "interface_declaration": UnifiedNodeType.INTERFACE,
@@ -56,7 +57,7 @@ class ASTNodeMapper:
     }
 
     # JavaScript AST → Unified mapping
-    JAVASCRIPT_NODE_MAP: Dict[str, str] = {
+    JAVASCRIPT_NODE_MAP: dict[str, str] = {
         "program": UnifiedNodeType.FILE,
         "class_declaration": UnifiedNodeType.CLASS,
         "function_declaration": UnifiedNodeType.FUNCTION,
@@ -90,7 +91,7 @@ class ASTNodeMapper:
             return ast_node_type
 
     @classmethod
-    def get_default_attrs(cls, language: str, unified_type: str) -> Dict[str, Any]:
+    def get_default_attrs(cls, language: str, unified_type: str) -> dict[str, Any]:
         """
         Get default attributes for a unified node type.
 
@@ -101,28 +102,34 @@ class ASTNodeMapper:
         Returns:
             Default attributes dict
         """
-        base_attrs: Dict[str, Any] = {
+        base_attrs: dict[str, Any] = {
             "language": language,
         }
 
         if unified_type == UnifiedNodeType.FUNCTION:
-            base_attrs.update({
-                "is_async": False,
-                "is_generator": False,
-                "visibility": "public",
-            })
+            base_attrs.update(
+                {
+                    "is_async": False,
+                    "is_generator": False,
+                    "visibility": "public",
+                }
+            )
         elif unified_type == UnifiedNodeType.METHOD:
-            base_attrs.update({
-                "is_async": False,
-                "is_static": False,
-                "is_abstract": False,
-                "visibility": "public",
-            })
+            base_attrs.update(
+                {
+                    "is_async": False,
+                    "is_static": False,
+                    "is_abstract": False,
+                    "visibility": "public",
+                }
+            )
         elif unified_type == UnifiedNodeType.CLASS:
-            base_attrs.update({
-                "is_abstract": False,
-                "visibility": "public",
-            })
+            base_attrs.update(
+                {
+                    "is_abstract": False,
+                    "visibility": "public",
+                }
+            )
 
         return base_attrs
 
@@ -132,7 +139,7 @@ class PythonAttrExtractor:
     """Extract Python-specific attributes."""
 
     @staticmethod
-    def extract_function_attrs(node_info: Dict[str, Any]) -> Dict[str, Any]:
+    def extract_function_attrs(node_info: dict[str, Any]) -> dict[str, Any]:
         """Extract function-specific attributes."""
         return {
             "is_async": node_info.get("is_async", False),
@@ -145,7 +152,7 @@ class TypeScriptAttrExtractor:
     """Extract TypeScript-specific attributes."""
 
     @staticmethod
-    def extract_function_attrs(node_info: Dict[str, Any]) -> Dict[str, Any]:
+    def extract_function_attrs(node_info: dict[str, Any]) -> dict[str, Any]:
         """Extract function-specific attributes."""
         return {
             "is_async": node_info.get("is_async", False),

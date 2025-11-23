@@ -35,12 +35,12 @@ graph TD
     A[Raw Files] -->|Tree-sitter / Parsers| B(Logical Object Tree)
     B -->|Enrichment (Git/Security/Static)| C(Canonical Leaf Chunk)
     C -->|Flattening Mapper| D{Vector DB Payload}
-    
+
     subgraph Logical Model [Memory: Rich Tree]
         B
         C
     end
-    
+
     subgraph Persistence Model [Storage: Flat List]
         D
     end
@@ -431,18 +431,18 @@ class VectorChunkPayload(BaseModel):
     # Flattened Meta
     tags: Dict[str, bool]
     identifiers: List[str] = []
-    
+
     # Flattened Graph Relations
     rel_calls: List[str] = []
     rel_tests: List[str] = []
     rel_touches: List[str] = []  # PR/Commit 연결
     rel_documents: List[str] = []
-    
+
     # Contexts
     last_modified_at: Optional[datetime] = None
     change_frequency: Optional[str] = None
     content_hash: Optional[str] = None
-    
+
     # Safety Net (나머지 모든 것)
     extra: Dict[str, Any] = {}
 
@@ -452,17 +452,17 @@ def canonical_leaf_to_vector_payload(chunk: CanonicalLeafChunk) -> VectorChunkPa
     Mapper Function: Tree(Rich) -> Flat(Persistence)
     """
     uri = f"{chunk.file_path}#L{chunk.code_range.start_line}-L{chunk.code_range.end_line}"
-    
+
     # 1. Flatten Tags
     tags = chunk.behavioral_tags.model_dump()
-    
+
     # 2. Flatten Relationships (주요 관계 승격 + 나머지 백업)
     rel_calls = []
     rel_tests = []
     rel_touches = []
     rel_documents = []
     extra_rels = {}
-    
+
     for rel in chunk.relationships:
         if rel.type == RelationshipType.CALLS:
             rel_calls.append(rel.target_id)
@@ -478,7 +478,7 @@ def canonical_leaf_to_vector_payload(chunk: CanonicalLeafChunk) -> VectorChunkPa
             if key not in extra_rels:
                 extra_rels[key] = []
             extra_rels[key].append(rel.target_id)
-    
+
     # 3. Extract Temporal Info
     modified_at = chunk.git_context.last_modified_at if chunk.git_context else None
     freq = chunk.git_context.change_frequency if chunk.git_context else None
@@ -507,5 +507,5 @@ def canonical_leaf_to_vector_payload(chunk: CanonicalLeafChunk) -> VectorChunkPa
         # 만능 주머니(attrs)와 기타 관계(extra_rels)를 합쳐서 extra에 저장
         extra={**chunk.attrs, **extra_rels}
     )
-    
+
     return payload

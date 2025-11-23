@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Query
 
 from ..dependencies import GraphServiceDep
-from ..schemas.repo_schema import RepoMapResponse, RepoMapNodeSchema
+from ..schemas.repo_schema import RepoMapNodeSchema, RepoMapResponse
 
 router = APIRouter()
 
@@ -26,10 +26,7 @@ async def get_repository(repo_id: str):
 async def get_repo_map(
     repo_id: str,
     token_budget: int = Query(
-        default=8000,
-        ge=1000,
-        le=100000,
-        description="Maximum token budget for the repository map"
+        default=8000, ge=1000, le=100000, description="Maximum token budget for the repository map"
     ),
     graph_service: GraphServiceDep = None,
 ):
@@ -53,10 +50,7 @@ async def get_repo_map(
         Hierarchical repository map within token budget
     """
     # Build repo map using graph service
-    root = await graph_service.build_repo_map(
-        repo_id=repo_id,
-        token_budget=token_budget
-    )
+    root = await graph_service.build_repo_map(repo_id=repo_id, token_budget=token_budget)
 
     # Convert to response schema
     def convert_to_schema(node) -> RepoMapNodeSchema:
@@ -66,7 +60,7 @@ async def get_repo_map(
             node_type=node.node_type,
             importance_score=node.importance_score,
             token_estimate=node.token_estimate,
-            children=[convert_to_schema(child) for child in node.children]
+            children=[convert_to_schema(child) for child in node.children],
         )
 
     root_schema = convert_to_schema(root)
@@ -84,8 +78,5 @@ async def get_repo_map(
     total_tokens, nodes_included = count_tokens_and_nodes(root_schema)
 
     return RepoMapResponse(
-        repo_id=repo_id,
-        root=root_schema,
-        total_tokens=total_tokens,
-        nodes_included=nodes_included
+        repo_id=repo_id, root=root_schema, total_tokens=total_tokens, nodes_included=nodes_included
     )

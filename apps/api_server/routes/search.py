@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi import APIRouter, Query
 
@@ -37,4 +36,3 @@ async def search_symbols(
     query = SearchQuery(query=q, search_type=SearchType.SYMBOL, limit=limit, offset=offset)
     results = await symbol_retriever.search(query)
     return {"results": results, "total": len(results)}
-

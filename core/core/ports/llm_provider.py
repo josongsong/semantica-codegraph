@@ -6,12 +6,13 @@ Implementations: OpenAI, Anthropic, local models, etc.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
 from enum import Enum
+from typing import Any, Optional
 
 
 class EmbeddingModel(str, Enum):
     """Supported embedding models."""
+
     OPENAI_SMALL = "text-embedding-3-small"
     OPENAI_LARGE = "text-embedding-3-large"
     OPENAI_ADA = "text-embedding-ada-002"
@@ -30,9 +31,9 @@ class LLMProviderPort(ABC):
     @abstractmethod
     async def embed_texts(
         self,
-        texts: List[str],
+        texts: list[str],
         model: EmbeddingModel = EmbeddingModel.OPENAI_SMALL,
-    ) -> List[List[float]]:
+    ) -> list[list[float]]:
         """
         Generate embeddings for a list of texts.
 
@@ -50,7 +51,7 @@ class LLMProviderPort(ABC):
         self,
         text: str,
         model: EmbeddingModel = EmbeddingModel.OPENAI_SMALL,
-    ) -> List[float]:
+    ) -> list[float]:
         """
         Generate embedding for a single text.
 
@@ -108,9 +109,9 @@ class LLMProviderPort(ABC):
     @abstractmethod
     async def batch_summarize(
         self,
-        code_snippets: List[Dict[str, Any]],
+        code_snippets: list[dict[str, Any]],
         language: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Batch summarize multiple code snippets.
 

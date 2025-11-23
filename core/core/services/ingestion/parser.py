@@ -5,11 +5,9 @@ Parses source code files using tree-sitter or language-specific parsers.
 Extracts symbols, imports, and structural information.
 """
 
-from typing import List, Optional
 from pathlib import Path
 
-from ...domain.nodes import FileNode, SymbolNode, SymbolKind
-from ...domain.context import CodeRange
+from ...domain.nodes import FileNode, SymbolNode
 
 
 class CodeParser:
@@ -29,7 +27,7 @@ class CodeParser:
         self,
         file_path: Path,
         language: str,
-    ) -> tuple[FileNode, List[SymbolNode]]:
+    ) -> tuple[FileNode, list[SymbolNode]]:
         """
         Parse a source file.
 
@@ -48,7 +46,7 @@ class CodeParser:
         tree,
         file_path: str,
         language: str,
-    ) -> List[SymbolNode]:
+    ) -> list[SymbolNode]:
         """
         Extract symbols from a parse tree.
 

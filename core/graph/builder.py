@@ -1,4 +1,3 @@
-from typing import Dict, List
 
 import networkx as nx
 
@@ -11,7 +10,7 @@ class GraphBuilder:
     def __init__(self):
         self.graph = nx.DiGraph()
 
-    def build_from_nodes(self, nodes: List[CodeNode], file_path: str) -> nx.DiGraph:
+    def build_from_nodes(self, nodes: list[CodeNode], file_path: str) -> nx.DiGraph:
         """CodeNode 리스트로부터 그래프 구성"""
         for node in nodes:
             self._add_node(node, file_path)
@@ -20,7 +19,7 @@ class GraphBuilder:
 
         return self.graph
 
-    def add_import_edges(self, file_imports: Dict[str, List[str]]):
+    def add_import_edges(self, file_imports: dict[str, list[str]]):
         """파일 간 import 관계 추가"""
         for source_file, imports in file_imports.items():
             for import_path in imports:
@@ -63,4 +62,3 @@ class GraphBuilder:
         source_id = f"{source.name}:{source.start_line}"
         target_id = f"{target.name}:{target.start_line}"
         self.graph.add_edge(source_id, target_id, relation=relation)
-

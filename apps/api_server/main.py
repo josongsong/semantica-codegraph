@@ -26,4 +26,3 @@ async def startup():
 async def shutdown():
     """애플리케이션 종료 시 정리"""
     pass
-

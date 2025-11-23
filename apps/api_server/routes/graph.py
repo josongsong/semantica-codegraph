@@ -31,4 +31,3 @@ async def get_callees(
     query = CalleesQuery(node_id=symbol_id, depth=depth)
     results = await call_graph.get_callees(query)
     return {"results": results}
-

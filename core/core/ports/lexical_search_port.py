@@ -6,7 +6,7 @@ Implementations: Meilisearch, Elasticsearch, etc.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
 
 class LexicalSearchPort(ABC):
@@ -23,7 +23,7 @@ class LexicalSearchPort(ABC):
     async def index_documents(
         self,
         index_name: str,
-        documents: List[Dict[str, Any]],
+        documents: list[dict[str, Any]],
     ) -> None:
         """
         Index documents for search.
@@ -39,10 +39,10 @@ class LexicalSearchPort(ABC):
         self,
         index_name: str,
         query: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[dict[str, Any]] = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Perform keyword search.
 
@@ -62,7 +62,7 @@ class LexicalSearchPort(ABC):
     async def delete_by_filter(
         self,
         index_name: str,
-        filters: Dict[str, Any],
+        filters: dict[str, Any],
     ) -> int:
         """
         Delete documents matching filters.
@@ -80,7 +80,7 @@ class LexicalSearchPort(ABC):
     async def create_index(
         self,
         index_name: str,
-        schema: Optional[Dict[str, Any]] = None,
+        schema: Optional[dict[str, Any]] = None,
     ) -> None:
         """
         Create a new search index.
@@ -100,7 +100,7 @@ class LexicalSearchPort(ABC):
     async def update_settings(
         self,
         index_name: str,
-        settings: Dict[str, Any],
+        settings: dict[str, Any],
     ) -> None:
         """
         Update index settings.

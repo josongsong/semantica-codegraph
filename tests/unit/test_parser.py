@@ -1,4 +1,3 @@
-import pytest
 
 from core.parsers.python_parser import PythonParser
 
@@ -44,4 +43,3 @@ class MyClass:
     assert len(nodes) == 2
     assert any(n.name == "my_function" for n in nodes)
     assert any(n.name == "MyClass" for n in nodes)
-

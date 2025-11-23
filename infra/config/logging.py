@@ -18,4 +18,3 @@ def setup_logging(log_level: Optional[str] = None):
 def get_logger(name: str) -> logging.Logger:
     """로거 생성"""
     return logging.getLogger(name)
-

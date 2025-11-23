@@ -14,4 +14,3 @@ async def readiness_check():
     """레디니스 체크"""
     # TODO: DB 연결 확인
     return {"status": "ready"}
-

@@ -4,23 +4,22 @@ Tree-sitter Parser Base
 Common base class for all Tree-sitter based parsers.
 """
 
-import time
 import hashlib
-from typing import List, Optional, Dict, Any
-from pathlib import Path
+import time
+from typing import Any, Optional
 
-from tree_sitter import Language, Parser, Node
+from tree_sitter import Language, Node, Parser
 
+from core.core.domain.parser_config import ParserConfig
 from core.core.ports.parser_port import (
-    ParserPort,
-    ParsedFileInput,
-    ParserResult,
     CodeNode,
-    ParserDiagnostic,
     DiagnosticLevel,
+    ParsedFileInput,
+    ParserDiagnostic,
+    ParserPort,
+    ParserResult,
     ParserRuntimeError,
 )
-from core.core.domain.parser_config import ParserConfig
 
 
 class TreeSitterParserBase(ParserPort):
@@ -69,16 +68,18 @@ class TreeSitterParserBase(ParserPort):
             ParserRuntimeError: If parsing fails
         """
         start_time = time.time()
-        diagnostics: List[ParserDiagnostic] = []
+        diagnostics: list[ParserDiagnostic] = []
 
         try:
             # Validate file size
             if self._exceeds_size_limit(file_input.content):
-                diagnostics.append(ParserDiagnostic(
-                    file_path=str(file_input.file_path),
-                    level=DiagnosticLevel.WARN,
-                    message=f"File exceeds size limit ({self.config.max_file_size_kb}KB), skipping",
-                ))
+                diagnostics.append(
+                    ParserDiagnostic(
+                        file_path=str(file_input.file_path),
+                        level=DiagnosticLevel.WARN,
+                        message=f"File exceeds size limit ({self.config.max_file_size_kb}KB), skipping",
+                    )
+                )
                 return ParserResult(
                     file_path=str(file_input.file_path),
                     language=file_input.language,
@@ -98,11 +99,13 @@ class TreeSitterParserBase(ParserPort):
 
             # Check node count limit
             if len(nodes) > self.config.max_nodes_per_file:
-                diagnostics.append(ParserDiagnostic(
-                    file_path=str(file_input.file_path),
-                    level=DiagnosticLevel.WARN,
-                    message=f"File has {len(nodes)} nodes, exceeds limit ({self.config.max_nodes_per_file})",
-                ))
+                diagnostics.append(
+                    ParserDiagnostic(
+                        file_path=str(file_input.file_path),
+                        level=DiagnosticLevel.WARN,
+                        message=f"File has {len(nodes)} nodes, exceeds limit ({self.config.max_nodes_per_file})",
+                    )
+                )
 
             parse_time_ms = (time.time() - start_time) * 1000
 
@@ -117,11 +120,13 @@ class TreeSitterParserBase(ParserPort):
             )
 
         except Exception as e:
-            diagnostics.append(ParserDiagnostic(
-                file_path=str(file_input.file_path),
-                level=DiagnosticLevel.ERROR,
-                message=f"Parsing failed: {str(e)}",
-            ))
+            diagnostics.append(
+                ParserDiagnostic(
+                    file_path=str(file_input.file_path),
+                    level=DiagnosticLevel.ERROR,
+                    message=f"Parsing failed: {str(e)}",
+                )
+            )
 
             return ParserResult(
                 file_path=str(file_input.file_path),
@@ -136,11 +141,7 @@ class TreeSitterParserBase(ParserPort):
         size_kb = len(content.encode("utf8")) / 1024
         return size_kb > self.config.max_file_size_kb
 
-    def _extract_nodes(
-        self,
-        root_node: Node,
-        file_input: ParsedFileInput
-    ) -> List[CodeNode]:
+    def _extract_nodes(self, root_node: Node, file_input: ParsedFileInput) -> list[CodeNode]:
         """
         Extract CodeNodes from Tree-sitter AST.
 
@@ -153,9 +154,7 @@ class TreeSitterParserBase(ParserPort):
         Returns:
             List of extracted code nodes
         """
-        raise NotImplementedError(
-            f"{self.__class__.__name__} must implement _extract_nodes"
-        )
+        raise NotImplementedError(f"{self.__class__.__name__} must implement _extract_nodes")
 
     def _create_code_node(
         self,
@@ -164,7 +163,7 @@ class TreeSitterParserBase(ParserPort):
         node_type: str,
         name: str,
         parent_id: Optional[str] = None,
-        attrs: Optional[Dict[str, Any]] = None,
+        attrs: Optional[dict[str, Any]] = None,
     ) -> CodeNode:
         """
         Create a CodeNode from a Tree-sitter node.
@@ -246,9 +245,9 @@ class TreeSitterParserBase(ParserPort):
         """
         for child in node.children:
             if child.type == "identifier":
-                return source_code[child.start_byte:child.end_byte]
+                return source_code[child.start_byte : child.end_byte]
         return ""
 
     def _get_node_text(self, node: Node, source_code: str) -> str:
         """Get text content of a node."""
-        return source_code[node.start_byte:node.end_byte]
+        return source_code[node.start_byte : node.end_byte]

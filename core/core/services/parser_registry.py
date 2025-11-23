@@ -4,10 +4,10 @@ Parser Registry
 Manages registration and lookup of language-specific parsers.
 """
 
-from typing import Dict, List, Optional
 from pathlib import Path
+from typing import Optional
 
-from ..ports.parser_port import ParserPort, ParserError
+from ..ports.parser_port import ParserPort
 
 
 class LanguageDetector:
@@ -114,7 +114,7 @@ class ParserRegistry:
 
     def __init__(self):
         """Initialize empty registry."""
-        self._parsers: Dict[str, ParserPort] = {}
+        self._parsers: dict[str, ParserPort] = {}
         self.language_detector = LanguageDetector()
 
     def register(self, parser: ParserPort) -> None:
@@ -148,9 +148,7 @@ class ParserRegistry:
             parser: Parser implementation
         """
         if not parser.supports(language):
-            raise ValueError(
-                f"Parser {parser.__class__.__name__} doesn't support {language}"
-            )
+            raise ValueError(f"Parser {parser.__class__.__name__} doesn't support {language}")
 
         self._parsers[language] = parser
 
@@ -182,7 +180,7 @@ class ParserRegistry:
         language = self.language_detector.detect_language(file_path)
         return self.get_parser(language)
 
-    def supported_languages(self) -> List[str]:
+    def supported_languages(self) -> list[str]:
         """
         Get list of supported languages.
 

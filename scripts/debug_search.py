@@ -41,4 +41,3 @@ if __name__ == "__main__":
     query = sys.argv[1]
     search_type = sys.argv[2] if len(sys.argv) > 2 else "chunk"
     asyncio.run(debug_search(query, search_type))
-

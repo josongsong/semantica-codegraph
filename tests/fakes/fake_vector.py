@@ -5,7 +5,8 @@ Fake Vector Store for Unit Testing
 Behavior-driven: 실제 유사도 검색 시뮬레이션.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
+
 import numpy as np
 
 
@@ -17,8 +18,8 @@ class FakeVectorStore:
     """
 
     def __init__(self):
-        self.vectors: Dict[str, np.ndarray] = {}
-        self.payloads: Dict[str, Dict[str, Any]] = {}
+        self.vectors: dict[str, np.ndarray] = {}
+        self.payloads: dict[str, dict[str, Any]] = {}
         self.collection_name: Optional[str] = None
 
     def create_collection(self, name: str, vector_size: int):
@@ -30,7 +31,7 @@ class FakeVectorStore:
     def upsert(
         self,
         collection_name: str,
-        points: List[Dict[str, Any]],
+        points: list[dict[str, Any]],
     ):
         """벡터 삽입/업데이트."""
         for point in points:
@@ -44,10 +45,10 @@ class FakeVectorStore:
     def search(
         self,
         collection_name: str,
-        query_vector: List[float],
+        query_vector: list[float],
         limit: int = 10,
-        filter_: Optional[Dict] = None,
-    ) -> List[Dict[str, Any]]:
+        filter_: Optional[dict] = None,
+    ) -> list[dict[str, Any]]:
         """
         Cosine similarity 기반 검색.
 
@@ -72,17 +73,19 @@ class FakeVectorStore:
 
             # Cosine similarity
             score = self._cosine_similarity(query, vector)
-            results.append({
-                "id": point_id,
-                "score": float(score),
-                "payload": self.payloads[point_id],
-            })
+            results.append(
+                {
+                    "id": point_id,
+                    "score": float(score),
+                    "payload": self.payloads[point_id],
+                }
+            )
 
         # 점수 내림차순 정렬
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:limit]
 
-    def delete(self, collection_name: str, point_ids: List[str]):
+    def delete(self, collection_name: str, point_ids: list[str]):
         """벡터 삭제."""
         for point_id in point_ids:
             self.vectors.pop(point_id, None)
@@ -92,7 +95,7 @@ class FakeVectorStore:
         """Cosine similarity 계산."""
         return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
 
-    def _match_filter(self, payload: Dict, filter_: Dict) -> bool:
+    def _match_filter(self, payload: dict, filter_: dict) -> bool:
         """
         간단한 필터 매칭.
 

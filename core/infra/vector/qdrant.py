@@ -4,10 +4,10 @@ Qdrant Vector Store Adapter
 Implements VectorStorePort using Qdrant.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
-from ...core.ports.vector_store import VectorStorePort
 from ...core.domain.chunks import VectorChunkPayload
+from ...core.ports.vector_store import VectorStorePort
 
 
 class QdrantAdapter(VectorStorePort):
@@ -32,8 +32,8 @@ class QdrantAdapter(VectorStorePort):
     async def upsert_chunks(
         self,
         collection_name: str,
-        chunks: List[VectorChunkPayload],
-        vectors: List[List[float]],
+        chunks: list[VectorChunkPayload],
+        vectors: list[list[float]],
     ) -> None:
         """Insert or update chunks."""
         # TODO: Implement Qdrant upsert
@@ -42,10 +42,10 @@ class QdrantAdapter(VectorStorePort):
     async def search(
         self,
         collection_name: str,
-        query_vector: List[float],
+        query_vector: list[float],
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: Optional[dict[str, Any]] = None,
+    ) -> list[dict[str, Any]]:
         """Perform vector similarity search."""
         # TODO: Implement Qdrant search
         raise NotImplementedError
@@ -53,7 +53,7 @@ class QdrantAdapter(VectorStorePort):
     async def delete_by_filter(
         self,
         collection_name: str,
-        filters: Dict[str, Any],
+        filters: dict[str, Any],
     ) -> int:
         """Delete chunks matching filters."""
         # TODO: Implement Qdrant delete
@@ -78,7 +78,7 @@ class QdrantAdapter(VectorStorePort):
         self,
         collection_name: str,
         chunk_id: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """Retrieve chunk by ID."""
         # TODO: Implement Qdrant get by ID
         raise NotImplementedError

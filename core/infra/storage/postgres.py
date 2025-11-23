@@ -4,16 +4,16 @@ PostgreSQL Relational Store Adapter
 Implements RelationalStorePort using PostgreSQL and SQLAlchemy.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Optional
 
-from ...core.ports.relational_store import RelationalStorePort
+from ...core.domain.chunks import CanonicalLeafChunk
 from ...core.domain.nodes import (
-    RepositoryNode,
-    ProjectNode,
     FileNode,
+    ProjectNode,
+    RepositoryNode,
     SymbolNode,
 )
-from ...core.domain.chunks import CanonicalLeafChunk
+from ...core.ports.relational_store import RelationalStorePort
 
 
 class PostgresAdapter(RelationalStorePort):
@@ -38,7 +38,7 @@ class PostgresAdapter(RelationalStorePort):
         # TODO: Implement
         raise NotImplementedError
 
-    async def list_repositories(self) -> List[RepositoryNode]:
+    async def list_repositories(self) -> list[RepositoryNode]:
         """List all repositories."""
         # TODO: Implement
         raise NotImplementedError
@@ -48,7 +48,7 @@ class PostgresAdapter(RelationalStorePort):
         # TODO: Implement
         raise NotImplementedError
 
-    async def get_projects_by_repo(self, repo_id: str) -> List[ProjectNode]:
+    async def get_projects_by_repo(self, repo_id: str) -> list[ProjectNode]:
         """Get projects in repository."""
         # TODO: Implement
         raise NotImplementedError
@@ -58,7 +58,7 @@ class PostgresAdapter(RelationalStorePort):
         # TODO: Implement
         raise NotImplementedError
 
-    async def get_files_by_project(self, project_id: str) -> List[FileNode]:
+    async def get_files_by_project(self, project_id: str) -> list[FileNode]:
         """Get files in project."""
         # TODO: Implement
         raise NotImplementedError
@@ -73,7 +73,7 @@ class PostgresAdapter(RelationalStorePort):
         # TODO: Implement
         raise NotImplementedError
 
-    async def get_symbols_by_file(self, file_id: str) -> List[SymbolNode]:
+    async def get_symbols_by_file(self, file_id: str) -> list[SymbolNode]:
         """Get symbols in file."""
         # TODO: Implement
         raise NotImplementedError
@@ -83,7 +83,7 @@ class PostgresAdapter(RelationalStorePort):
         query: str,
         repo_id: Optional[str] = None,
         limit: int = 50,
-    ) -> List[SymbolNode]:
+    ) -> list[SymbolNode]:
         """Search symbols by name."""
         # TODO: Implement
         raise NotImplementedError
@@ -98,7 +98,7 @@ class PostgresAdapter(RelationalStorePort):
         # TODO: Implement
         raise NotImplementedError
 
-    async def get_chunks_by_file(self, file_id: str) -> List[CanonicalLeafChunk]:
+    async def get_chunks_by_file(self, file_id: str) -> list[CanonicalLeafChunk]:
         """Get chunks in file."""
         # TODO: Implement
         raise NotImplementedError
@@ -108,7 +108,7 @@ class PostgresAdapter(RelationalStorePort):
         # TODO: Implement
         raise NotImplementedError
 
-    async def bulk_create(self, entities: List[Any]) -> None:
+    async def bulk_create(self, entities: list[Any]) -> None:
         """Bulk create entities."""
         # TODO: Implement
         raise NotImplementedError

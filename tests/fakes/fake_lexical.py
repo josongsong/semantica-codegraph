@@ -2,7 +2,7 @@
 Fake Lexical Search for Unit Testing
 """
 
-from typing import List, Dict, Any
+from typing import Any
 
 
 class FakeLexicalSearch:
@@ -13,13 +13,13 @@ class FakeLexicalSearch:
     """
 
     def __init__(self):
-        self.documents: Dict[str, str] = {}
+        self.documents: dict[str, str] = {}
 
     def index(self, doc_id: str, content: str):
         """문서 인덱싱."""
         self.documents[doc_id] = content
 
-    def search(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def search(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """
         Substring matching 기반 검색.
 
@@ -36,11 +36,13 @@ class FakeLexicalSearch:
             if query.lower() in content.lower():
                 # 간단한 relevance score (매칭 횟수)
                 score = content.lower().count(query.lower())
-                results.append({
-                    "id": doc_id,
-                    "score": score,
-                    "content": content,
-                })
+                results.append(
+                    {
+                        "id": doc_id,
+                        "score": score,
+                        "content": content,
+                    }
+                )
 
         # 점수 내림차순 정렬
         results.sort(key=lambda x: x["score"], reverse=True)

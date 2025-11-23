@@ -4,7 +4,7 @@ Meilisearch Lexical Search Adapter
 Implements LexicalSearchPort using Meilisearch.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
 from ...core.ports.lexical_search_port import LexicalSearchPort
 
@@ -23,7 +23,7 @@ class MeilisearchAdapter(LexicalSearchPort):
     async def index_documents(
         self,
         index_name: str,
-        documents: List[Dict[str, Any]],
+        documents: list[dict[str, Any]],
     ) -> None:
         """Index documents."""
         # TODO: Implement
@@ -33,10 +33,10 @@ class MeilisearchAdapter(LexicalSearchPort):
         self,
         index_name: str,
         query: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[dict[str, Any]] = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Perform search."""
         # TODO: Implement
         raise NotImplementedError
@@ -44,7 +44,7 @@ class MeilisearchAdapter(LexicalSearchPort):
     async def delete_by_filter(
         self,
         index_name: str,
-        filters: Dict[str, Any],
+        filters: dict[str, Any],
     ) -> int:
         """Delete documents by filter."""
         # TODO: Implement
@@ -53,7 +53,7 @@ class MeilisearchAdapter(LexicalSearchPort):
     async def create_index(
         self,
         index_name: str,
-        schema: Optional[Dict[str, Any]] = None,
+        schema: Optional[dict[str, Any]] = None,
     ) -> None:
         """Create index."""
         # TODO: Implement
@@ -67,7 +67,7 @@ class MeilisearchAdapter(LexicalSearchPort):
     async def update_settings(
         self,
         index_name: str,
-        settings: Dict[str, Any],
+        settings: dict[str, Any],
     ) -> None:
         """Update index settings."""
         # TODO: Implement

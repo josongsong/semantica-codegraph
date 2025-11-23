@@ -5,19 +5,19 @@ Orchestrates repository and branch indexing pipeline.
 Coordinates parsing, chunking, and storage across all ports.
 """
 
-from typing import List, Optional
 from pathlib import Path
+from typing import Optional
 
-from ..domain.nodes import RepositoryNode, ProjectNode, FileNode, SymbolNode
 from ..domain.chunks import CanonicalLeafChunk, canonical_leaf_to_vector_payload
-from ..ports.vector_store import VectorStorePort
-from ..ports.graph_store import GraphStorePort
-from ..ports.relational_store import RelationalStorePort
+from ..domain.nodes import FileNode, ProjectNode, RepositoryNode, SymbolNode
 from ..ports.git_provider import GitProviderPort
-from ..ports.llm_provider import LLMProviderPort
+from ..ports.graph_store import GraphStorePort
 from ..ports.lexical_search_port import LexicalSearchPort
-from .ingestion.parser import CodeParser
+from ..ports.llm_provider import LLMProviderPort
+from ..ports.relational_store import RelationalStorePort
+from ..ports.vector_store import VectorStorePort
 from .ingestion.chunker import CodeChunker
+from .ingestion.parser import CodeParser
 
 
 class IndexingService:
@@ -92,7 +92,7 @@ class IndexingService:
         project_id: str,
         file_path: Path,
         language: str,
-    ) -> tuple[FileNode, List[SymbolNode], List[CanonicalLeafChunk]]:
+    ) -> tuple[FileNode, list[SymbolNode], list[CanonicalLeafChunk]]:
         """
         Index a single file.
 
@@ -109,7 +109,7 @@ class IndexingService:
 
     async def store_chunks(
         self,
-        chunks: List[CanonicalLeafChunk],
+        chunks: list[CanonicalLeafChunk],
         collection_name: str = "codegraph",
     ) -> None:
         """
@@ -141,10 +141,7 @@ class IndexingService:
         """
         # Delete old data
         await self.relational_store.delete_by_repo(repo_id)
-        await self.vector_store.delete_by_filter(
-            "codegraph",
-            {"repo_id": repo_id}
-        )
+        await self.vector_store.delete_by_filter("codegraph", {"repo_id": repo_id})
 
         # TODO: Reindex
         raise NotImplementedError

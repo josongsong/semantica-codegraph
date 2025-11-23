@@ -18,18 +18,21 @@ def test_vector_search_returns_top_results(fake_vector, fake_llm):
     THEN: 유사도 순으로 결과가 반환된다
     """
     # GIVEN
-    fake_vector.upsert("test_collection", [
-        {
-            "id": "doc1",
-            "vector": fake_llm.embed("Python function"),
-            "payload": {"file": "test.py", "symbol": "func1"},
-        },
-        {
-            "id": "doc2",
-            "vector": fake_llm.embed("JavaScript function"),
-            "payload": {"file": "test.js", "symbol": "func2"},
-        },
-    ])
+    fake_vector.upsert(
+        "test_collection",
+        [
+            {
+                "id": "doc1",
+                "vector": fake_llm.embed("Python function"),
+                "payload": {"file": "test.py", "symbol": "func1"},
+            },
+            {
+                "id": "doc2",
+                "vector": fake_llm.embed("JavaScript function"),
+                "payload": {"file": "test.js", "symbol": "func2"},
+            },
+        ],
+    )
 
     # WHEN
     query_vector = fake_llm.embed("Python")
