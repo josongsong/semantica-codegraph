@@ -1,0 +1,103 @@
+# ========================================================================
+# Test Environment Docker Compose
+# ========================================================================
+# Integration Test용 ephemeral 환경
+# 테스트 종료 후 모든 데이터는 삭제됨
+#
+# 사용법:
+#   docker-compose -f docker-compose.test.yml up -d
+#   pytest -m integration
+#   docker-compose -f docker-compose.test.yml down -v
+# ========================================================================
+
+version: '3.8'
+
+services:
+  # ========================================================================
+  # PostgreSQL Test Instance
+  # ========================================================================
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: codegraph-postgres-test
+    environment:
+      POSTGRES_USER: codegraph_test
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: codegraph_test
+    ports:
+      - "5433:5432"  # 다른 포트 사용
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codegraph_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    tmpfs:
+      - /var/lib/postgresql/data  # Ephemeral storage
+
+  # ========================================================================
+  # Redis Test Instance
+  # ========================================================================
+  redis-test:
+    image: redis:7-alpine
+    container_name: codegraph-redis-test
+    command: redis-server --appendonly no
+    ports:
+      - "6380:6379"  # 다른 포트 사용
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    tmpfs:
+      - /data  # Ephemeral storage
+
+  # ========================================================================
+  # Qdrant Test Instance
+  # ========================================================================
+  qdrant-test:
+    image: qdrant/qdrant:v1.7.4
+    container_name: codegraph-qdrant-test
+    ports:
+      - "6335:6333"  # 다른 포트 사용
+      - "6336:6334"
+    networks:
+      - test-network
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__SERVICE__HTTP_PORT: 6333
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6333/"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    tmpfs:
+      - /qdrant/storage  # Ephemeral storage
+
+  # ========================================================================
+  # Zoekt Test Instance (Optional - 필요시 활성화)
+  # ========================================================================
+  # zoekt-test:
+  #   image: sourcegraph/zoekt-webserver:latest
+  #   container_name: codegraph-zoekt-test
+  #   ports:
+  #     - "6071:6070"
+  #   networks:
+  #     - test-network
+  #   tmpfs:
+  #     - /data/index
+
+# ========================================================================
+# Networks
+# ========================================================================
+networks:
+  test-network:
+    driver: bridge
+
+# ========================================================================
+# No Volumes (Ephemeral)
+# ========================================================================
+# 테스트 환경은 모든 데이터를 tmpfs에 저장
+# down -v 시 모든 데이터 삭제됨

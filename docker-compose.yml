@@ -1,0 +1,217 @@
+version: '3.8'
+
+services:
+  # ========================================================================
+  # 관계형 데이터베이스 (메타데이터, 세션, 협업 정보)
+  # ========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: codegraph-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-codegraph}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codegraph_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-codegraph}
+    ports:
+      - "${POSTGRES_PORT:-7201}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/db/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - codegraph-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-codegraph}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ========================================================================
+  # Redis (세션, 캐시, 협업 메타데이터)
+  # 요구사항 1-2: 세션/협업 메타: Redis/Postgres 등 경량 스토어
+  # 요구사항 9-1: Session 모델 - workspace, user_id, role 등
+  # ========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: codegraph-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-codegraph_redis}
+    ports:
+      - "${REDIS_PORT:-7202}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - codegraph-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ========================================================================
+  # Qdrant (벡터 검색 - dense embedding + payload filter)
+  # 요구사항 1-2: 벡터 검색: Qdrant (dense + payload filter)
+  # 요구사항 2-3: Qdrant 스키마 - code_chunks, symbol_summaries 컬렉션
+  # ========================================================================
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    container_name: codegraph-qdrant
+    ports:
+      - "${QDRANT_HTTP_PORT:-7203}:6333"
+      - "${QDRANT_GRPC_PORT:-7204}:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__SERVICE__HTTP_PORT: 6333
+      # 성능 최적화 설정
+      QDRANT__STORAGE__PERFORMANCE__MAX_SEARCH_THREADS: ${QDRANT_MAX_THREADS:-4}
+    networks:
+      - codegraph-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6333/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  # ========================================================================
+  # Zoekt Web Server (Lexical 검색 - BM25 + substring + regex)
+  # 요구사항 1-2: Lexical 검색: Zoekt (BM25 + substring + regex)
+  # 요구사항 2-4: Zoekt 인덱스 - FILE/CHUNK 텍스트, repo_id, language 등
+  # ========================================================================
+  zoekt-webserver:
+    image: sourcegraph/zoekt-webserver:latest
+    container_name: codegraph-zoekt-web
+    ports:
+      - "${ZOEKT_PORT:-7205}:6070"
+    volumes:
+      - zoekt_index:/data/index
+    command: ["-index", "/data/index", "-listen", ":6070"]
+    networks:
+      - codegraph-network
+    depends_on:
+      - zoekt-indexserver
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6070/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ========================================================================
+  # Zoekt Index Server (코드 인덱싱)
+  # 요구사항 4-1: 인덱싱 파이프라인 - Tree-sitter → Zoekt 인덱싱
+  # ========================================================================
+  zoekt-indexserver:
+    image: sourcegraph/zoekt-indexserver:latest
+    container_name: codegraph-zoekt-index
+    volumes:
+      - zoekt_index:/data/index
+      - ./repos:/data/repos:ro
+    environment:
+      # 인덱싱 간격 설정 (기본 1시간)
+      ZOEKT_INDEX_INTERVAL: ${ZOEKT_INDEX_INTERVAL:-1h}
+    command: [
+      "-index", "/data/index",
+      "-interval", "${ZOEKT_INDEX_INTERVAL:-1h}",
+      "-data_dir", "/data/repos",
+      # 증분 인덱싱 지원
+      "-incremental", "true"
+    ]
+    networks:
+      - codegraph-network
+    restart: unless-stopped
+
+  # ========================================================================
+  # API Server (HTTP API - FastAPI)
+  # 요구사항 1-1: CLI / MCP / HTTP API / IDE 플러그인 등 헤드리스 엔진
+  # 요구사항 5-1: 하이브리드 검색 파이프라인
+  # 요구사항 8-3: Tool 세트 (search_code, get_call_chain 등)
+  # ========================================================================
+  api-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: codegraph-api
+    environment:
+      # Database
+      SEMANTICA_DB_CONNECTION_STRING: postgresql://${POSTGRES_USER:-codegraph}:${POSTGRES_PASSWORD:-codegraph_dev}@postgres:5432/${POSTGRES_DB:-codegraph}
+      # Redis
+      SEMANTICA_REDIS_HOST: redis
+      SEMANTICA_REDIS_PORT: 6379
+      SEMANTICA_REDIS_PASSWORD: ${REDIS_PASSWORD:-codegraph_redis}
+      # Qdrant
+      SEMANTICA_VECTOR_HOST: qdrant
+      SEMANTICA_VECTOR_PORT: 6333
+      SEMANTICA_VECTOR_COLLECTION: ${QDRANT_COLLECTION:-codegraph}
+      # Zoekt
+      SEMANTICA_ZOEKT_HOST: http://zoekt-webserver
+      SEMANTICA_ZOEKT_PORT: 6070
+      # LLM
+      SEMANTICA_OPENAI_API_KEY: ${OPENAI_API_KEY}
+      SEMANTICA_EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      SEMANTICA_EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-1536}
+      # Application
+      SEMANTICA_LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SEMANTICA_ENVIRONMENT: ${ENVIRONMENT:-development}
+      SEMANTICA_API_HOST: 0.0.0.0
+      SEMANTICA_API_PORT: 8000
+      SEMANTICA_API_RELOAD: ${API_RELOAD:-true}
+    ports:
+      - "${API_PORT:-7200}:8000"
+    volumes:
+      # 개발 환경: 코드 마운트 (핫 리로드)
+      - ./codegraph:/app/codegraph:ro
+      - ./apps/api_server:/app/apps/api_server:ro
+      # Kùzu embedded DB 스토리지 (요구사항 1-2: Kùzu embedded)
+      - kuzu_data:/app/data/kuzu
+      # 로그
+      - ./logs:/app/logs
+    networks:
+      - codegraph-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      zoekt-webserver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+# ========================================================================
+# Volumes
+# ========================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  qdrant_data:
+    driver: local
+  zoekt_index:
+    driver: local
+  kuzu_data:
+    driver: local
+
+# ========================================================================
+# Networks
+# ========================================================================
+networks:
+  codegraph-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
