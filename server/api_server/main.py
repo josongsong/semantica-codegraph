@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from apps.api_server.routes import graph, health, search
 from infra.config.logging import setup_logging
+from server.api_server.routes import graph, health, search
 
 setup_logging()
 

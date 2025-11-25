@@ -3,11 +3,6 @@
 
 import asyncio
 
-from mcp.server import Server
-from mcp.server.models import InitializationOptions
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool
-
 from apps.mcp_server.handlers import (
     get_callees,
     get_callers,
@@ -21,6 +16,11 @@ from core.core.mcp.services import MCPGraphService, MCPSearchService
 from core.core.search.chunk_retriever import create_chunk_retriever
 from core.core.search.symbol_retriever import create_symbol_retriever
 from core.core.store.factory import create_all_stores
+from mcp.server import Server
+from mcp.server.models import InitializationOptions
+from mcp.server.stdio import stdio_server
+from mcp.types import Tool
+
 from infra.config.logging import setup_logging
 
 setup_logging()
@@ -119,17 +119,17 @@ async def list_tools() -> list[Tool]:
 async def call_tool(name: str, arguments: dict) -> str:
     """도구 호출"""
     if name == "search_chunks":
-        return await search_chunks(search_service, arguments)
+        return await search_chunks(search_service, arguments)  # type: ignore[no-any-return]
     elif name == "search_symbols":
-        return await search_symbols(search_service, arguments)
+        return await search_symbols(search_service, arguments)  # type: ignore[no-any-return]
     elif name == "get_chunk":
-        return await get_chunk(search_service, arguments)
+        return await get_chunk(search_service, arguments)  # type: ignore[no-any-return]
     elif name == "get_symbol":
-        return await get_symbol(search_service, arguments)
+        return await get_symbol(search_service, arguments)  # type: ignore[no-any-return]
     elif name == "get_callers":
-        return await get_callers(graph_service, arguments)
+        return await get_callers(graph_service, arguments)  # type: ignore[no-any-return]
     elif name == "get_callees":
-        return await get_callees(graph_service, arguments)
+        return await get_callees(graph_service, arguments)  # type: ignore[no-any-return]
     else:
         raise ValueError(f"Unknown tool: {name}")
 

@@ -12,10 +12,13 @@ Resolution levels:
 - EXTERNAL: External dependencies (future)
 """
 
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from ...ir.id_strategy import generate_type_id
 from .models import TypeEntity, TypeFlavor, TypeResolutionLevel
+
+if TYPE_CHECKING:
+    from ...ir.external_analyzers.base import ExternalAnalyzer
 
 
 class TypeResolver:
@@ -60,14 +63,16 @@ class TypeResolver:
         "type",
     }
 
-    def __init__(self, repo_id: str):
+    def __init__(self, repo_id: str, external_analyzer: "ExternalAnalyzer | None" = None):
         """
         Initialize type resolver.
 
         Args:
             repo_id: Repository identifier
+            external_analyzer: Optional external type checker (Pyright/Mypy)
         """
         self.repo_id = repo_id
+        self.external_analyzer = external_analyzer
         self._local_classes: dict[str, str] = {}  # class_name -> node_id
 
     def register_local_class(self, class_name: str, node_id: str):
@@ -112,9 +117,7 @@ class TypeResolver:
             generic_param_ids=generic_param_ids,
         )
 
-    def _classify_type(
-        self, type_str: str
-    ) -> tuple[TypeFlavor, TypeResolutionLevel, Optional[str]]:
+    def _classify_type(self, type_str: str) -> tuple[TypeFlavor, TypeResolutionLevel, str | None]:
         """
         Classify type into flavor and resolution level.
 

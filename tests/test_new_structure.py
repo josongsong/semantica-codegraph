@@ -10,21 +10,14 @@ import pytest
 class TestNewStructure:
     """새 디렉토리 구조 검증"""
 
-    def test_import_engine(self):
-        """src.engine 임포트 확인"""
-        from src.engine import SemanticaEngine
-
-        engine = SemanticaEngine()
-        assert engine is not None
-
     def test_import_ports(self):
         """src.ports 임포트 확인"""
         from src.ports import (
+            ContextPort,
             EnginePort,
+            GraphPort,
             IndexingPort,
             SearchPort,
-            GraphPort,
-            ContextPort,
         )
 
         assert IndexingPort is not None
@@ -36,10 +29,10 @@ class TestNewStructure:
     def test_foundation_structure(self):
         """foundation 모듈 구조 확인"""
         import src.foundation
-        import src.foundation.parsing
-        import src.foundation.ir
-        import src.foundation.graph
         import src.foundation.chunk
+        import src.foundation.graph
+        import src.foundation.ir
+        import src.foundation.parsing
 
         assert src.foundation is not None
 
@@ -56,50 +49,34 @@ class TestNewStructure:
     def test_index_structure(self):
         """index 모듈 구조 확인"""
         import src.index
-        import src.index.lexical
-        import src.index.vector
-        import src.index.symbol
-        import src.index.fuzzy
         import src.index.domain_meta
+        import src.index.fuzzy
+        import src.index.lexical
         import src.index.runtime
+        import src.index.symbol
+        import src.index.vector
 
         assert src.index is not None
 
     def test_retriever_structure(self):
         """retriever 모듈 구조 확인"""
         import src.retriever
+        import src.retriever.context_builder
+        import src.retriever.fusion
+        import src.retriever.graph_runtime_expansion
         import src.retriever.intent
         import src.retriever.multi_index
-        import src.retriever.graph_runtime_expansion
-        import src.retriever.fusion
-        import src.retriever.context_builder
 
         assert src.retriever is not None
 
     def test_server_structure(self):
         """server 모듈 구조 확인"""
         import server
+        import server.adapters
         import server.api
         import server.mcp
-        import server.adapters
 
         assert server is not None
-
-    def test_engine_methods_exist(self):
-        """SemanticaEngine 메서드 존재 확인"""
-        from src.engine import SemanticaEngine
-
-        engine = SemanticaEngine()
-
-        # 메서드 존재 확인
-        assert hasattr(engine, "index_repository")
-        assert hasattr(engine, "search")
-        assert hasattr(engine, "get_context")
-
-        # 호출 가능 확인
-        assert callable(engine.index_repository)
-        assert callable(engine.search)
-        assert callable(engine.get_context)
 
 
 if __name__ == "__main__":

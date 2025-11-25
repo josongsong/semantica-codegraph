@@ -6,7 +6,6 @@ Abstract base class for language-specific IR generators.
 
 import hashlib
 from abc import ABC, abstractmethod
-from typing import Optional
 
 try:
     from tree_sitter import Node as TSNode
@@ -65,9 +64,7 @@ class IRGenerator(ABC):
         digest = hashlib.sha256(normalized.encode()).hexdigest()
         return f"sha256:{digest}"
 
-    def calculate_cyclomatic_complexity(
-        self, node: Optional[TSNode], node_type_branches: set[str]
-    ) -> int:
+    def calculate_cyclomatic_complexity(self, node: TSNode | None, node_type_branches: set[str]) -> int:
         """
         Calculate cyclomatic complexity using AST.
 
@@ -108,7 +105,7 @@ class IRGenerator(ABC):
         complexity += count_branches(node)
         return complexity
 
-    def has_loop(self, node: Optional[TSNode], loop_types: set[str]) -> bool:
+    def has_loop(self, node: TSNode | None, loop_types: set[str]) -> bool:
         """
         Check if node contains any loop.
 
@@ -127,7 +124,7 @@ class IRGenerator(ABC):
 
         return any(self.has_loop(child, loop_types) for child in node.children)
 
-    def has_try(self, node: Optional[TSNode], try_types: set[str]) -> bool:
+    def has_try(self, node: TSNode | None, try_types: set[str]) -> bool:
         """
         Check if node contains try/except.
 
@@ -146,7 +143,7 @@ class IRGenerator(ABC):
 
         return any(self.has_try(child, try_types) for child in node.children)
 
-    def count_branches(self, node: Optional[TSNode], branch_types: set[str]) -> int:
+    def count_branches(self, node: TSNode | None, branch_types: set[str]) -> int:
         """
         Count number of branches (if/elif/case).
 
@@ -180,7 +177,7 @@ class IRGenerator(ABC):
         """
         return source_bytes[node.start_byte : node.end_byte].decode("utf-8")
 
-    def find_child_by_type(self, node: TSNode, child_type: str) -> Optional[TSNode]:
+    def find_child_by_type(self, node: TSNode, child_type: str) -> TSNode | None:
         """
         Find first child node of specific type.
 

@@ -9,7 +9,6 @@ Strategy:
 - Phase 3: Cross-module type resolution
 """
 
-from typing import Optional
 
 from ...ir.models import IRDocument, Node, NodeKind
 from ..context import TypeIndex
@@ -27,9 +26,7 @@ class TypeIrBuilder:
     def __init__(self):
         self._type_cache: dict[str, TypeEntity] = {}
 
-    def build_full(
-        self, ir_doc: IRDocument
-    ) -> tuple[list[TypeEntity], TypeIndex]:
+    def build_full(self, ir_doc: IRDocument) -> tuple[list[TypeEntity], TypeIndex]:
         """
         Build complete type IR from structural IR document.
 
@@ -63,9 +60,7 @@ class TypeIrBuilder:
 
         return types, type_index
 
-    def _index_function(
-        self, func_node: Node, ir_doc: IRDocument, type_index: TypeIndex
-    ):
+    def _index_function(self, func_node: Node, ir_doc: IRDocument, type_index: TypeIndex):
         """
         Index function's parameter types and return type.
 
@@ -87,15 +82,11 @@ class TypeIrBuilder:
 
         # Index parameter types
         if signature.parameter_type_ids:
-            type_index.function_to_param_type_ids[func_node.id] = (
-                signature.parameter_type_ids
-            )
+            type_index.function_to_param_type_ids[func_node.id] = signature.parameter_type_ids
 
         # Index return type
         if signature.return_type_id:
-            type_index.function_to_return_type_id[func_node.id] = (
-                signature.return_type_id
-            )
+            type_index.function_to_return_type_id[func_node.id] = signature.return_type_id
 
     def apply_delta(
         self,

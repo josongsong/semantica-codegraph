@@ -1,0 +1,345 @@
+개요
+
+1-1. 목적
+
+Index Layer가 실제로 커버해야 하는 검색/인덱싱 유즈케이스 전체 목록을
+
+핵심 유즈케이스(엔진 퀄리티를 결정하는 것)
+
+베이스 유즈케이스(일반적인 검색/운영 기능)
+
+엣지케이스(실패·경계 상황)
+로 나눠서 정리함.
+
+1-2. 관점
+
+“Retriever에서 어떤 쿼리를 받더라도 Index Layer가 어떤 형태의 Hit를 안정적으로 제공해야 하는가” 기준으로 작성함.
+
+Graph/RepoMap/Runtime과 연동되는 것들도, Index가 보장해야 할 부분만 명시함.
+
+핵심 유즈케이스 (엔진 퀄리티를 좌우하는 것)
+
+2-1. 심볼 정의 위치/코드 블럭 검색
+
+[C1] 함수/메서드 정의 위치 찾기
+
+목표: "HybridRetriever.retrieve" 같은 심볼에 대해 정의된 파일 경로, chunk, 코드 블럭을 빠르게 반환
+
+인덱스: lexical(Zoekt), symbol(Kuzu), vector(optional)
+
+요구사항:
+
+정확한 심볼명/qualifier로 질의 시, 심볼 정의 chunk가 상위로 나와야 함
+
+오버로드/동일 이름 타 파일 존재 시, repo_id + file_path + snapshot_id 기준으로 모두 반환
+
+[C2] 클래스/인터페이스/enum 정의 찾기
+
+목표: EmbeddingModel, GraphStorePort 같은 타입 정의를 정확히 찾음
+
+인덱스: lexical, symbol
+
+요구사항:
+
+type-like 심볼에 대해서도 동일 동작
+
+symbol index가 “type kind”를 구분해서 반환
+
+2-2. 라우트/엔드포인트 → 핸들러 매핑
+
+[C3] HTTP/Router 경로로 핸들러 구현 찾기
+
+목표: "POST /hybrid/search", "router.post('/hybrid/search')" 등으로 핸들러 정의를 찾음
+
+인덱스: lexical(Zoekt), symbol(Kuzu; route→handler edge), domain(meta)
+
+요구사항:
+
+문자열 기반 route 검색만으로도 handler chunk 반환 가능
+
+Graph가 붙어 있으면 route→handler→service 흐름을 추가로 제공할 수 있도록, Index에서 route 심볼/문자열을 충분히 인덱싱
+
+2-3. 이름 기반 정밀 심볼 검색
+
+[C4] 심볼 이름/identifier로 코드 위치 찾기
+
+목표: "HybridRetriever", "create_bootstrap", "GraphNodeRecord" 등 이름으로 정의/주요 사용처를 찾음
+
+인덱스: lexical(필수), symbol, fuzzy(optional)
+
+요구사항:
+
+identifiers 필드에 모든 주요 심볼/변수/필드를 담고, lexical/fuzzy에서 이를 우선 검색
+
+동일 이름 복수 존재 시, “정의 → 중요한 참조 → 기타 참조” 순으로 score 정렬 가능해야 함
+
+2-4. import/export / 모듈 구조 파악
+
+[C5] import/export 구조 분석용 검색
+
+목표: “이 모듈을 import하는 곳들”, “이 export를 사용하는 파일들”을 빠르게 찾음
+
+인덱스: symbol(Kuzu; IMPORT/USES edge), lexical
+
+요구사항:
+
+Lexical로 문자열 검색만 해도 어느 정도 동작
+
+Symbol Index가 있으면 정확한 모듈 의존 그래프를 기반으로 위치/경로 제공
+
+2-5. 자연어 기반 코드 검색 (Semantics)
+
+[C6] 자연어로 기능/역할을 설명해서 코드 찾기
+
+예: “하이브리드 검색 스코어를 계산하는 로직”, “에러 핸들링 전체 플로우”
+
+인덱스: vector(Qdrant), domain(meta), lexical 보조
+
+요구사항:
+
+IndexDocument.content가 summary + code + 메타를 충분히 포함
+
+Domain Index(ADR/README)와 코드 Vector Index가 함께 hit를 제공하도록 payload에 링크
+
+2-6. RepoMap / 중요도 반영 검색
+
+[C7] 중요한 엔트리포인트/핵심 모듈 우선 검색
+
+목표: “검색 엔진 진입점”, “메인 파이프라인” 같은 모호한 질의에도 레포의 핵심 코드부터 제시
+
+인덱스: lexical, vector, RepoMap score(tag로 주입)
+
+요구사항:
+
+IndexDocument.tags에 repomap_score 저장
+
+최소한 Lexical/Vector hit score를 repomap_score로 보정할 수 있는 메타 제공
+
+2-7. Snapshot 일관성 기반 검색
+
+[C8] 동일 repo에 대해 여러 snapshot 공존 시 정확 스냅샷으로 검색
+
+목표: “현재 세션이 보고 있는 snapshot”에 정확히 대응하는 코드만 검색
+
+인덱스: 모든 인덱스
+
+요구사항:
+
+모든 query path에서 repo_id + snapshot_id를 필수 파라미터로 받음
+
+IndexDocument와 SearchHit에도 snapshot 기준이 암묵적으로 일치하도록 계약 정의
+
+베이스 유즈케이스 (일반적인/운영단 검색)
+
+3-1. 텍스트/문자열 검색
+
+[B1] 단순 문자열 검색
+
+목표: 특정 상수, 에러 코드, config 키 문자열 등을 찾음
+
+인덱스: lexical(Zoekt)
+
+요구사항:
+
+regex, literal string 모두 지원
+
+파일 경로/라인 정보 제공
+
+[B2] 주석/문서 기반 검색
+
+목표: TODO, FIXME, 특정 도메인 단어(“checkout”, “promotion”)를 주석/문서에서 찾음
+
+인덱스: lexical, domain(meta)
+
+요구사항:
+
+Chunk.summary와 comment도 content에 포함
+
+README/ADR는 Domain Index에서 semantic 검색 가능한 상태
+
+3-2. 파일/경로/언어 단위 검색
+
+[B3] 특정 디렉터리/파일 범위에서만 검색
+
+목표: src/retriever/만, *.py만 등 범위를 좁혀 검색
+
+인덱스: lexical, vector
+
+요구사항:
+
+IndexDocument.tags 또는 file_path 조건 기반 필터 지원
+
+[B4] 테스트 코드/프로덕션 코드 분리 검색
+
+목표: test 코드만, 혹은 test는 제외하고 검색
+
+인덱스: lexical, vector
+
+요구사항:
+
+tags에 is_test: "true"|"false" 등 플래그 저장
+
+3-3. 문서/ADR/Spec 검색
+
+[B5] ADR/디자인 문서 검색
+
+목표: “Index Layer 설계 ADR”, “Graph Construction Spec” 같은 문서를 semantic하게 찾음
+
+인덱스: domain(Qdrant)
+
+요구사항:
+
+ADR/Spec은 별도의 Domain Index에 요약+embedding 저장
+
+검색 결과에서 해당 문서와 연결된 코드 영역(예: 관련 모듈)로 이동할 수 있는 메타 제공
+
+3-4. 증분 인덱싱 확인/운영
+
+[B6] 특정 파일/커밋 기준 재인덱싱
+
+목표: 변경된 파일들만 빠르게 재인덱싱
+
+인덱스: 모든 인덱스
+
+요구사항:
+
+IR diff → ChunkRefreshResult → Index update 플로우가 잘 연결
+
+운영자가 “이 파일/경로만 reindex” 요청할 수 있는 API 계약 존재
+
+[B7] 인덱스 상태/버전 확인
+
+목표: “이 repo의 현재 인덱스 snapshot이 무엇인지”, “언제 인덱싱됐는지” 확인
+
+인덱스: 메타 스토어(Postgres 등)
+
+요구사항:
+
+snapshot 단위 메타 데이터(생성 시간, 상태, 버전)를 별도 테이블로 보관
+
+엣지케이스 (경계/실패/품질 관련 케이스)
+
+4-1. 인덱스 부재/지연 케이스
+
+[E1] 최초 인덱싱 이전 검색 요청
+
+상황: repo를 처음 attach했는데 아직 인덱싱이 안 끝난 상태
+
+요구사항:
+
+Index Layer는 “인덱스 없음/인덱싱 중” 상태를 구분해서 반환
+
+Retriever/Agent가 fallback 전략(원시 파일 접근 등)을 선택할 수 있도록 명시적인 상태 코드 제공
+
+[E2] 일부 백엔드 인덱스 실패
+
+상황: Zoekt는 OK, Qdrant는 장애
+
+요구사항:
+
+IndexingService는 per-index 실패를 감지하고, 가능한 인덱스만으로 SearchHit 반환
+
+실패 인덱스에 대한 상태 플래그/로그를 갖고 있어야 함
+
+4-2. snapshot/브랜치 불일치
+
+[E3] snapshot 불일치로 인한 stale 결과
+
+상황: LLM이 보고 있는 코드 snapshot과 Index snapshot이 다름
+
+요구사항:
+
+모든 인덱스 API는 snapshot_id를 필수로 요구
+
+snapshot mismatch 시 오류/경고를 명확히 반환
+
+4-3. 심볼/이름 충돌
+
+[E4] 동일 이름 심볼이 여러 파일에 존재
+
+상황: parse() 함수가 10개 존재
+
+요구사항:
+
+SearchHit에 file_path, symbol_id, kind를 함께 담아서 disambiguation 가능하게 함
+
+Symbol Index가 있다면, “현재 컨텍스트(파일/모듈)” 기준으로 우선 순위 조정할 수 있는 메타 제공
+
+[E5] rename/파일 이동/Span Drift
+
+상황: 함수가 다른 파일로 이동하거나 상하로 줄 수십 개 이동 (span drift)
+
+요구사항:
+
+ChunkIncrementalRefresher의 renamed_chunks, drifted_chunks를 Zoekt/Qdrant에 정확히 반영
+
+stable_symbol_id + content_hash 정책대로, 같은 심볼로 계속 추적
+
+4-4. 대형 파일/이상 패턴
+
+[E6] 초대형 파일/자동 생성 코드
+
+상황: 1만+ 라인, generated code, vendor 디렉터리 등
+
+요구사항:
+
+Chunking 단계에서 “무시/요약만/부분 인덱싱” 정책을 tags에 표시
+
+Index가 해당 chunk를 낮은 중요도로 처리하거나, 아예 인덱스 제외 옵션을 지원
+
+[E7] 이진/혼합 파일
+
+상황: 코드와 함께 포함된 큰 JSON, 바이너리 blob 등
+
+요구사항:
+
+IndexDocument 생성에서 content 필터링/트렁케이션
+
+Vector Index에서는 토큰 수 초과 시 summary 우선
+
+4-5. fuzzy/lexical 충돌
+
+[E8] fuzzy match가 exact match보다 상위에 뜨는 경우
+
+상황: 오타 검색을 허용했는데 엉뚱한 심볼이 상단 노출
+
+요구사항:
+
+SearchHit.source, score에 더해 “match_type(exact|prefix|fuzzy)” 같은 메타를 추가해서 fusion 레이어에서 재조정 가능하게 함
+
+기본 정책: exact > prefix > fuzzy
+
+4-6. Domain/Runtime 메타와의 충돌
+
+[E9] 도메인 문서 hit와 코드 hit가 서로 다른 방향을 가리킬 때
+
+상황: README는 오래된 API 설명, 코드는 새로운 API
+
+요구사항:
+
+Domain Index hit에는 문서의 last_updated, 관련 snapshot 정보 포함
+
+Runtime Index가 있다면 실제 사용 빈도 높은 코드에 더 높은 weight 부여
+
+4-7. 다국어/자연어 쿼리 혼합
+
+[E10] 코드와 다른 언어의 질의
+
+상황: 한글 질의 + 영어 코드, 또는 반대
+
+요구사항:
+
+Vector Index는 다국어 임베딩 모델 사용 또는 프롬프트 레벨에서 언어 통합
+
+Lexical Index는 여전히 identifier 기반으로 잘 동작해야 하므로, 자연어는 vector로, identifier는 lexical로 분리해서 처리할 수 있는 메타 필요
+
+마무리
+
+위 목록이 “Index Layer 기준으로 반드시 처리해야 하는 유즈케이스 전 범위”라고 보면 됨.
+
+다음 단계로는,
+
+각 유즈케이스별 “어떤 인덱스 조합을 얼마나 강제/필수로 할지”
+
+Weighted Fusion에서 source/score/tag를 어떻게 사용할지
+를 별 문서로 빼서 설계하면, Retriever/Agent 쪽과 딱 맞게 조립 가능함.

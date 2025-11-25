@@ -1,42 +1,44 @@
 # Python Style Specification
 
-**문서 목적:**
-Python 함수/클래스/import/logging 스타일 MUST
-
-**범위:**
-- [TODO: 범위 정의]
-
-**버전:** v1.0
-**최종 수정:** 2025-01-23
+본 문서는 Python 코드 스타일에 대한 MUST 수준 규칙을 정의한다.
 
 ---
 
-## 1. 핵심 원칙 (MUST)
+## 목적
 
-[TODO: MUST 규칙 정의]
-
----
-
-## 2. 금지 규칙 (MUST NOT)
-
-[TODO: MUST NOT 규칙 정의]
+- Python 코드 전역의 일관성 유지
+- 리뷰 비용 절감
+- 가독성·안정성·예측 가능성 확보
 
 ---
 
-## 3. 예시/패턴 (참조)
+## MUST 규칙
 
-[TODO: 좋은 예시 / 나쁜 예시]
+1. 함수명/변수명은 snake_case
+2. 클래스명은 PascalCase
+3. 파일명은 snake_case
+4. import 순서는 다음 우선순위
+   - 표준 라이브러리
+   - 외부 패키지
+   - 내부 모듈
+5. typing.Optional 대신 `| None` 사용
+6. 모든 함수에 타입 힌트를 명시해야 한다
+7. 로깅은 print 금지, 반드시 structured logging
+8. TODO/NOTE 주석에는 날짜와 작성자 식별자를 포함
 
 ---
 
-## 4. 체크리스트
+## 금지 규칙
 
-구현 시 다음을 확인하세요:
-
-- [ ] [TODO: 체크리스트]
+1. from module import *
+2. 전역 변수 사용
+3. 동적 attribute 추가
+4. 파일 내부에 여러 클래스 정의
+5. 한 파일에 1,000라인 이상 코드 작성
 
 ---
 
-## 5. 참고 자료
+## 문서 간 경계
 
-- [TODO: 참고 문서 링크]
+- Formatting/Lint 규칙은 LINT_FORMAT_SPEC.md
+- TypeScript 스타일은 STYLE_TS.md

@@ -8,12 +8,12 @@ Defines the data structures for semantic IR lifecycle:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
 
+from ..dfg.models import DfgSnapshot
+from .bfg.models import BasicFlowBlock, BasicFlowGraph
 from .cfg.models import ControlFlowBlock, ControlFlowEdge, ControlFlowGraph
 from .signature.models import SignatureEntity
 from .typing.models import TypeEntity
-
 
 # ============================================================
 # Snapshot
@@ -26,23 +26,25 @@ class SemanticIrSnapshot:
     Complete semantic IR state.
 
     Phase 1: types, signatures
-    Phase 2: + cfg_blocks, cfg_edges
-    Phase 3: + variables, read_write_events, dataflow_edges
+    Phase 2: + BFG (basic blocks) + CFG (control flow edges)
+    Phase 3: + DFG (data flow graph)
     """
 
     # Phase 1: Type + Signature
     types: list[TypeEntity] = field(default_factory=list)
     signatures: list[SignatureEntity] = field(default_factory=list)
 
-    # Phase 2: CFG (Control Flow Graph)
+    # Phase 2a: BFG (Basic Flow Graph - blocks without edges)
+    bfg_graphs: list[BasicFlowGraph] = field(default_factory=list)
+    bfg_blocks: list[BasicFlowBlock] = field(default_factory=list)
+
+    # Phase 2b: CFG (Control Flow Graph - blocks with edges)
     cfg_graphs: list[ControlFlowGraph] = field(default_factory=list)
     cfg_blocks: list[ControlFlowBlock] = field(default_factory=list)
     cfg_edges: list[ControlFlowEdge] = field(default_factory=list)
 
     # Phase 3: DFG (Data Flow Graph)
-    # variables: list[VariableEntity] = field(default_factory=list)
-    # read_write_events: list[ReadWriteEvent] = field(default_factory=list)
-    # dataflow_edges: list[DataFlowEdge] = field(default_factory=list)
+    dfg_snapshot: DfgSnapshot | None = None
 
 
 # ============================================================
@@ -80,10 +82,10 @@ class TypeIndex:
     function_to_param_type_ids: dict[str, list[str]] = field(default_factory=dict)
 
     # Function node_id -> return type ID
-    function_to_return_type_id: dict[str, Optional[str]] = field(default_factory=dict)
+    function_to_return_type_id: dict[str, str | None] = field(default_factory=dict)
 
     # Variable node_id -> declared type ID
-    variable_to_type_id: dict[str, Optional[str]] = field(default_factory=dict)
+    variable_to_type_id: dict[str, str | None] = field(default_factory=dict)
 
 
 @dataclass

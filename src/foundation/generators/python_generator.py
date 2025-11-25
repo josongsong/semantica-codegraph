@@ -2,9 +2,12 @@
 Python IR Generator
 
 Converts Python AST (tree-sitter) to IR.
+
+Enhanced with:
+- Pyright integration for advanced type resolution (optional)
 """
 
-from typing import Optional
+from typing import TYPE_CHECKING
 
 try:
     from tree_sitter import Node as TSNode
@@ -15,9 +18,6 @@ from ..ir.id_strategy import (
     generate_content_hash,
     generate_edge_id,
     generate_logical_id,
-    generate_signature_id,
-    generate_stable_id,
-    generate_type_id,
 )
 from ..ir.models import (
     ControlFlowSummary,
@@ -26,16 +26,18 @@ from ..ir.models import (
     IRDocument,
     Node,
     NodeKind,
-    SignatureEntity,
     Span,
-    TypeEntity,
-    TypeFlavor,
-    TypeResolutionLevel,
 )
 from ..parsing import AstTree, SourceFile
+from ..semantic_ir.signature.models import SignatureEntity
+from ..semantic_ir.typing.models import TypeEntity
 from ..semantic_ir.typing.resolver import TypeResolver
 from .base import IRGenerator
+from .python import PythonCallAnalyzer, PythonSignatureBuilder, PythonVariableAnalyzer
 from .scope_stack import ScopeStack
+
+if TYPE_CHECKING:
+    from ..ir.external_analyzers import ExternalAnalyzer
 
 # Python-specific Tree-sitter node types
 PYTHON_BRANCH_TYPES = {
@@ -54,6 +56,9 @@ PYTHON_TRY_TYPES = {
     "try_statement",
 }
 
+# Parameters to skip during processing
+SKIP_PARAMS = frozenset({"self", "cls"})
+
 
 class PythonIRGenerator(IRGenerator):
     """
@@ -62,18 +67,19 @@ class PythonIRGenerator(IRGenerator):
     Features:
     - Full node generation (File/Class/Function/Variable/Field/Import)
     - Edge generation (CONTAINS/CALLS/IMPORTS)
-    - Type resolution (RAW/BUILTIN/LOCAL)
+    - Type resolution (RAW/BUILTIN/LOCAL/EXTERNAL via Pyright)
     - Signature building
     - CFG generation
     - External function handling
     """
 
-    def __init__(self, repo_id: str):
+    def __init__(self, repo_id: str, external_analyzer: "ExternalAnalyzer | None" = None):
         """
         Initialize Python generator.
 
         Args:
             repo_id: Repository identifier
+            external_analyzer: Optional external type checker (Pyright/Mypy)
         """
         super().__init__(repo_id)
 
@@ -86,49 +92,115 @@ class PythonIRGenerator(IRGenerator):
         # External functions cache
         self._external_functions: dict[str, Node] = {}  # name -> Node
 
-        # Type resolver
-        self._type_resolver = TypeResolver(repo_id)
+        # Type resolver (with optional external analyzer)
+        self._type_resolver = TypeResolver(repo_id, external_analyzer)
+        self._external_analyzer = external_analyzer
 
-        # Scope tracking
-        self._scope: Optional[ScopeStack] = None
+        # Scope tracking (initialized in generate())
+        self._scope: ScopeStack
 
-        # Source reference
-        self._source: Optional[SourceFile] = None
-        self._source_bytes: Optional[bytes] = None
-        self._ast: Optional[AstTree] = None
+        # Source reference (initialized in generate())
+        self._source: SourceFile
+        self._source_bytes: bytes
+        self._ast: AstTree
 
-    def generate(self, source: SourceFile, snapshot_id: str) -> IRDocument:
+        # Specialized builders (initialized lazily in generate())
+        self._signature_builder: PythonSignatureBuilder | None = None
+        self._variable_analyzer: PythonVariableAnalyzer | None = None
+        self._call_analyzer: PythonCallAnalyzer | None = None
+
+        # Performance timing (for profiling)
+        self._timings: dict[str, float] = {}
+
+    def generate(
+        self,
+        source: SourceFile,
+        snapshot_id: str,
+        old_content: str | None = None,
+        diff_text: str | None = None,
+        ast: AstTree | None = None,
+    ) -> IRDocument:
         """
         Generate IR document from Python source file.
+
+        OPTIMIZATION: Can accept pre-parsed AST to avoid duplicate parsing.
 
         Args:
             source: Python source file
             snapshot_id: Snapshot identifier
+            old_content: Previous file content (for incremental parsing)
+            diff_text: Unified diff text (for incremental parsing)
+            ast: Pre-parsed AST tree (optional, avoids re-parsing)
 
         Returns:
             Complete IR document
         """
+        import time
+
         # Reset state
         self._nodes = []
         self._edges = []
         self._types = {}
         self._signatures = {}
         self._external_functions = {}
+        self._timings = {
+            "parsing_ms": 0.0,
+            "ast_traverse_ms": 0.0,
+            "function_process_ms": 0.0,
+            "class_process_ms": 0.0,
+            "call_analysis_ms": 0.0,
+            "variable_analysis_ms": 0.0,
+            "signature_build_ms": 0.0,
+            "type_resolve_ms": 0.0,
+            # Function processing breakdown
+            "func_metadata_ms": 0.0,  # Name, FQN, span, docstring
+            "func_node_creation_ms": 0.0,  # Node object creation
+            "func_edge_scope_ms": 0.0,  # Edge creation, scope ops
+            "func_param_ms": 0.0,  # Parameter processing
+            "func_cf_summary_ms": 0.0,  # CF summary calculation
+            "other_ms": 0.0,
+        }
 
         # Store source
         self._source = source
         self._source_bytes = source.content.encode(source.encoding)
 
-        # Parse AST
-        self._ast = AstTree.parse(source)
+        # Parse AST (or use provided AST)
+        # OPTIMIZATION: Accept pre-parsed AST to avoid duplicate parsing
+        parse_start = time.perf_counter()
+        if ast is not None:
+            # Use provided AST (avoids re-parsing)
+            self._ast = ast
+            self._timings["parsing_ms"] = 0.0  # No parsing needed
+        elif old_content is not None and diff_text is not None:
+            # Incremental parsing
+            self._ast = AstTree.parse_incremental(source, old_content, diff_text)
+            self._timings["parsing_ms"] = (time.perf_counter() - parse_start) * 1000
+        else:
+            # Full parsing
+            self._ast = AstTree.parse(source)
+            self._timings["parsing_ms"] = (time.perf_counter() - parse_start) * 1000
 
         # Initialize scope with module FQN
         module_fqn = self._get_module_fqn(source.file_path)
         self._scope = ScopeStack(module_fqn)
 
+        # Initialize specialized builders
+        self._signature_builder = PythonSignatureBuilder(self._type_resolver, self._types)
+        self._variable_analyzer = PythonVariableAnalyzer(self._nodes, self._scope, self._add_contains_edge)
+        self._call_analyzer = PythonCallAnalyzer(self._nodes, self._edges, self._external_functions, self._scope)
+
         # Generate IR
+        gen_start = time.perf_counter()
         self._generate_file_node()
         self._traverse_ast(self._ast.root)
+        gen_time = (time.perf_counter() - gen_start) * 1000
+
+        # Calculate "other" time (AST traversal overhead + misc)
+        # Note: function_process_ms includes call_analysis, variable_analysis, signature_build
+        # So we only count top-level function/class processing times
+        measured_time = self._timings["function_process_ms"] + self._timings["class_process_ms"]
+        self._timings["other_ms"] = max(0.0, gen_time - measured_time)
 
         # Build IR document
         doc = IRDocument(
@@ -148,6 +220,28 @@ class PythonIRGenerator(IRGenerator):
 
         return doc
 
+    def get_timing_breakdown(self) -> dict[str, float]:
+        """
+        Get detailed timing breakdown of IR generation.
+
+        Returns:
+            Dictionary mapping phase names to milliseconds
+        """
+        return self._timings.copy()
+
+    def _record_time(self, key: str, duration_ms: float):
+        """
+        Record timing for a specific phase.
+
+        Args:
+            key: Timing key (e.g., "function_process_ms")
+            duration_ms: Duration in milliseconds
+        """
+        if key in self._timings:
+            self._timings[key] += duration_ms
+        else:
+            self._timings[key] = duration_ms
+
     # ============================================================
     # AST Traversal
     # ============================================================
@@ -156,20 +250,40 @@ class PythonIRGenerator(IRGenerator):
         """
         Traverse AST and generate IR nodes/edges.
 
+        OPTIMIZED: Iterative traversal with stack + dictionary dispatch.
+
         Args:
             node: Current AST node
         """
-        # Handle different node types
-        if node.type == "class_definition":
-            self._process_class(node)
-        elif node.type == "function_definition":
-            self._process_function(node)
-        elif node.type in ("import_statement", "import_from_statement"):
-            self._process_import(node)
-        else:
-            # Continue traversal
-            for child in node.children:
-                self._traverse_ast(child)
+        # OPTIMIZATION: Dictionary dispatch for node type handlers
+        # This is faster than if/elif chains for many node types
+        handlers = {
+            "class_definition": self._process_class,
+            "function_definition": self._process_function,
+            "import_statement": self._process_import,
+            "import_from_statement": self._process_import,
+        }
+
+        # OPTIMIZATION: Iterative traversal with stack instead of recursion
+        # This avoids function call overhead for deep AST trees
+        stack = [node]
+
+        while stack:
+            current = stack.pop()
+
+            # Get handler for this node type
+            handler = handlers.get(current.type)
+
+            if handler:
+                # Process this node with specific handler
+                handler(current)
+                # Don't traverse children for handled nodes
+                # (handlers manage their own child traversal)
+            else:
+                # Continue traversal for unhandled nodes
+                # Add children to stack in reverse order to maintain left-to-right traversal
+                if current.children:
+                    stack.extend(reversed(current.children))
 
     # ============================================================
     # Node Generation
@@ -216,6 +330,10 @@ class PythonIRGenerator(IRGenerator):
         Args:
             node: class_definition AST node
         """
+        import time
+
+        start = time.perf_counter()
+
         # Get class name
         name_node = self.find_child_by_type(node, "identifier")
         if not name_node:
@@ -255,15 +373,15 @@ class PythonIRGenerator(IRGenerator):
             parent_id=self._scope.current.node_id,
             body_span=body_span,
             docstring=docstring,
-            content_hash=self.generate_content_hash(
-                self.get_node_text(node, self._source_bytes)
-            ),
+            content_hash=self.generate_content_hash(self.get_node_text(node, self._source_bytes)),
         )
 
         self._nodes.append(class_node)
 
         # Add CONTAINS edge from parent
-        self._add_contains_edge(self._scope.current.node_id, node_id, span)
+        parent_node_id = self._scope.current.node_id
+        assert parent_node_id is not None, "Parent scope must have node_id set"
+        self._add_contains_edge(parent_node_id, node_id, span)
 
         # Register in scope
         self._scope.register_symbol(class_name, node_id)
@@ -276,6 +394,7 @@ class PythonIRGenerator(IRGenerator):
         self._scope.current.node_id = node_id
 
         # Process class body
+        method_time_before = self._timings.get("function_process_ms", 0)
         if body_node:
             for child in body_node.children:
                 if child.type == "function_definition":
@@ -283,9 +402,16 @@ class PythonIRGenerator(IRGenerator):
                 elif child.type == "expression_statement":
                     # Could be class-level assignment (field)
                     self._process_potential_field(child)
+        method_time_after = self._timings.get("function_process_ms", 0)
+        method_time_in_class = method_time_after - method_time_before
 
         # Pop class scope
         self._scope.pop()
+
+        # Record class overhead only (exclude method processing time)
+        duration_ms = (time.perf_counter() - start) * 1000
+        class_overhead = duration_ms - method_time_in_class
+        self._record_time("class_process_ms", class_overhead)
 
     def _process_function(self, node: TSNode, is_method: bool = False):
         """
@@ -295,6 +421,13 @@ class PythonIRGenerator(IRGenerator):
             node: function_definition AST node
             is_method: True if this is a class method
         """
+        import time
+
+        start = time.perf_counter()
+
+        # PHASE 1: Extract metadata (name, FQN, span, docstring)
+        metadata_start = time.perf_counter()
+
         # Get function name
         name_node = self.find_child_by_type(node, "identifier")
         if not name_node:
@@ -324,10 +457,15 @@ class PythonIRGenerator(IRGenerator):
         body_node = self.find_child_by_type(node, "block")
         body_span = self._ast.get_span(body_node) if body_node else None
 
-        # Calculate control flow summary
-        cf_summary = self._calculate_cf_summary(body_node) if body_node else None
+        self._record_time("func_metadata_ms", (time.perf_counter() - metadata_start) * 1000)
 
-        # Create function/method node (signature will be built later)
+        # PHASE 2: Calculate control flow summary
+        cf_start = time.perf_counter()
+        cf_summary = self._calculate_cf_summary(body_node) if body_node else None
+        self._record_time("func_cf_summary_ms", (time.perf_counter() - cf_start) * 1000)
+
+        # PHASE 3: Create node object
+        node_start = time.perf_counter()
         func_node = Node(
             id=node_id,
             kind=kind,
@@ -340,16 +478,19 @@ class PythonIRGenerator(IRGenerator):
             parent_id=self._scope.current.node_id,
             body_span=body_span,
             docstring=docstring,
-            content_hash=self.generate_content_hash(
-                self.get_node_text(node, self._source_bytes)
-            ),
+            content_hash=self.generate_content_hash(self.get_node_text(node, self._source_bytes)),
             control_flow_summary=cf_summary,
         )
-
         self._nodes.append(func_node)
+        self._record_time("func_node_creation_ms", (time.perf_counter() - node_start) * 1000)
+
+        # PHASE 4: Edge creation and scope management
+        edge_scope_start = time.perf_counter()
 
         # Add CONTAINS edge from parent
-        self._add_contains_edge(self._scope.current.node_id, node_id, span)
+        parent_node_id = self._scope.current.node_id
+        assert parent_node_id is not None, "Parent scope must have node_id set"
+        self._add_contains_edge(parent_node_id, node_id, span)
 
         # Register in scope
         self._scope.register_symbol(func_name, node_id)
@@ -358,27 +499,70 @@ class PythonIRGenerator(IRGenerator):
         self._scope.push("function", func_name, func_fqn)
         self._scope.current.node_id = node_id
 
-        # Process parameters
+        self._record_time("func_edge_scope_ms", (time.perf_counter() - edge_scope_start) * 1000)
+
+        # PHASE 5: Process parameters
+        param_start = time.perf_counter()
         params_node = self.find_child_by_type(node, "parameters")
         param_type_ids = []
         if params_node:
             param_type_ids = self._process_parameters(params_node, node_id)
+        self._record_time("func_param_ms", (time.perf_counter() - param_start) * 1000)
 
-        # Process function body for variables
+        # Process function body for variables (using builder)
         if body_node:
-            self._process_variables_in_block(body_node, node_id)
-            # Process function calls
-            self._process_calls_in_block(body_node, node_id)
+            var_start = time.perf_counter()
+            self._variable_analyzer.process_variables_in_block(
+                body_node,
+                node_id,
+                self.repo_id,
+                self._source.file_path,
+                self._source.language,
+                self._scope.module.fqn,
+                self._ast.get_span,
+                self.get_node_text,
+                self._source_bytes,
+                self.find_child_by_type,
+            )
+            self._record_time("variable_analysis_ms", (time.perf_counter() - var_start) * 1000)
+
+            # Process function calls (using builder)
+            call_start = time.perf_counter()
+            self._call_analyzer.process_calls_in_block(
+                body_node,
+                node_id,
+                self.repo_id,
+                self._ast.get_span,
+                self.get_node_text,
+                self._source_bytes,
+            )
+            self._record_time("call_analysis_ms", (time.perf_counter() - call_start) * 1000)
 
         # Pop function scope
         self._scope.pop()
 
-        # Build signature after processing
-        signature = self._build_signature(node, node_id, func_name, param_type_ids)
+        # Build signature after processing (using builder)
+        sig_start = time.perf_counter()
+        signature = self._signature_builder.build_signature(
+            node,
+            node_id,
+            func_name,
+            param_type_ids,
+            self.get_node_text,
+            self._source_bytes,
+        )
+        self._record_time("signature_build_ms", (time.perf_counter() - sig_start) * 1000)
+
         if signature:
             self._signatures[signature.id] = signature
             # Link signature to function node
             func_node.signature_id = signature.id
+
+        # Record total function processing time
+        # Note: We don't separately track core overhead because
+        # call/variable/signature timings are cumulative
+        duration_ms = (time.perf_counter() - start) * 1000
+        self._record_time("function_process_ms", duration_ms)
 
     def _process_import(self, node: TSNode):
         """
@@ -495,7 +679,9 @@ class PythonIRGenerator(IRGenerator):
         self._nodes.append(import_ir_node)
 
         # Add CONTAINS edge from file
-        self._add_contains_edge(self._scope.module.node_id, node_id, span)
+        module_node_id = self._scope.module.node_id
+        assert module_node_id is not None, "Module scope must have node_id set"
+        self._add_contains_edge(module_node_id, node_id, span)
 
         # Register import alias in scope
         self._scope.register_import(alias, full_symbol)
@@ -512,7 +698,7 @@ class PythonIRGenerator(IRGenerator):
 
     def _process_parameters(self, params_node: TSNode, function_id: str) -> list[str]:
         """
-        Process function parameters and create Variable nodes.
+        OPTIMIZED: Process function parameters and create Variable nodes.
 
         Args:
             params_node: parameters AST node
@@ -523,13 +709,20 @@ class PythonIRGenerator(IRGenerator):
         """
         param_type_ids = []
 
+        # Cache commonly accessed attributes (reduces attribute lookups)
+        file_path = self._source.file_path
+        language = self._source.language
+        module_path = self._scope.module.fqn
+        repo_id = self.repo_id
+        source_bytes = self._source_bytes
+
         # Find all identifiers in parameters
         for child in params_node.children:
             if child.type == "identifier":
-                param_name = self.get_node_text(child, self._source_bytes)
+                param_name = self.get_node_text(child, source_bytes)
 
-                # Skip 'self' and 'cls' (will handle later)
-                if param_name in ("self", "cls"):
+                # Skip 'self' and 'cls' (using frozenset for O(1) lookup)
+                if param_name in SKIP_PARAMS:
                     continue
 
                 # Build FQN
@@ -538,9 +731,9 @@ class PythonIRGenerator(IRGenerator):
                 # Generate node ID
                 span = self._ast.get_span(child)
                 node_id = generate_logical_id(
-                    repo_id=self.repo_id,
+                    repo_id=repo_id,
                     kind=NodeKind.VARIABLE,
-                    file_path=self._source.file_path,
+                    file_path=file_path,
                     fqn=param_fqn,
                 )
 
@@ -549,21 +742,19 @@ class PythonIRGenerator(IRGenerator):
                     id=node_id,
                     kind=NodeKind.VARIABLE,
                     fqn=param_fqn,
-                    file_path=self._source.file_path,
+                    file_path=file_path,
                     span=span,
-                    language=self._source.language,
+                    language=language,
                     name=param_name,
-                    module_path=self._scope.module.fqn,
+                    module_path=module_path,
                     parent_id=function_id,
                     attrs={"var_kind": "parameter"},
                 )
 
                 self._nodes.append(var_node)
 
-                # Add CONTAINS edge
+                # Add CONTAINS edge and register in scope
                 self._add_contains_edge(function_id, node_id, span)
-
-                # Register in scope
                 self._scope.register_symbol(param_name, node_id)
 
                 # No type annotation, skip for signature
@@ -573,18 +764,18 @@ class PythonIRGenerator(IRGenerator):
                 # Handle typed parameters: name: type
                 name_node = self.find_child_by_type(child, "identifier")
                 if name_node:
-                    param_name = self.get_node_text(name_node, self._source_bytes)
+                    param_name = self.get_node_text(name_node, source_bytes)
 
-                    if param_name in ("self", "cls"):
+                    if param_name in SKIP_PARAMS:
                         continue
 
                     param_fqn = self._scope.build_fqn(param_name)
                     span = self._ast.get_span(name_node)
 
                     node_id = generate_logical_id(
-                        repo_id=self.repo_id,
+                        repo_id=repo_id,
                         kind=NodeKind.VARIABLE,
-                        file_path=self._source.file_path,
+                        file_path=file_path,
                         fqn=param_fqn,
                     )
 
@@ -592,7 +783,7 @@ class PythonIRGenerator(IRGenerator):
                     type_node = child.child_by_field_name("type")
                     declared_type_id = None
                     if type_node:
-                        raw_type = self.get_node_text(type_node, self._source_bytes)
+                        raw_type = self.get_node_text(type_node, source_bytes)
                         type_entity = self._type_resolver.resolve_type(raw_type)
                         self._types[type_entity.id] = type_entity
                         declared_type_id = type_entity.id
@@ -601,11 +792,11 @@ class PythonIRGenerator(IRGenerator):
                         id=node_id,
                         kind=NodeKind.VARIABLE,
                         fqn=param_fqn,
-                        file_path=self._source.file_path,
+                        file_path=file_path,
                         span=span,
-                        language=self._source.language,
+                        language=language,
                         name=param_name,
-                        module_path=self._scope.module.fqn,
+                        module_path=module_path,
                         parent_id=function_id,
                         declared_type_id=declared_type_id,
                         attrs={"var_kind": "parameter"},
@@ -620,365 +811,6 @@ class PythonIRGenerator(IRGenerator):
                         param_type_ids.append(declared_type_id)
 
         return param_type_ids
-
-    def _build_signature(
-        self,
-        func_node: TSNode,
-        node_id: str,
-        func_name: str,
-        param_type_ids: list[str],
-    ) -> Optional[SignatureEntity]:
-        """
-        Build signature entity for function/method.
-
-        Args:
-            func_node: function_definition AST node
-            node_id: Function node ID
-            func_name: Function name
-            param_type_ids: List of parameter type IDs
-
-        Returns:
-            SignatureEntity or None
-        """
-        # Extract return type annotation
-        return_type_id = None
-        return_type_node = func_node.child_by_field_name("return_type")
-        if return_type_node:
-            raw_return_type = self.get_node_text(return_type_node, self._source_bytes)
-            return_type_entity = self._type_resolver.resolve_type(raw_return_type)
-            self._types[return_type_entity.id] = return_type_entity
-            return_type_id = return_type_entity.id
-
-        # Build signature string
-        param_type_strs = []
-        for type_id in param_type_ids:
-            type_entity = self._types.get(type_id)
-            if type_entity:
-                param_type_strs.append(type_entity.raw)
-
-        return_type_str = ""
-        if return_type_id:
-            return_type_entity = self._types.get(return_type_id)
-            if return_type_entity:
-                return_type_str = f" -> {return_type_entity.raw}"
-
-        params_str = ", ".join(param_type_strs) if param_type_strs else ""
-        raw_signature = f"{func_name}({params_str}){return_type_str}"
-
-        # Generate signature ID
-        return_type_raw = None
-        if return_type_id:
-            return_type_entity = self._types.get(return_type_id)
-            if return_type_entity:
-                return_type_raw = return_type_entity.raw
-
-        sig_id = generate_signature_id(
-            owner_node_id=node_id,
-            name=func_name,
-            param_types=param_type_strs,
-            return_type=return_type_raw,
-        )
-
-        # Calculate signature hash for change detection
-        import hashlib
-
-        sig_hash = hashlib.sha256(raw_signature.encode()).hexdigest()
-
-        # Create signature entity
-        signature = SignatureEntity(
-            id=sig_id,
-            owner_node_id=node_id,
-            name=func_name,
-            raw=raw_signature,
-            parameter_type_ids=param_type_ids,
-            return_type_id=return_type_id,
-            signature_hash=f"sha256:{sig_hash}",
-        )
-
-        return signature
-
-    def _process_variables_in_block(self, block_node: TSNode, function_id: str):
-        """
-        Process variable assignments in function body.
-
-        Args:
-            block_node: Function body block
-            function_id: Parent function node ID
-        """
-        # Find all assignments in the block
-        for child in block_node.children:
-            if child.type == "expression_statement":
-                # Check if it contains an assignment
-                assignment = self.find_child_by_type(child, "assignment")
-                if assignment:
-                    self._process_assignment(assignment, function_id)
-            elif child.type == "assignment":
-                self._process_assignment(child, function_id)
-
-            # Recursively process nested blocks (if, for, while, etc.)
-            for nested in child.children:
-                if nested.type == "block":
-                    self._process_variables_in_block(nested, function_id)
-
-    def _process_assignment(self, assignment_node: TSNode, function_id: str):
-        """
-        Process single assignment and create Variable node.
-
-        Args:
-            assignment_node: assignment AST node
-            function_id: Parent function node ID
-        """
-        # Get left side (variable name)
-        left_node = assignment_node.child_by_field_name("left")
-        if not left_node:
-            return
-
-        # Only handle simple identifier assignments for now
-        if left_node.type != "identifier":
-            return
-
-        var_name = self.get_node_text(left_node, self._source_bytes)
-
-        # Check if already defined in this scope
-        if self._scope.lookup_symbol(var_name):
-            # Already defined, skip (this is a reassignment, not a new variable)
-            return
-
-        # Build FQN
-        var_fqn = self._scope.build_fqn(var_name)
-
-        # Generate node ID
-        span = self._ast.get_span(left_node)
-        node_id = generate_logical_id(
-            repo_id=self.repo_id,
-            kind=NodeKind.VARIABLE,
-            file_path=self._source.file_path,
-            fqn=var_fqn,
-        )
-
-        # Create Variable node
-        var_node = Node(
-            id=node_id,
-            kind=NodeKind.VARIABLE,
-            fqn=var_fqn,
-            file_path=self._source.file_path,
-            span=span,
-            language=self._source.language,
-            name=var_name,
-            module_path=self._scope.module.fqn,
-            parent_id=function_id,
-            attrs={"var_kind": "local"},
-        )
-
-        self._nodes.append(var_node)
-
-        # Add CONTAINS edge
-        self._add_contains_edge(function_id, node_id, span)
-
-        # Register in scope
-        self._scope.register_symbol(var_name, node_id)
-
-    def _process_calls_in_block(self, block_node: TSNode, caller_id: str):
-        """
-        Process function calls in a block and create CALLS edges.
-
-        Args:
-            block_node: Block AST node
-            caller_id: Caller function/method node ID
-        """
-        # Find all call nodes recursively
-        calls = self._find_calls_recursive(block_node)
-
-        for call_node in calls:
-            self._process_single_call(call_node, caller_id)
-
-    def _find_calls_recursive(self, node: TSNode) -> list[TSNode]:
-        """
-        Find all call nodes recursively in AST.
-
-        Args:
-            node: Starting AST node
-
-        Returns:
-            List of call nodes
-        """
-        calls = []
-
-        if node.type == "call":
-            calls.append(node)
-
-        # Recursively search children
-        for child in node.children:
-            calls.extend(self._find_calls_recursive(child))
-
-        return calls
-
-    def _process_single_call(self, call_node: TSNode, caller_id: str):
-        """
-        Process a single function call and create CALLS edge.
-
-        Args:
-            call_node: call AST node
-            caller_id: Caller node ID
-        """
-        # Get the function being called
-        func_node = call_node.child_by_field_name("function")
-        if not func_node:
-            return
-
-        # Resolve callee based on function type
-        callee_id = None
-        callee_name = None
-
-        if func_node.type == "identifier":
-            # Simple call: foo()
-            callee_name = self.get_node_text(func_node, self._source_bytes)
-            callee_id = self._resolve_callee(callee_name)
-
-        elif func_node.type == "attribute":
-            # Attribute call: obj.method() or module.function()
-            callee_name = self._get_attribute_name(func_node)
-            callee_id = self._resolve_attribute_callee(func_node, callee_name)
-
-        # If we resolved a callee, create CALLS edge
-        if callee_id and callee_name:
-            self._add_calls_edge(caller_id, callee_id, callee_name, self._ast.get_span(call_node))
-
-    def _resolve_callee(self, name: str) -> Optional[str]:
-        """
-        Resolve simple function call to node ID.
-
-        Args:
-            name: Function name
-
-        Returns:
-            Callee node ID or None
-        """
-        # Try to find in current scope
-        callee_id = self._scope.lookup_symbol(name)
-        if callee_id:
-            return callee_id
-
-        # Try to find in imports
-        full_symbol = self._scope.resolve_import(name)
-        if full_symbol:
-            # External function
-            return self._get_or_create_external_function(full_symbol)
-
-        # Unknown - create external function
-        return self._get_or_create_external_function(name)
-
-    def _resolve_attribute_callee(self, attr_node: TSNode, full_name: str) -> Optional[str]:
-        """
-        Resolve attribute call (obj.method or module.func).
-
-        Args:
-            attr_node: attribute AST node
-            full_name: Full attribute name (e.g., "self.helper" or "os.path.join")
-
-        Returns:
-            Callee node ID or None
-        """
-        # Get the object part (left side of dot)
-        obj_node = attr_node.child_by_field_name("object")
-        if not obj_node:
-            return None
-
-        obj_name = self.get_node_text(obj_node, self._source_bytes)
-
-        # Check if it's 'self' or 'cls' - method call on current class
-        if obj_name in ("self", "cls"):
-            # Try to find method in current class
-            method_node = attr_node.child_by_field_name("attribute")
-            if method_node:
-                method_name = self.get_node_text(method_node, self._source_bytes)
-                # Look up in class scope
-                class_scope = self._scope.class_scope
-                if class_scope:
-                    method_fqn = f"{class_scope.fqn}.{method_name}"
-                    # Try to find in symbols
-                    for symbol_name, symbol_id in class_scope.symbols.items():
-                        if symbol_name == method_name:
-                            return symbol_id
-
-        # Check if it's an imported module
-        full_symbol = self._scope.resolve_import(obj_name)
-        if full_symbol:
-            # It's an import, e.g., np.array() where np = numpy
-            attr_name = attr_node.child_by_field_name("attribute")
-            if attr_name:
-                func_name = self.get_node_text(attr_name, self._source_bytes)
-                external_name = f"{full_symbol}.{func_name}"
-                return self._get_or_create_external_function(external_name)
-
-        # Default: external function
-        return self._get_or_create_external_function(full_name)
-
-    def _get_attribute_name(self, attr_node: TSNode) -> str:
-        """
-        Get full attribute name from attribute node.
-
-        Args:
-            attr_node: attribute AST node
-
-        Returns:
-            Full attribute name (e.g., "obj.method")
-        """
-        # Recursively build attribute name
-        parts = []
-
-        def collect_parts(node: TSNode):
-            if node.type == "identifier":
-                parts.insert(0, self.get_node_text(node, self._source_bytes))
-            elif node.type == "attribute":
-                attr = node.child_by_field_name("attribute")
-                if attr:
-                    parts.insert(0, self.get_node_text(attr, self._source_bytes))
-                obj = node.child_by_field_name("object")
-                if obj:
-                    collect_parts(obj)
-
-        collect_parts(attr_node)
-        return ".".join(parts)
-
-    def _get_or_create_external_function(self, name: str) -> str:
-        """
-        Get or create external function node.
-
-        Args:
-            name: External function name
-
-        Returns:
-            External function node ID
-        """
-        # Check cache
-        if name in self._external_functions:
-            return self._external_functions[name].id
-
-        # Create new external function node
-        external_fqn = f"external.{name}"
-        node_id = generate_logical_id(
-            repo_id=self.repo_id,
-            kind=NodeKind.FUNCTION,
-            file_path="<external>",
-            fqn=external_fqn,
-        )
-
-        external_node = Node(
-            id=node_id,
-            kind=NodeKind.FUNCTION,
-            fqn=external_fqn,
-            file_path="<external>",
-            span=Span(0, 0, 0, 0),
-            language="python",
-            name=name,
-            attrs={"is_external": True},
-        )
-
-        self._nodes.append(external_node)
-        self._external_functions[name] = external_node
-
-        return node_id
 
     # ============================================================
     # Edge Generation
@@ -1017,11 +849,7 @@ class PythonIRGenerator(IRGenerator):
         """
         # Count existing calls from this caller to same callee
         occurrence = sum(
-            1
-            for e in self._edges
-            if e.kind == EdgeKind.CALLS
-            and e.source_id == caller_id
-            and e.target_id == callee_id
+            1 for e in self._edges if e.kind == EdgeKind.CALLS and e.source_id == caller_id and e.target_id == callee_id
         )
 
         edge_id = generate_edge_id("calls", caller_id, callee_id, occurrence)
@@ -1071,13 +899,9 @@ class PythonIRGenerator(IRGenerator):
 
     def _is_test_file(self, file_path: str) -> bool:
         """Check if file is a test file"""
-        return (
-            "test" in file_path.lower()
-            or file_path.startswith("tests/")
-            or "/tests/" in file_path
-        )
+        return "test" in file_path.lower() or file_path.startswith("tests/") or "/tests/" in file_path
 
-    def _extract_docstring(self, node: TSNode) -> Optional[str]:
+    def _extract_docstring(self, node: TSNode) -> str | None:
         """
         Extract docstring from function/class node.
 
@@ -1094,22 +918,48 @@ class PythonIRGenerator(IRGenerator):
 
         # First statement in body might be a string (docstring)
         for child in body.children:
-            if child.type == "expression_statement":
-                # Check if it's a string
+            # Check for direct string node (Python docstrings are direct children)
+            if child.type == "string":
+                text = self.get_node_text(child, self._source_bytes)
+                return self._clean_docstring(text)
+            # Fallback: check for expression_statement containing string
+            elif child.type == "expression_statement":
                 string_node = self.find_child_by_type(child, "string")
                 if string_node:
                     text = self.get_node_text(string_node, self._source_bytes)
-                    # Remove quotes
-                    return text.strip('"""').strip("'''").strip('"').strip("'").strip()
+                    return self._clean_docstring(text)
             elif child.type not in ("comment", "newline"):
                 # Non-docstring statement found
                 break
 
         return None
 
+    def _clean_docstring(self, text: str) -> str:
+        """
+        Remove quotes from docstring text.
+
+        Args:
+            text: Raw docstring text with quotes
+
+        Returns:
+            Cleaned docstring text
+        """
+        # Remove quotes (triple quotes first, then single/double)
+        if text.startswith('"""') and text.endswith('"""'):
+            text = text[3:-3]
+        elif text.startswith("'''") and text.endswith("'''"):
+            text = text[3:-3]
+        elif text.startswith('"') and text.endswith('"'):
+            text = text[1:-1]
+        elif text.startswith("'") and text.endswith("'"):
+            text = text[1:-1]
+        return text.strip()
+
     def _calculate_cf_summary(self, body_node: TSNode) -> ControlFlowSummary:
         """
         Calculate control flow summary for function body.
+
+        OPTIMIZED: Single-pass iterative traversal.
 
         Args:
             body_node: Function body block
@@ -1117,13 +967,39 @@ class PythonIRGenerator(IRGenerator):
         Returns:
             Control flow summary
         """
-        cyclomatic = self.calculate_cyclomatic_complexity(
-            body_node, PYTHON_BRANCH_TYPES
-        )
+        if body_node is None or not body_node.children:
+            return ControlFlowSummary(
+                cyclomatic_complexity=1,
+                has_loop=False,
+                has_try=False,
+                branch_count=0,
+            )
 
-        has_loop_flag = self.has_loop(body_node, PYTHON_LOOP_TYPES)
-        has_try_flag = self.has_try(body_node, PYTHON_TRY_TYPES)
-        branch_count = self.count_branches(body_node, PYTHON_BRANCH_TYPES)
+        # Initialize metrics
+        cyclomatic = 1
+        branch_count = 0
+        has_loop_flag = False
+        has_try_flag = False
+
+        # Single iterative pass
+        stack = [body_node]
+
+        while stack:
+            node = stack.pop()
+            node_type = node.type
+
+            # frozenset membership is O(1)
+            if node_type in PYTHON_BRANCH_TYPES:
+                branch_count += 1
+                cyclomatic += 1
+            elif node_type in PYTHON_LOOP_TYPES:
+                has_loop_flag = True
+                cyclomatic += 1
+            elif node_type in PYTHON_TRY_TYPES:
+                has_try_flag = True
+
+            if node.children:
+                stack.extend(node.children)
 
         return ControlFlowSummary(
             cyclomatic_complexity=cyclomatic,

@@ -41,6 +41,7 @@ venv.bak/
 # Testing
 .pytest_cache/
 .coverage
+coverage.xml
 htmlcov/
 .tox/
 .nox/
@@ -51,6 +52,7 @@ htmlcov/
 dmypy.json
 .pyre/
 .pytype/
+.ruff_cache/
 
 # Docker
 *.log
@@ -70,3 +72,6 @@ data/
 # Environment variables
 .env.local
 .env.*.local
+
+# Benchmark reports
+benchmark/reports/

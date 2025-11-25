@@ -117,6 +117,32 @@ class FakeGraphStore:
 
         return result
 
+    async def get_callers(self, symbol_id: str) -> list[dict[str, Any]]:
+        """
+        Get symbols that call this symbol.
+
+        Args:
+            symbol_id: Symbol ID to find callers for
+
+        Returns:
+            List of caller nodes
+        """
+        # Callers are nodes that have CALLS edges TO this symbol
+        return self.get_neighbors(symbol_id, edge_type="CALLS", direction="incoming")
+
+    async def get_callees(self, symbol_id: str) -> list[dict[str, Any]]:
+        """
+        Get symbols called by this symbol.
+
+        Args:
+            symbol_id: Symbol ID to find callees for
+
+        Returns:
+            List of callee nodes
+        """
+        # Callees are nodes that this symbol CALLS
+        return self.get_neighbors(symbol_id, edge_type="CALLS", direction="outgoing")
+
     def query(self, cypher_like: str) -> list[dict[str, Any]]:
         """
         간단한 쿼리 시뮬레이션.

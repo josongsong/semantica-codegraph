@@ -2,13 +2,12 @@
 AST Tree wrapper for Tree-sitter
 """
 
-from typing import Optional
 
 try:
     from tree_sitter import Node as TSNode
     from tree_sitter import Tree as TSTree
-except ImportError:
-    raise ImportError("tree-sitter is required. Install with: pip install tree-sitter")
+except ImportError as e:
+    raise ImportError("tree-sitter is required. Install with: pip install tree-sitter") from e
 
 from ..ir.models import Span
 from .parser_registry import get_registry
@@ -67,7 +66,7 @@ class AstTree:
         """Get root node"""
         return self._root
 
-    def walk(self, node: Optional[TSNode] = None) -> list[TSNode]:
+    def walk(self, node: TSNode | None = None) -> list[TSNode]:
         """
         Walk AST in depth-first order.
 
@@ -85,7 +84,7 @@ class AstTree:
             nodes.extend(self.walk(child))
         return nodes
 
-    def find_by_type(self, node_type: str, node: Optional[TSNode] = None) -> list[TSNode]:
+    def find_by_type(self, node_type: str, node: TSNode | None = None) -> list[TSNode]:
         """
         Find all nodes of specific type.
 
@@ -138,7 +137,7 @@ class AstTree:
             end_col=node.end_point[1],
         )
 
-    def find_node_at_line(self, line: int, node: Optional[TSNode] = None) -> Optional[TSNode]:
+    def find_node_at_line(self, line: int, node: TSNode | None = None) -> TSNode | None:
         """
         Find deepest node containing the given line.
 
@@ -168,7 +167,7 @@ class AstTree:
         # This node is the deepest match
         return node
 
-    def get_parent(self, node: TSNode) -> Optional[TSNode]:
+    def get_parent(self, node: TSNode) -> TSNode | None:
         """Get parent node"""
         return node.parent
 
@@ -180,7 +179,7 @@ class AstTree:
         """Get named child nodes (excluding anonymous nodes)"""
         return [child for child in node.children if child.is_named]
 
-    def has_error(self, node: Optional[TSNode] = None) -> bool:
+    def has_error(self, node: TSNode | None = None) -> bool:
         """
         Check if AST has any error nodes.
 
@@ -198,7 +197,7 @@ class AstTree:
 
         return any(self.has_error(child) for child in node.children)
 
-    def get_errors(self, node: Optional[TSNode] = None) -> list[TSNode]:
+    def get_errors(self, node: TSNode | None = None) -> list[TSNode]:
         """
         Get all error nodes.
 

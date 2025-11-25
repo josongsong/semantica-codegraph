@@ -5,7 +5,8 @@ Implements minimal methods required by the DI container. Replace the stubs with
 real Qdrant client calls when wiring the vector store.
 """
 
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 
 class QdrantAdapter:

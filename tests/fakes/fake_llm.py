@@ -46,7 +46,8 @@ class FakeLLMProvider:
         if norm > 0:
             vector = vector / norm
 
-        return vector.tolist()
+        result: list[float] = vector.tolist()
+        return result
 
     def complete(self, prompt: str, max_tokens: int = 100) -> str:
         """
@@ -60,3 +61,23 @@ class FakeLLMProvider:
         """Mock chat completion."""
         last_message = messages[-1]["content"] if messages else ""
         return f"Mock chat response to: {last_message[:50]}"
+
+    async def generate(self, prompt: str, max_tokens: int = 500, temperature: float = 0.3) -> str:
+        """
+        Async text generation (LLMPort protocol).
+
+        Returns a mock summary for testing.
+        """
+        # Generate a simple summary based on prompt
+        if "function" in prompt.lower():
+            return "This function processes data and returns the result."
+        elif "class" in prompt.lower():
+            return "This class manages state and provides methods for operations."
+        elif "file" in prompt.lower():
+            return "This file contains utility functions and classes."
+        else:
+            return "This code element provides functionality for the system."
+
+
+# Alias for backward compatibility
+FakeLLM = FakeLLMProvider

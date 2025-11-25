@@ -5,7 +5,7 @@ Expose minimal methods for embeddings and chat completions. Replace with actual
 OpenAI client calls via litellm or openai SDK.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 
 class OpenAIAdapter:
@@ -18,5 +18,5 @@ class OpenAIAdapter:
     async def embed(self, text: str) -> list[float]:
         raise NotImplementedError("OpenAIAdapter.embed is not implemented yet")
 
-    async def chat(self, messages: list[dict[str, Any]], model: Optional[str] = None) -> str:
+    async def chat(self, messages: list[dict[str, Any]], model: str | None = None) -> str:
         raise NotImplementedError("OpenAIAdapter.chat is not implemented yet")

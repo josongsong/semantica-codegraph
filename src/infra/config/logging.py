@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from infra.config.settings import settings
+from src.infra.config.settings import settings
 
 
 def setup_logging(log_level: str | None = None):

@@ -4,7 +4,6 @@ Source File representation
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -29,7 +28,7 @@ class SourceFile:
         cls,
         file_path: str | Path,
         repo_root: str | Path,
-        language: Optional[str] = None,
+        language: str | None = None,
         encoding: str = "utf-8",
     ) -> "SourceFile":
         """

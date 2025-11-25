@@ -3,7 +3,6 @@ Scope Stack for tracking context during AST traversal
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -15,7 +14,7 @@ class ScopeFrame:
     kind: str  # "module" | "class" | "function"
     name: str  # Scope name
     fqn: str  # Fully qualified name
-    node_id: Optional[str] = None  # IR Node ID (once created)
+    node_id: str | None = None  # IR Node ID (once created)
 
     # Symbol table for this scope
     symbols: dict[str, str] = field(default_factory=dict)  # name -> node_id
@@ -60,7 +59,7 @@ class ScopeStack:
         self._stack.append(frame)
         return frame
 
-    def pop(self) -> Optional[ScopeFrame]:
+    def pop(self) -> ScopeFrame | None:
         """Pop current scope frame"""
         if len(self._stack) > 1:  # Keep module scope
             return self._stack.pop()
@@ -77,7 +76,7 @@ class ScopeStack:
         return self._stack[0]
 
     @property
-    def class_scope(self) -> Optional[ScopeFrame]:
+    def class_scope(self) -> ScopeFrame | None:
         """Get current class scope (if inside class)"""
         for frame in reversed(self._stack):
             if frame.kind == "class":
@@ -85,7 +84,7 @@ class ScopeStack:
         return None
 
     @property
-    def function_scope(self) -> Optional[ScopeFrame]:
+    def function_scope(self) -> ScopeFrame | None:
         """Get current function scope (if inside function)"""
         for frame in reversed(self._stack):
             if frame.kind == "function":
@@ -106,7 +105,7 @@ class ScopeStack:
         """
         self.current.symbols[name] = node_id
 
-    def lookup_symbol(self, name: str) -> Optional[str]:
+    def lookup_symbol(self, name: str) -> str | None:
         """
         Lookup symbol from current scope upward.
 
@@ -132,7 +131,7 @@ class ScopeStack:
         """
         self._imports[alias] = full_symbol
 
-    def resolve_import(self, alias: str) -> Optional[str]:
+    def resolve_import(self, alias: str) -> str | None:
         """
         Resolve import alias to full symbol.
 

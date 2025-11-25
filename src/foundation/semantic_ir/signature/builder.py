@@ -24,9 +24,7 @@ class SignatureIrBuilder:
     def __init__(self):
         pass
 
-    def build_full(
-        self, ir_doc: IRDocument
-    ) -> tuple[list[SignatureEntity], SignatureIndex]:
+    def build_full(self, ir_doc: IRDocument) -> tuple[list[SignatureEntity], SignatureIndex]:
         """
         Build complete signature IR from structural IR document.
 

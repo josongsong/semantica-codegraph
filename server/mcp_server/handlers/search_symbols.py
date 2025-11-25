@@ -1,6 +1,6 @@
 import json
 
-from core.core.mcp.services import MCPSearchService
+from src.core.mcp.services import MCPSearchService
 
 
 async def search_symbols(service: MCPSearchService, arguments: dict) -> str:

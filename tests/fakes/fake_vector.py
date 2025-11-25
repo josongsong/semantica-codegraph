@@ -82,7 +82,7 @@ class FakeVectorStore:
             )
 
         # 점수 내림차순 정렬
-        results.sort(key=lambda x: x["score"], reverse=True)
+        results.sort(key=lambda x: float(x["score"]), reverse=True)  # type: ignore[arg-type]
         return results[:limit]
 
     def delete(self, collection_name: str, point_ids: list[str]):

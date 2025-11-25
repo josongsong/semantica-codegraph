@@ -15,13 +15,13 @@ class FakeGitProvider:
     def __init__(self):
         self.commits: list[dict[str, Any]] = []
         self.branches: list[str] = ["main"]
-        self.current_branch = "main"
+        self.current_branch: str = "main"
 
     def get_current_branch(self) -> str:
         """현재 브랜치."""
         return self.current_branch
 
-    def get_commits(self, since: str = None) -> list[dict[str, Any]]:
+    def get_commits(self, since: str | None = None) -> list[dict[str, Any]]:
         """커밋 리스트."""
         return self.commits
 

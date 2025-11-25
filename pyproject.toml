@@ -6,9 +6,12 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "psycopg2-binary>=2.9.9",
+    "asyncpg>=0.29.0",
     "qdrant-client>=1.7.0",
-    "tree-sitter>=0.21.0",
-    "tree-sitter-languages>=1.10.2",
+    "kuzu>=0.1.0",
+    "openai>=1.0.0",
+    "tree-sitter>=0.25.0",
+    "tree-sitter-language-pack>=0.11.0",
     "mcp>=1.0.0",
     "fastapi>=0.104.0",
     "uvicorn>=0.24.0",
@@ -30,6 +33,7 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.7.0",
     "pre-commit>=3.5.0",
+    "pyright>=1.1.380",
 ]
 
 [build-system]
@@ -37,12 +41,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.black]
-line-length = 100
+line-length = 120
 target-version = ['py310']
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py310"
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -52,10 +58,13 @@ select = [
     "C4",  # flake8-comprehensions
     "UP",  # pyupgrade
 ]
-ignore = []
+ignore = [
+    "B008",  # Allow function calls in argument defaults (FastAPI Depends pattern)
+]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"tests/**/*.py" = ["F811", "F841", "B011", "B017", "E402", "F401", "B007"]  # Allow redefinitions and unused vars in tests
 
 [tool.mypy]
 python_version = "3.10"
@@ -69,4 +78,4 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --cov=core --cov-report=term-missing"
+addopts = "-v --cov=src --cov-report=term-missing --cov-fail-under=30"

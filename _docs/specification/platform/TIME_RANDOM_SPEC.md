@@ -1,42 +1,37 @@
-# Time & Random Specification
+# Time & Random Provider Specification
 
-**문서 목적:**
-clock/uuid/random provider 래핑 규칙 MUST
-
-**범위:**
-- [TODO: 범위 정의]
-
-**버전:** v1.0
-**최종 수정:** 2025-01-23
+본 문서는 시간/UUID/랜덤 사용을 테스트 가능한 형태로 래핑하는 규칙을 정의한다.
 
 ---
 
-## 1. 핵심 원칙 (MUST)
+## 목적
 
-[TODO: MUST 규칙 정의]
-
----
-
-## 2. 금지 규칙 (MUST NOT)
-
-[TODO: MUST NOT 규칙 정의]
+- 테스트에서 시간/랜덤 값 결정론적(deterministic) 유지
+- 글로벌 clock 의존성 제거
+- timestamp/uuid 생성 시 일관성 확보
 
 ---
 
-## 3. 예시/패턴 (참조)
+## MUST 규칙
 
-[TODO: 좋은 예시 / 나쁜 예시]
-
----
-
-## 4. 체크리스트
-
-구현 시 다음을 확인하세요:
-
-- [ ] [TODO: 체크리스트]
+1. 시간·UUID·랜덤 생성은 반드시 provider 클래스를 통해 호출한다.
+   - 예: `TimeProvider.now()`, `UUIDProvider.new()`
+2. provider는 DI 컨테이너에서 단일 인스턴스로 생성한다.
+3. 테스트에서는 provider를 mock 가능해야 한다.
+4. timestamp를 문자열로 format하는 것은 Interfaces 계층에서만 허용한다.
+5. timezone은 반드시 UTC 기준으로 고정한다.
 
 ---
 
-## 5. 참고 자료
+## 금지 규칙
 
-- [TODO: 참고 문서 링크]
+1. 코드 곳곳에서 `datetime.utcnow()` 직접 호출
+2. uuid4() 직 호출
+3. 테스트에서 실제 시간 흐름을 sleep으로 조절
+4. 랜덤값을 기반으로 분기하는 로직
+
+---
+
+## 문서 간 경계
+
+- CI 파이프라인 및 deterministic 테스트 규칙은 TEST_RULES.md 참고

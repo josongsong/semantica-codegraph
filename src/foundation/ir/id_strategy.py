@@ -8,7 +8,6 @@ Implements dual ID system:
 """
 
 import hashlib
-from typing import Optional
 
 from .models import NodeKind, Span
 
@@ -60,11 +59,7 @@ def generate_stable_id(
     """
     # Construct a stable key
     # Note: file_path is intentionally excluded for stability across file moves
-    stable_key = (
-        f"{repo_id}:{kind.value}:{fqn}:"
-        f"{span.start_line}-{span.end_line}:"
-        f"{content_hash}"
-    )
+    stable_key = f"{repo_id}:{kind.value}:{fqn}:" f"{span.start_line}-{span.end_line}:" f"{content_hash}"
 
     # Hash to 16 chars for brevity
     hash_digest = hashlib.sha256(stable_key.encode()).hexdigest()[:16]
@@ -135,7 +130,7 @@ def generate_signature_id(
     owner_node_id: str,
     name: str,
     param_types: list[str],
-    return_type: Optional[str],
+    return_type: str | None,
 ) -> str:
     """
     Generate signature entity ID.
@@ -160,7 +155,7 @@ def generate_signature_id(
 def generate_signature_hash(
     name: str,
     param_types: list[str],
-    return_type: Optional[str],
+    return_type: str | None,
     is_async: bool,
     is_static: bool,
 ) -> str:
@@ -188,9 +183,7 @@ def generate_cfg_block_id(function_node_id: str, block_index: int) -> str:
 
     Format: "cfg:{function_suffix}:block:{index}"
     """
-    function_suffix = (
-        function_node_id.split(":")[-1] if ":" in function_node_id else function_node_id
-    )
+    function_suffix = function_node_id.split(":")[-1] if ":" in function_node_id else function_node_id
     return f"cfg:{function_suffix}:block:{block_index}"
 
 
@@ -200,9 +193,7 @@ def generate_cfg_id(function_node_id: str) -> str:
 
     Format: "cfg:{function_suffix}"
     """
-    function_suffix = (
-        function_node_id.split(":")[-1] if ":" in function_node_id else function_node_id
-    )
+    function_suffix = function_node_id.split(":")[-1] if ":" in function_node_id else function_node_id
     return f"cfg:{function_suffix}"
 
 
@@ -239,8 +230,6 @@ def is_builtin_type(type_str: str) -> bool:
         # Go
         "int64",
         "int32",
-        "string",
-        "bool",
         "float64",
         "interface{}",
         # Java
@@ -249,7 +238,6 @@ def is_builtin_type(type_str: str) -> bool:
         "Boolean",
         "Double",
         "Long",
-        "void",
     }
 
     # Extract base type (before brackets)

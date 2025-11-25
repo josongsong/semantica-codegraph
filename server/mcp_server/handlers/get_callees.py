@@ -1,6 +1,6 @@
 import json
 
-from core.core.mcp.services import MCPGraphService
+from src.core.mcp.services import MCPGraphService
 
 
 async def get_callees(service: MCPGraphService, arguments: dict) -> str:

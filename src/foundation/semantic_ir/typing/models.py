@@ -6,7 +6,6 @@ TypeEntity, TypeFlavor, TypeResolutionLevel
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 
 class TypeFlavor(str, Enum):
@@ -53,7 +52,7 @@ class TypeEntity:
     resolution_level: TypeResolutionLevel
 
     # [Optional] Resolution
-    resolved_target: Optional[str] = None  # Node.id (Class/Interface/TypeAlias)
+    resolved_target: str | None = None  # Node.id (Class/Interface/TypeAlias)
 
     # [Optional] Generics
     generic_param_ids: list[str] = field(default_factory=list)  # TypeEntity.id list

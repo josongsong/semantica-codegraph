@@ -1,0 +1,22 @@
+{
+  "include": [
+    "src",
+    "server",
+    "tests"
+  ],
+  "exclude": [
+    "htmlcov",
+    ".pytest_cache",
+    ".vscode",
+    "_docs",
+    "_docs_legacy",
+    "_command_doc",
+    "migrations"
+  ],
+  "typeCheckingMode": "basic",
+  "pythonVersion": "3.10",
+  "venvPath": ".",
+  "reportMissingImports": "warning",
+  "reportMissingTypeStubs": "warning",
+  "useLibraryCodeForTypes": true
+}

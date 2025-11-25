@@ -1,10 +1,10 @@
 """
-CFG (Control Flow Graph) IR
+CFG (Control Flow Graph) Layer
 
-CFGBlock, ControlFlowEdge, ControlFlowGraph, CfgIrBuilder
+Builds control flow graph from BFG (Basic Flow Graph).
 """
 
-from .builder import CfgIrBuilder
+from .builder import CfgBuilder
 from .models import (
     CFGBlockKind,
     CFGEdgeKind,
@@ -14,7 +14,7 @@ from .models import (
 )
 
 __all__ = [
-    "CfgIrBuilder",
+    "CfgBuilder",
     "CFGBlockKind",
     "CFGEdgeKind",
     "ControlFlowBlock",

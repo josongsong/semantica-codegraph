@@ -6,8 +6,7 @@ Node, Edge, Span - language-agnostic code structure.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
-
+from typing import Any
 
 # ============================================================
 # Enums
@@ -86,9 +85,7 @@ class Span:
 
     def overlaps(self, other: "Span") -> bool:
         """Check if this span overlaps with another"""
-        return not (
-            self.end_line < other.start_line or other.end_line < self.start_line
-        )
+        return not (self.end_line < other.start_line or other.end_line < self.start_line)
 
     def contains_line(self, line: int) -> bool:
         """Check if span contains the given line"""
@@ -130,26 +127,26 @@ class Node:
     language: str  # python, typescript, javascript, go, java, ...
 
     # [Optional] Identity (tracking)
-    stable_id: Optional[str] = None  # Hash-based stable ID for file movement tracking
-    content_hash: Optional[str] = None  # sha256 of node's code text
+    stable_id: str | None = None  # Hash-based stable ID for file movement tracking
+    content_hash: str | None = None  # sha256 of node's code text
 
     # [Optional] Structure
-    name: Optional[str] = None  # Symbol name (null for File/Block)
-    module_path: Optional[str] = None  # For import/name resolution
-    parent_id: Optional[str] = None  # Convenience anchor (also in CONTAINS Edge)
-    body_span: Optional[Span] = None  # Body only (excluding signature)
+    name: str | None = None  # Symbol name (null for File/Block)
+    module_path: str | None = None  # For import/name resolution
+    parent_id: str | None = None  # Convenience anchor (also in CONTAINS Edge)
+    body_span: Span | None = None  # Body only (excluding signature)
 
     # [Optional] Metadata
-    docstring: Optional[str] = None  # For LLM summary/search
-    role: Optional[str] = None  # controller, service, repo, dto, entity, util, test, ...
-    is_test_file: Optional[bool] = None
+    docstring: str | None = None  # For LLM summary/search
+    role: str | None = None  # controller, service, repo, dto, entity, util, test, ...
+    is_test_file: bool | None = None
 
     # [Optional] Type/Signature references
-    signature_id: Optional[str] = None  # For Function/Method/Lambda
-    declared_type_id: Optional[str] = None  # For Variable/Field
+    signature_id: str | None = None  # For Function/Method/Lambda
+    declared_type_id: str | None = None  # For Variable/Field
 
     # [Optional] Control flow
-    control_flow_summary: Optional[ControlFlowSummary] = None
+    control_flow_summary: ControlFlowSummary | None = None
 
     # [Optional] Language-specific extensions
     attrs: dict[str, Any] = field(default_factory=dict)
@@ -170,7 +167,7 @@ class Edge:
     target_id: str  # Callee, Referenced, Imported, etc.
 
     # [Optional] Location
-    span: Optional[Span] = None  # Where this relationship appears in code
+    span: Span | None = None  # Where this relationship appears in code
 
     # [Optional] Metadata
     attrs: dict[str, Any] = field(default_factory=dict)

@@ -6,7 +6,6 @@ CFGBlock, CFGEdge, CFGGraph
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 from ...ir.models.core import Span
 
@@ -44,7 +43,7 @@ class ControlFlowBlock:
     function_node_id: str  # Node.id (Function/Method)
 
     # [Optional] Location
-    span: Optional[Span] = None
+    span: Span | None = None
 
     # [Optional] Data Flow (for DFG)
     defined_variable_ids: list[str] = field(default_factory=list)  # Node.id (Variable/Field)

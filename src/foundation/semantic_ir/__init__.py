@@ -9,23 +9,24 @@ Phases:
 - Phase 3: DFG (Data Flow Graph)
 """
 
-from .builder import DefaultSemanticIrBuilder, SemanticIrBuilder
-from .context import (
-    SemanticIndex,
-    SemanticIrDelta,
-    SemanticIrSnapshot,
-    SignatureIndex,
-    TypeIndex,
-)
-
 # Sub-layers
-from .cfg.builder import CfgIrBuilder
+from .bfg.builder import BfgBuilder
+from .bfg.models import BasicFlowBlock, BasicFlowGraph, BFGBlockKind
+from .builder import DefaultSemanticIrBuilder, SemanticIrBuilder
+from .cfg.builder import CfgBuilder
 from .cfg.models import (
     CFGBlockKind,
     CFGEdgeKind,
     ControlFlowBlock,
     ControlFlowEdge,
     ControlFlowGraph,
+)
+from .context import (
+    SemanticIndex,
+    SemanticIrDelta,
+    SemanticIrSnapshot,
+    SignatureIndex,
+    TypeIndex,
 )
 from .signature.builder import SignatureIrBuilder
 from .signature.models import SignatureEntity, Visibility
@@ -38,7 +39,8 @@ __all__ = [
     "DefaultSemanticIrBuilder",
     "TypeIrBuilder",
     "SignatureIrBuilder",
-    "CfgIrBuilder",
+    "BfgBuilder",
+    "CfgBuilder",
     # Context
     "SemanticIrSnapshot",
     "SemanticIrDelta",
@@ -51,6 +53,9 @@ __all__ = [
     "TypeResolutionLevel",
     "SignatureEntity",
     "Visibility",
+    "BFGBlockKind",
+    "BasicFlowBlock",
+    "BasicFlowGraph",
     "CFGBlockKind",
     "CFGEdgeKind",
     "ControlFlowBlock",

@@ -1,10 +1,9 @@
 """
-IR Models - Re-export all models
+IR Models - Core structural IR models
 
-Backward compatibility layer for existing imports.
+Contains Node, Edge, Span, and IRDocument definitions.
 """
 
-# Structural IR
 from .core import (
     ControlFlowSummary,
     Edge,
@@ -13,27 +12,7 @@ from .core import (
     NodeKind,
     Span,
 )
-
-# IR Document
 from .document import IRDocument
-
-# Re-export semantic IR models for convenience
-from ...semantic_ir.typing.models import (
-    TypeEntity,
-    TypeFlavor,
-    TypeResolutionLevel,
-)
-from ...semantic_ir.signature.models import (
-    SignatureEntity,
-    Visibility,
-)
-from ...semantic_ir.cfg.models import (
-    CFGBlockKind,
-    CFGEdgeKind,
-    ControlFlowBlock,
-    ControlFlowEdge,
-    ControlFlowGraph,
-)
 
 __all__ = [
     # Structural IR
@@ -44,17 +23,4 @@ __all__ = [
     "Span",
     "ControlFlowSummary",
     "IRDocument",
-    # Type System
-    "TypeEntity",
-    "TypeFlavor",
-    "TypeResolutionLevel",
-    # Signature
-    "SignatureEntity",
-    "Visibility",
-    # CFG
-    "CFGBlockKind",
-    "CFGEdgeKind",
-    "ControlFlowBlock",
-    "ControlFlowEdge",
-    "ControlFlowGraph",
 ]

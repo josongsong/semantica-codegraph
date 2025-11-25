@@ -46,7 +46,7 @@ def process(count: int, point: DataPoint) -> DataPoint:
     )
     ir_doc = python_generator.generate(source, snapshot_id="test:001")
 
-    print(f"\n  Structural IR:")
+    print("\n  Structural IR:")
     print(f"    - Nodes: {len(ir_doc.nodes)}")
     print(f"    - Types: {len(ir_doc.types)}")
     print(f"    - Signatures: {len(ir_doc.signatures)}")
@@ -54,7 +54,7 @@ def process(count: int, point: DataPoint) -> DataPoint:
     # Build semantic IR without source_map (simplified CFG)
     semantic_snapshot, semantic_index = semantic_builder.build_full(ir_doc)
 
-    print(f"\n  Semantic IR (without source_map):")
+    print("\n  Semantic IR (without source_map):")
     print(f"    - Types: {len(semantic_snapshot.types)}")
     print(f"    - Signatures: {len(semantic_snapshot.signatures)}")
     print(f"    - CFG Graphs: {len(semantic_snapshot.cfg_graphs)}")
@@ -73,7 +73,7 @@ def process(count: int, point: DataPoint) -> DataPoint:
     assert len(semantic_snapshot.cfg_edges) == 2  # Entry->Body, Body->Exit
 
     cfg_graph = semantic_snapshot.cfg_graphs[0]
-    print(f"\n  CFG Graph:")
+    print("\n  CFG Graph:")
     print(f"    - ID: {cfg_graph.id}")
     print(f"    - Entry: {cfg_graph.entry_block_id}")
     print(f"    - Exit: {cfg_graph.exit_block_id}")
@@ -86,9 +86,11 @@ def process(count: int, point: DataPoint) -> DataPoint:
     func_node = func_nodes[0]
 
     # Verify type index
-    print(f"\n  Type Index:")
-    print(f"    - function_to_param_type_ids: {len(semantic_index.type_index.function_to_param_type_ids)}")
-    print(f"    - function_to_return_type_id: {len(semantic_index.type_index.function_to_return_type_id)}")
+    print("\n  Type Index:")
+    param_count = len(semantic_index.type_index.function_to_param_type_ids)
+    print(f"    - function_to_param_type_ids: {param_count}")
+    return_count = len(semantic_index.type_index.function_to_return_type_id)
+    print(f"    - function_to_return_type_id: {return_count}")
     print(f"    - variable_to_type_id: {len(semantic_index.type_index.variable_to_type_id)}")
 
     assert func_node.id in semantic_index.type_index.function_to_param_type_ids
@@ -98,7 +100,7 @@ def process(count: int, point: DataPoint) -> DataPoint:
     assert semantic_index.type_index.function_to_return_type_id[func_node.id] is not None
 
     # Verify signature index
-    print(f"\n  Signature Index:")
+    print("\n  Signature Index:")
     print(f"    - function_to_signature: {len(semantic_index.signature_index.function_to_signature)}")
 
     assert func_node.id in semantic_index.signature_index.function_to_signature
@@ -114,21 +116,21 @@ def process(count: int, point: DataPoint) -> DataPoint:
     assert len(signature.parameter_type_ids) == 2
     assert signature.return_type_id is not None
 
-    print(f"\n✅ Semantic IR builder test passed!")
+    print("\n✅ Semantic IR builder test passed!")
 
 
 def test_semantic_index_merge(semantic_builder):
     """Test semantic index merge functionality"""
 
-    code1 = '''
+    code1 = """
 def func1(x: int) -> int:
     return x + 1
-'''
+"""
 
-    code2 = '''
+    code2 = """
 def func2(y: str) -> str:
     return y.upper()
-'''
+"""
 
     # Generate two IR documents
     gen = PythonIRGenerator(repo_id="test-repo")
@@ -146,7 +148,7 @@ def func2(y: str) -> str:
     # Merge indexes
     merged = index1.merge(index2)
 
-    print(f"\n  Index Merge:")
+    print("\n  Index Merge:")
     print(f"    - Index1 functions: {len(index1.signature_index.function_to_signature)}")
     print(f"    - Index2 functions: {len(index2.signature_index.function_to_signature)}")
     print(f"    - Merged functions: {len(merged.signature_index.function_to_signature)}")
@@ -155,7 +157,7 @@ def func2(y: str) -> str:
     assert len(merged.signature_index.function_to_signature) == 2
     assert len(merged.type_index.function_to_param_type_ids) == 2
 
-    print(f"\n✅ Semantic index merge test passed!")
+    print("\n✅ Semantic index merge test passed!")
 
 
 def test_enhanced_cfg_with_branches_and_loops(python_generator, semantic_builder):
@@ -191,7 +193,7 @@ def calculate(n: int) -> int:
     source_map = {source.file_path: source}
     semantic_snapshot, semantic_index = semantic_builder.build_full(ir_doc, source_map)
 
-    print(f"\n  Enhanced CFG Analysis:")
+    print("\n  Enhanced CFG Analysis:")
     print(f"    - CFG Graphs: {len(semantic_snapshot.cfg_graphs)}")
     print(f"    - CFG Blocks: {len(semantic_snapshot.cfg_blocks)}")
     print(f"    - CFG Edges: {len(semantic_snapshot.cfg_edges)}")
@@ -209,29 +211,31 @@ def calculate(n: int) -> int:
     assert len(calculate_cfg.blocks) > 3  # More than Entry, Body, Exit
 
     cfg_graph = calculate_cfg
-    print(f"\n  CFG Details:")
+    print("\n  CFG Details:")
     print(f"    - Entry: {cfg_graph.entry_block_id}")
     print(f"    - Exit: {cfg_graph.exit_block_id}")
 
     # Print block kinds
     from src.foundation.semantic_ir.cfg.models import CFGBlockKind
+
     block_kinds = {}
     for block in cfg_graph.blocks:
         kind = block.kind.value
         block_kinds[kind] = block_kinds.get(kind, 0) + 1
 
-    print(f"    - Block kinds:")
+    print("    - Block kinds:")
     for kind, count in block_kinds.items():
         print(f"      - {kind}: {count}")
 
     # Print edge kinds
     from src.foundation.semantic_ir.cfg.models import CFGEdgeKind
+
     edge_kinds = {}
     for edge in cfg_graph.edges:
         kind = edge.kind.value
         edge_kinds[kind] = edge_kinds.get(kind, 0) + 1
 
-    print(f"    - Edge kinds:")
+    print("    - Edge kinds:")
     for kind, count in edge_kinds.items():
         print(f"      - {kind}: {count}")
 
@@ -250,7 +254,7 @@ def calculate(n: int) -> int:
     # Verify we have LOOP_BACK edges
     assert CFGEdgeKind.LOOP_BACK.value in edge_kinds
 
-    print(f"\n✅ Enhanced CFG test passed!")
+    print("\n✅ Enhanced CFG test passed!")
 
 
 if __name__ == "__main__":

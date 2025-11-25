@@ -134,10 +134,7 @@ def complex_function(x):
     ir_doc = generator.generate(source, snapshot_id="test:002")
 
     # Find function nodes (exclude external)
-    func_nodes = [
-        n for n in ir_doc.nodes
-        if n.kind == NodeKind.FUNCTION and not n.attrs.get("is_external")
-    ]
+    func_nodes = [n for n in ir_doc.nodes if n.kind == NodeKind.FUNCTION and not n.attrs.get("is_external")]
     assert len(func_nodes) == 1
 
     func = func_nodes[0]
@@ -150,7 +147,7 @@ def complex_function(x):
     assert cf.cyclomatic_complexity > 1  # Has if/elif/else branches
     assert cf.branch_count >= 3  # if + nested if + elif
 
-    print(f"\n✅ Control Flow Summary:")
+    print("\n✅ Control Flow Summary:")
     print(f"  - Cyclomatic Complexity: {cf.cyclomatic_complexity}")
     print(f"  - Has Loop: {cf.has_loop}")
     print(f"  - Branch Count: {cf.branch_count}")
@@ -283,10 +280,7 @@ def process_data(
     print(f"  Total signatures: {len(ir_doc.signatures)}")
 
     # Find the function
-    func_nodes = [
-        n for n in ir_doc.nodes
-        if n.kind == NodeKind.FUNCTION and n.name == "process_data"
-    ]
+    func_nodes = [n for n in ir_doc.nodes if n.kind == NodeKind.FUNCTION and n.name == "process_data"]
     assert len(func_nodes) == 1
     func = func_nodes[0]
 
@@ -307,7 +301,7 @@ def process_data(
     # Find the return type entity
     return_type = next((t for t in ir_doc.types if t.id == signature.return_type_id), None)
     assert return_type is not None
-    print(f"\n  Return type:")
+    print("\n  Return type:")
     print(f"    - raw: {return_type.raw}")
     print(f"    - flavor: {return_type.flavor.value}")
     print(f"    - resolution_level: {return_type.resolution_level.value}")
@@ -318,13 +312,14 @@ def process_data(
 
     # Find parameters
     param_nodes = [
-        n for n in ir_doc.nodes
+        n
+        for n in ir_doc.nodes
         if n.kind == NodeKind.VARIABLE
         and n.attrs.get("var_kind") == "parameter"
         and n.name in ("count", "name", "items", "point")
     ]
 
-    print(f"\n  Parameters with types:")
+    print("\n  Parameters with types:")
     for param in param_nodes:
         type_id = param.declared_type_id
         if type_id:
@@ -367,9 +362,9 @@ def process_data(
     # Should resolve to the class node
     assert param_types["point"].resolved_target is not None
 
-    print(f"\n✅ Type resolution test passed!")
-    print(f"   - BUILTIN types: int, str, list")
-    print(f"   - LOCAL type: DataPoint (resolved to class)")
+    print("\n✅ Type resolution test passed!")
+    print("   - BUILTIN types: int, str, list")
+    print("   - LOCAL type: DataPoint (resolved to class)")
     print(f"   - Signature: {signature.raw}")
 
 
