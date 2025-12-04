@@ -37,6 +37,13 @@ class TypeState:
 
     variables: Dict[str, Set[str]] = field(default_factory=dict)  # var -> possible types
     constraints: List[TypeConstraint] = field(default_factory=list)
+    
+    def copy(self) -> "TypeState":
+        """Create a deep copy of this type state"""
+        return TypeState(
+            variables={k: v.copy() for k, v in self.variables.items()},
+            constraints=self.constraints.copy()
+        )
 
 
 class FullTypeNarrowingAnalyzer:

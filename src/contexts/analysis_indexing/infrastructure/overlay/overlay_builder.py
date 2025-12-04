@@ -195,16 +195,34 @@ class OverlayIRBuilder:
         return affected
 
     def _symbol_body_changed(self, base_sym: dict, overlay_sym: dict) -> bool:
-        """Check if symbol body changed"""
+        """Check if symbol body changed using semantic hash"""
+        # Method 1: Semantic hash comparison (faster than full AST)
+        base_hash = self._compute_semantic_hash(base_sym)
+        overlay_hash = self._compute_semantic_hash(overlay_sym)
+        
+        if base_hash != overlay_hash:
+            return True
+        
+        # Method 2: Range comparison as fallback
         base_range = base_sym.get("range", {})
         overlay_range = overlay_sym.get("range", {})
-
-        # Simple heuristic: if range changed, body likely changed
-        if base_range != overlay_range:
-            return True
-
-        # TODO: More sophisticated check (AST comparison)
-        return False
+        
+        return base_range != overlay_range
+    
+    def _compute_semantic_hash(self, symbol: dict) -> str:
+        """Compute semantic hash ignoring whitespace and comments"""
+        import re
+        
+        # Get signature + body representation
+        signature = symbol.get("signature", "")
+        body_repr = symbol.get("body", "")
+        
+        # Normalize: remove whitespace, comments
+        normalized = re.sub(r'\s+', '', signature + body_repr)
+        normalized = re.sub(r'#.*$', '', normalized, flags=re.MULTILINE)
+        
+        # Hash
+        return hashlib.sha256(normalized.encode()).hexdigest()[:16]
 
     def _ir_document_to_dict(self, ir_doc) -> dict:
         """Convert IRDocument object to dict"""
@@ -308,15 +326,16 @@ class InvalidationComputer:
 
     async def _find_callers(self, symbol_id: str, repo_id: str) -> Set[str]:
         """Find symbols that call this symbol"""
-        # Query call graph
-        query = f"""
-        MATCH (caller:Symbol)-[:CALLS]->(callee:Symbol {{id: '{symbol_id}'}})
-        WHERE caller.repo_id = '{repo_id}'
+        # Parameterized query to prevent SQL injection
+        query = """
+        MATCH (caller:Symbol)-[:CALLS]->(callee:Symbol {id: $symbol_id})
+        WHERE caller.repo_id = $repo_id
         RETURN caller.id as caller_id
         """
+        params = {"symbol_id": symbol_id, "repo_id": repo_id}
 
         try:
-            results = await self.graph_store.execute_query(query)
+            results = await self.graph_store.execute_query(query, params)
             return {r["caller_id"] for r in results}
         except Exception as e:
             logger.error("failed_to_find_callers", symbol_id=symbol_id, error=str(e))
@@ -324,14 +343,15 @@ class InvalidationComputer:
 
     async def _find_importers(self, symbol_id: str, repo_id: str) -> Set[str]:
         """Find files that import this symbol"""
-        query = f"""
-        MATCH (file:File)-[:IMPORTS]->(symbol:Symbol {{id: '{symbol_id}'}})
-        WHERE file.repo_id = '{repo_id}'
+        query = """
+        MATCH (file:File)-[:IMPORTS]->(symbol:Symbol {id: $symbol_id})
+        WHERE file.repo_id = $repo_id
         RETURN file.path as file_path
         """
+        params = {"symbol_id": symbol_id, "repo_id": repo_id}
 
         try:
-            results = await self.graph_store.execute_query(query)
+            results = await self.graph_store.execute_query(query, params)
             return {r["file_path"] for r in results}
         except Exception as e:
             logger.error("failed_to_find_importers", symbol_id=symbol_id, error=str(e))
@@ -339,13 +359,14 @@ class InvalidationComputer:
 
     async def _get_symbol_file(self, symbol_id: str, repo_id: str) -> Optional[str]:
         """Get file path for symbol"""
-        query = f"""
-        MATCH (symbol:Symbol {{id: '{symbol_id}', repo_id: '{repo_id}'}})
+        query = """
+        MATCH (symbol:Symbol {id: $symbol_id, repo_id: $repo_id})
         RETURN symbol.file as file_path
         """
+        params = {"symbol_id": symbol_id, "repo_id": repo_id}
 
         try:
-            results = await self.graph_store.execute_query(query)
+            results = await self.graph_store.execute_query(query, params)
             if results:
                 return results[0]["file_path"]
         except Exception as e:

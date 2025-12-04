@@ -233,8 +233,16 @@ class SemanticAnnotator:
         A region depends on another if:
         - It calls symbols in that region
         - It references symbols in that region
+        
+        O(N) implementation with symbol index
         """
-        # For each region, find dependencies
+        # Build symbol → region index (O(N))
+        symbol_to_region: Dict[str, SemanticRegion] = {}
+        for region in collection.regions:
+            for symbol in region.symbols:
+                symbol_to_region[symbol] = region
+        
+        # For each region, find dependencies (O(N))
         for region in collection.regions:
             # Get IR for this file
             ir_doc = self._ir_docs.get(region.file_path)
@@ -251,21 +259,19 @@ class SemanticAnnotator:
                 
                 # If source is in this region
                 if source in region.symbols:
-                    # Find which region contains target
-                    for other_region in collection.regions:
-                        if other_region.region_id == region.region_id:
-                            continue
+                    # O(1) lookup!
+                    other_region = symbol_to_region.get(target)
+                    
+                    if other_region and other_region.region_id != region.region_id:
+                        # Add dependency
+                        region.add_dependency(other_region.region_id)
+                        other_region.depended_by.add(region.region_id)
                         
-                        if target in other_region.symbols:
-                            # Add dependency
-                            region.add_dependency(other_region.region_id)
-                            other_region.depended_by.add(region.region_id)
-                            
-                            logger.debug(
-                                "dependency_found",
-                                from_region=region.region_id,
-                                to_region=other_region.region_id,
-                            )
+                        logger.debug(
+                            "dependency_found",
+                            from_region=region.region_id,
+                            to_region=other_region.region_id,
+                        )
         
         # Log dependency statistics
         total_deps = sum(len(r.depends_on) for r in collection.regions)

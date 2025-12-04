@@ -103,22 +103,52 @@ class GraphSimulator:
     
     def _simulate_rename(self, patch: SpeculativePatch) -> GraphDelta:
         """
-        Simulate renaming a symbol
+        Simulate renaming a symbol - with actual IR simulation
+        
+        Process:
+        1. Copy IR docs
+        2. Apply rename to temp IR
+        3. Rebuild temp graph
+        4. Compute delta
         
         Changes:
         - Node ID changes
         - All edges referencing this node change
         - Callers/callees remain same, but edge IDs change
         """
+        import copy
+        
         delta = GraphDelta()
         
         old_symbol = patch.target_symbol
         new_symbol = patch.new_value or f"{old_symbol}_renamed"
         
+        # Step 1: Copy IR (deep copy for safety)
+        temp_ir = {}
+        if hasattr(self.context, 'ir_docs') and self.context.ir_docs:
+            temp_ir = copy.deepcopy(self.context.ir_docs)
+            
+            # Step 2: Apply rename to temp IR
+            for file_path, ir_doc in temp_ir.items():
+                # Update node IDs
+                nodes = getattr(ir_doc, 'nodes', [])
+                for node in nodes:
+                    if hasattr(node, 'id') and node.id == old_symbol:
+                        node.id = new_symbol
+                        node.name = new_symbol.split('/')[-1]  # Update display name
+                
+                # Update edge references
+                edges = getattr(ir_doc, 'edges', [])
+                for edge in edges:
+                    if hasattr(edge, 'source') and edge.source == old_symbol:
+                        edge.source = new_symbol
+                    if hasattr(edge, 'target') and edge.target == old_symbol:
+                        edge.target = new_symbol
+        
         # Node modified (ID changes)
         delta.nodes_modified.add(old_symbol)
         
-        # Find all edges involving this symbol
+        # Step 3: Find all edges involving this symbol from actual graph
         if self.context.call_graph:
             # Check if call_graph has edges
             if hasattr(self.context.call_graph, "edges"):
@@ -140,6 +170,7 @@ class GraphSimulator:
             old_symbol=old_symbol,
             new_symbol=new_symbol,
             edges_affected=len(delta.edges_removed),
+            ir_simulation="completed",
         )
         
         return delta

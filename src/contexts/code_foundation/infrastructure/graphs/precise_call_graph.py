@@ -94,14 +94,93 @@ class PreciseCallGraphBuilder:
         """Process single symbol (function/method)"""
         symbol_id = symbol.get("id", "")
         calls = symbol.get("calls", [])
+        body = symbol.get("body", "")
 
-        # Get type state for this symbol
-        # In real implementation, we'd run type narrowing on the function body
-        # For now, use initial types
-        type_state = TypeState(variables=initial_types.copy())
+        # Run actual type narrowing on function body
+        type_state = self._analyze_body_with_narrowing(body, initial_types)
 
         for call in calls:
-            self._process_call(symbol_id, call, type_state)
+            # Get type state at call location
+            call_line = call.get("location", (0, 0))[0]
+            type_state_at_call = self._get_type_state_at_line(type_state, call_line)
+            self._process_call(symbol_id, call, type_state_at_call)
+    
+    def _analyze_body_with_narrowing(
+        self, 
+        body: str, 
+        initial_types: Dict[str, Set[str]]
+    ) -> Dict[int, TypeState]:
+        """
+        Analyze function body with type narrowing
+        Returns: {line_number: TypeState}
+        """
+        if not body:
+            return {0: TypeState(variables=initial_types.copy())}
+        
+        # Parse body to extract control flow and type guards
+        type_states = {0: TypeState(variables=initial_types.copy())}
+        current_state = TypeState(variables=initial_types.copy())
+        
+        # Simple line-by-line analysis
+        for line_num, line in enumerate(body.split('\n'), start=1):
+            line = line.strip()
+            
+            # Detect isinstance checks
+            if 'isinstance(' in line:
+                var, typ = self._parse_isinstance(line)
+                if var and typ:
+                    # Narrow type
+                    narrowed_state = current_state.copy()
+                    narrowed_state.variables[var] = {typ}
+                    type_states[line_num] = narrowed_state
+                    current_state = narrowed_state
+                    continue
+            
+            # Detect None checks
+            if ' is not None' in line or ' is None' in line:
+                var = self._parse_none_check(line)
+                if var:
+                    narrowed_state = current_state.copy()
+                    if ' is not None' in line:
+                        # Remove None type
+                        if var in narrowed_state.variables:
+                            narrowed_state.variables[var].discard('None')
+                    type_states[line_num] = narrowed_state
+                    current_state = narrowed_state
+                    continue
+            
+            type_states[line_num] = current_state
+        
+        return type_states
+    
+    def _parse_isinstance(self, line: str) -> tuple[Optional[str], Optional[str]]:
+        """Parse isinstance(var, Type) → (var, Type)"""
+        import re
+        match = re.search(r'isinstance\(\s*(\w+)\s*,\s*(\w+)\s*\)', line)
+        if match:
+            return match.group(1), match.group(2)
+        return None, None
+    
+    def _parse_none_check(self, line: str) -> Optional[str]:
+        """Parse 'var is None' → var"""
+        import re
+        match = re.search(r'(\w+)\s+is\s+(?:not\s+)?None', line)
+        if match:
+            return match.group(1)
+        return None
+    
+    def _get_type_state_at_line(
+        self, 
+        type_states: Dict[int, TypeState], 
+        line: int
+    ) -> TypeState:
+        """Get type state at specific line"""
+        # Find closest line <= target line
+        valid_lines = [l for l in type_states.keys() if l <= line]
+        if valid_lines:
+            closest_line = max(valid_lines)
+            return type_states[closest_line]
+        return type_states.get(0, TypeState(variables={}))
 
     def _process_call(self, caller_id: str, call: dict, type_state: TypeState):
         """Process single call with type information"""
