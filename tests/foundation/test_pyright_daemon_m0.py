@@ -26,6 +26,7 @@ def temp_project():
 
     # Create pyrightconfig.json to help Pyright recognize the workspace
     import json
+
     config = {
         "include": ["**/*.py"],
         "typeCheckingMode": "basic",
@@ -220,4 +221,4 @@ def func5(): pass
     # Should be very fast (< 100ms for 5000 lookups)
     assert elapsed < 0.1, f"Lookup too slow: {elapsed:.3f}s for 5000 lookups"
 
-    print(f"✓ Performed 5000 lookups in {elapsed*1000:.2f}ms")
+    print(f"✓ Performed 5000 lookups in {elapsed * 1000:.2f}ms")

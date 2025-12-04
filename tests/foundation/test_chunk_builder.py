@@ -157,9 +157,9 @@ class MyClass:
             print(f"    - {child.kind}: {child.fqn}")
 
             # Verify back-reference
-            assert (
-                child.parent_id == chunk.chunk_id
-            ), f"Child {child.chunk_id} doesn't reference parent {chunk.chunk_id}"
+            assert child.parent_id == chunk.chunk_id, (
+                f"Child {child.chunk_id} doesn't reference parent {chunk.chunk_id}"
+            )
 
     print("\n✅ Parent-child link test passed!")
 

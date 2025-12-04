@@ -78,10 +78,7 @@ class TestConsensusEngine:
     def test_consensus_cap(self, engine):
         """Test consensus factor capping."""
         # Create many strategies to exceed max_factor
-        hits = {
-            f"strategy_{i}": [RankedHit(chunk_id="chunk1", strategy=f"strategy_{i}", rank=0)]
-            for i in range(20)
-        }
+        hits = {f"strategy_{i}": [RankedHit(chunk_id="chunk1", strategy=f"strategy_{i}", rank=0)] for i in range(20)}
 
         stats = engine.calculate_consensus_stats("chunk1", hits)
 

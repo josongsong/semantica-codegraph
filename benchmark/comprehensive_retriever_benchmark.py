@@ -26,6 +26,7 @@ from typing import Any
 
 # Reuse infrastructure from real_retriever_benchmark
 import sys
+
 sys.path.insert(0, str(Path(__file__).parent))
 
 from real_retriever_benchmark import (
@@ -68,7 +69,6 @@ COMPREHENSIVE_QUERIES = [
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     # Priority 1: Engine-Based Essentials (20 queries)
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
     # A. Symbol/Definition/Structure Navigation
     ScenarioBenchmarkQuery(
         scenario_id="1-1",
@@ -115,7 +115,6 @@ COMPREHENSIVE_QUERIES = [
         k=5,
         required_axes=["AST", "Graph"],
     ),
-
     # B. Call Relationships & Dependencies
     ScenarioBenchmarkQuery(
         scenario_id="1-6",
@@ -144,7 +143,6 @@ COMPREHENSIVE_QUERIES = [
         k=10,
         required_axes=["Graph", "Symbol Index", "AST"],
     ),
-
     # C. Pipeline / E2E Flows
     ScenarioBenchmarkQuery(
         scenario_id="1-9",
@@ -182,7 +180,6 @@ COMPREHENSIVE_QUERIES = [
         k=10,
         required_axes=["Runtime Info"],
     ),
-
     # D. API / DTO
     ScenarioBenchmarkQuery(
         scenario_id="1-13",
@@ -211,7 +208,6 @@ COMPREHENSIVE_QUERIES = [
         k=15,
         required_axes=["Graph", "Symbol Index"],
     ),
-
     # E. Config / Environment / Service Calls
     ScenarioBenchmarkQuery(
         scenario_id="1-16",
@@ -258,11 +254,9 @@ COMPREHENSIVE_QUERIES = [
         k=10,
         required_axes=["Runtime Info", "Domain Metadata"],
     ),
-
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     # Priority 2: Production Essentials (20 queries)
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
     # A. Structure / Refactoring / Quality
     ScenarioBenchmarkQuery(
         scenario_id="2-1",
@@ -318,7 +312,6 @@ COMPREHENSIVE_QUERIES = [
         k=10,
         required_axes=["Runtime Info"],
     ),
-
     # B. Parsing / Caching / Events / Batch
     ScenarioBenchmarkQuery(
         scenario_id="2-7",
@@ -365,7 +358,6 @@ COMPREHENSIVE_QUERIES = [
         k=10,
         required_axes=["Runtime Info"],
     ),
-
     # C. CLI / gRPC / Multi-version DTO
     ScenarioBenchmarkQuery(
         scenario_id="2-12",
@@ -394,7 +386,6 @@ COMPREHENSIVE_QUERIES = [
         k=10,
         required_axes=["Symbol Index", "AST"],
     ),
-
     # D. Security / Env / Integrity / Debugging
     ScenarioBenchmarkQuery(
         scenario_id="2-15",
@@ -450,11 +441,9 @@ COMPREHENSIVE_QUERIES = [
         k=10,
         required_axes=["Graph", "AST"],
     ),
-
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     # Priority 3: RepoMap (1 query)
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
     ScenarioBenchmarkQuery(
         scenario_id="2-21",
         scenario_name="RepoMap / 프로젝트 구조 요약",
@@ -569,7 +558,7 @@ async def run_comprehensive_benchmark(src_dir: Path):
 
     for query_spec in priority1_queries:
         logger.info(f"[{query_spec.scenario_id}] {query_spec.scenario_name}")
-        logger.info(f"  Query: \"{query_spec.query}\"")
+        logger.info(f'  Query: "{query_spec.query}"')
         logger.info(f"  Intent: {query_spec.intent}, K={query_spec.k}")
         logger.info(f"  Required axes: {', '.join(query_spec.required_axes)}")
 
@@ -599,7 +588,7 @@ async def run_comprehensive_benchmark(src_dir: Path):
 
     for query_spec in priority2_queries:
         logger.info(f"[{query_spec.scenario_id}] {query_spec.scenario_name}")
-        logger.info(f"  Query: \"{query_spec.query}\"")
+        logger.info(f'  Query: "{query_spec.query}"')
 
         for version_name, fusion_impl in versions.items():
             result = await run_single_scenario_benchmark(
@@ -612,11 +601,7 @@ async def run_comprehensive_benchmark(src_dir: Path):
             )
             all_results.append((query_spec.scenario_id, result))
 
-            logger.info(
-                f"  {version_name}: "
-                f"P@{query_spec.k}={result.precision_at_k:.2f}, "
-                f"NDCG={result.ndcg:.3f}"
-            )
+            logger.info(f"  {version_name}: P@{query_spec.k}={result.precision_at_k:.2f}, NDCG={result.ndcg:.3f}")
 
         logger.info("")
 
@@ -626,7 +611,7 @@ async def run_comprehensive_benchmark(src_dir: Path):
 
     for query_spec in priority3_queries:
         logger.info(f"[{query_spec.scenario_id}] {query_spec.scenario_name}")
-        logger.info(f"  Query: \"{query_spec.query}\"")
+        logger.info(f'  Query: "{query_spec.query}"')
 
         for version_name, fusion_impl in versions.items():
             result = await run_single_scenario_benchmark(
@@ -639,11 +624,7 @@ async def run_comprehensive_benchmark(src_dir: Path):
             )
             all_results.append((query_spec.scenario_id, result))
 
-            logger.info(
-                f"  {version_name}: "
-                f"P@{query_spec.k}={result.precision_at_k:.2f}, "
-                f"NDCG={result.ndcg:.3f}"
-            )
+            logger.info(f"  {version_name}: P@{query_spec.k}={result.precision_at_k:.2f}, NDCG={result.ndcg:.3f}")
 
         logger.info("")
 

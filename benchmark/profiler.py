@@ -73,14 +73,9 @@ def classify_phase_layer(phase_name: str) -> str:
         return "dfg"
     if "chunk" in name_lower:
         return "chunk"
-    if any(
-        kw in name_lower for kw in ["lexical", "vector", "symbol_index", "zoekt", "qdrant"]
-    ):
+    if any(kw in name_lower for kw in ["lexical", "vector", "symbol_index", "zoekt", "qdrant"]):
         return "index"
-    if any(
-        kw in name_lower
-        for kw in ["retriev", "scope", "fusion", "rerank", "search", "query"]
-    ):
+    if any(kw in name_lower for kw in ["retriev", "scope", "fusion", "rerank", "search", "query"]):
         return "retriever"
 
     # Default
@@ -401,9 +396,7 @@ class IndexingProfiler:
         Returns:
             List of FileMetrics sorted by total time
         """
-        return sorted(self._file_metrics.values(), key=lambda f: f.total_time_ms, reverse=True)[
-            :limit
-        ]
+        return sorted(self._file_metrics.values(), key=lambda f: f.total_time_ms, reverse=True)[:limit]
 
     def get_files_by_symbols(self, limit: int = 10) -> list[FileMetrics]:
         """
@@ -460,15 +453,11 @@ class IndexingProfiler:
 
             layer_stats[layer]["total_time_ms"] += phase.duration_ms
             layer_stats[layer]["total_memory_mb"] += phase.memory_delta_mb
-            layer_stats[layer]["peak_memory_mb"] = max(
-                layer_stats[layer]["peak_memory_mb"], phase.peak_memory
-            )
+            layer_stats[layer]["peak_memory_mb"] = max(layer_stats[layer]["peak_memory_mb"], phase.peak_memory)
             layer_stats[layer]["phase_count"] += 1
 
         # Calculate percentages
         for layer, stats in layer_stats.items():
-            stats["percentage"] = (
-                (stats["total_time_ms"] / total_duration_ms * 100) if total_duration_ms > 0 else 0
-            )
+            stats["percentage"] = (stats["total_time_ms"] / total_duration_ms * 100) if total_duration_ms > 0 else 0
 
         return layer_stats

@@ -315,9 +315,7 @@ class TestErrorHandling:
         mock_client, _ = mock_httpx_client
 
         # Mock HTTP error
-        mock_client.get.side_effect = httpx.HTTPStatusError(
-            "Server error", request=MagicMock(), response=MagicMock()
-        )
+        mock_client.get.side_effect = httpx.HTTPStatusError("Server error", request=MagicMock(), response=MagicMock())
 
         adapter = ZoektAdapter(host="localhost", port=7205)
         adapter.client = mock_client

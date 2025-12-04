@@ -9,7 +9,6 @@ Test scope:
 - Multi-file snapshots
 """
 
-
 import pytest
 
 from src.foundation.ir.external_analyzers import (
@@ -19,6 +18,7 @@ from src.foundation.ir.external_analyzers import (
 )
 
 # M1: JSON Serialization Tests
+
 
 def test_span_to_dict():
     """Test Span to_dict() serialization"""
@@ -199,6 +199,7 @@ def test_snapshot_roundtrip():
 
 # M1: SemanticSnapshotStore Tests (require PostgreSQL)
 
+
 @pytest.mark.asyncio
 @pytest.mark.skip(reason="Requires PostgreSQL setup")
 async def test_snapshot_store_save_load():
@@ -280,6 +281,7 @@ async def test_snapshot_store_list():
 
 
 # Edge cases
+
 
 def test_snapshot_empty_typing_info():
     """Test snapshot with no typing info"""

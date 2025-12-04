@@ -96,9 +96,7 @@ class TestRetrieverV3Integration:
         """Test complete pipeline with symbol query."""
         query = "login function"
 
-        results, intent = service.retrieve(
-            query=query, hits_by_strategy=sample_search_hits, enable_cache=False
-        )
+        results, intent = service.retrieve(query=query, hits_by_strategy=sample_search_hits, enable_cache=False)
 
         # Should classify as symbol intent
         assert intent.symbol > 0.2
@@ -121,9 +119,7 @@ class TestRetrieverV3Integration:
         """Test complete pipeline with concept query."""
         query = "how does authentication work?"
 
-        results, intent = service.retrieve(
-            query=query, hits_by_strategy=sample_search_hits, enable_cache=False
-        )
+        results, intent = service.retrieve(query=query, hits_by_strategy=sample_search_hits, enable_cache=False)
 
         # Should classify as concept intent
         assert intent.concept > 0.3
@@ -139,9 +135,7 @@ class TestRetrieverV3Integration:
         """Test complete pipeline with flow query."""
         query = "trace call from login to database"
 
-        results, intent = service.retrieve(
-            query=query, hits_by_strategy=sample_search_hits, enable_cache=False
-        )
+        results, intent = service.retrieve(query=query, hits_by_strategy=sample_search_hits, enable_cache=False)
 
         # Should classify as flow intent
         assert intent.flow > 0.2
@@ -154,9 +148,7 @@ class TestRetrieverV3Integration:
         """Test that consensus boosting works correctly."""
         query = "authentication"
 
-        results, _ = service.retrieve(
-            query=query, hits_by_strategy=sample_search_hits, enable_cache=False
-        )
+        results, _ = service.retrieve(query=query, hits_by_strategy=sample_search_hits, enable_cache=False)
 
         # chunk1 appears in 4 strategies, others in fewer
         chunk1_result = next(r for r in results if r.chunk_id == "chunk1")
@@ -169,9 +161,7 @@ class TestRetrieverV3Integration:
         """Test that feature vectors are correctly generated."""
         query = "login"
 
-        results, _ = service.retrieve(
-            query=query, hits_by_strategy=sample_search_hits, enable_cache=False
-        )
+        results, _ = service.retrieve(query=query, hits_by_strategy=sample_search_hits, enable_cache=False)
 
         # Check first result
         result = results[0]
@@ -203,9 +193,7 @@ class TestRetrieverV3Integration:
         """Test that explainability is generated."""
         query = "login function"
 
-        results, _ = service.retrieve(
-            query=query, hits_by_strategy=sample_search_hits, enable_cache=False
-        )
+        results, _ = service.retrieve(query=query, hits_by_strategy=sample_search_hits, enable_cache=False)
 
         # Check explanation
         result = results[0]
@@ -218,9 +206,7 @@ class TestRetrieverV3Integration:
         """Test LTR feature vector extraction."""
         query = "authentication"
 
-        results, _ = service.retrieve(
-            query=query, hits_by_strategy=sample_search_hits, enable_cache=False
-        )
+        results, _ = service.retrieve(query=query, hits_by_strategy=sample_search_hits, enable_cache=False)
 
         # Extract feature vectors
         chunk_ids, feature_arrays = service.get_feature_vectors(results)
@@ -304,9 +290,7 @@ class TestRetrieverV3Integration:
         """Test that results are ranked by final score."""
         query = "authentication"
 
-        results, _ = service.retrieve(
-            query=query, hits_by_strategy=sample_search_hits, enable_cache=False
-        )
+        results, _ = service.retrieve(query=query, hits_by_strategy=sample_search_hits, enable_cache=False)
 
         # Results should be sorted by final_score descending
         for i in range(len(results) - 1):

@@ -124,7 +124,7 @@ def test_role_mapping_single_source():
 
     print("\n  Graph-First Role Mapping:")
     print(f"  {'Role':<15} {'GraphNodeKind':<20} {'ChunkKind':<20}")
-    print(f"  {'-'*60}")
+    print(f"  {'-' * 60}")
 
     for role, expected_graph_kind in test_roles:
         # GraphBuilder: role → GraphNodeKind

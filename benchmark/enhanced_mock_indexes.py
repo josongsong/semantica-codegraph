@@ -341,7 +341,7 @@ class EnhancedMockLexicalIndex:
                         first_occurrence = content_lower.find(term)
                         if first_occurrence != -1:
                             position_boost = 1.0 - (first_occurrence / len(content_lower))
-                            tf_idf *= (1.0 + position_boost * 0.5)
+                            tf_idf *= 1.0 + position_boost * 0.5
 
                         score += tf_idf
 

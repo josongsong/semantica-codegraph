@@ -478,7 +478,9 @@ class AgentScenarioBenchmark:
         logger.info(f"Starting Agent Scenario Benchmark: {len(self.scenarios)} scenarios")
 
         results = []
-        category_metrics = defaultdict(lambda: {"total": 0, "passed": 0, "latencies": [], "precisions": [], "recalls": [], "mrrs": []})
+        category_metrics = defaultdict(
+            lambda: {"total": 0, "passed": 0, "latencies": [], "precisions": [], "recalls": [], "mrrs": []}
+        )
 
         for i, scenario in enumerate(self.scenarios, 1):
             logger.info(f"[{i}/{len(self.scenarios)}] Testing: {scenario.scenario_id} - {scenario.user_query[:50]}...")
@@ -546,10 +548,10 @@ class AgentScenarioBenchmark:
         # Save report
         self._save_report(report)
 
-        logger.info(f"\n{'='*80}")
+        logger.info(f"\n{'=' * 80}")
         logger.info(f"Benchmark Complete!")
-        logger.info(f"{'='*80}")
-        logger.info(f"Overall: {passed}/{total} passed ({passed/total*100:.1f}%)")
+        logger.info(f"{'=' * 80}")
+        logger.info(f"Overall: {passed}/{total} passed ({passed / total * 100:.1f}%)")
         logger.info(f"Avg Latency: {avg_latency:.0f}ms")
         logger.info(f"Avg Precision: {avg_precision:.3f}")
         logger.info(f"Avg Recall: {avg_recall:.3f}")
@@ -594,9 +596,7 @@ class AgentScenarioBenchmark:
 
             # Success criteria
             success = (
-                latency_ms <= scenario.max_latency_ms
-                and precision >= scenario.min_relevance
-                and relevant_count > 0
+                latency_ms <= scenario.max_latency_ms and precision >= scenario.min_relevance and relevant_count > 0
             )
 
             return ScenarioResult(
@@ -631,9 +631,7 @@ class AgentScenarioBenchmark:
                 error=str(e),
             )
 
-    def _generate_recommendations(
-        self, results: list[ScenarioResult], by_category: dict
-    ) -> list[str]:
+    def _generate_recommendations(self, results: list[ScenarioResult], by_category: dict) -> list[str]:
         """Generate recommendations based on results."""
         recommendations = []
 
@@ -694,7 +692,9 @@ class AgentScenarioBenchmark:
 
             f.write(f"Overall Results:\n")
             f.write(f"  Total Scenarios: {report.total_scenarios}\n")
-            f.write(f"  Passed: {report.passed_scenarios} ({report.passed_scenarios/report.total_scenarios*100:.1f}%)\n")
+            f.write(
+                f"  Passed: {report.passed_scenarios} ({report.passed_scenarios / report.total_scenarios * 100:.1f}%)\n"
+            )
             f.write(f"  Failed: {report.failed_scenarios}\n\n")
 
             f.write(f"Metrics:\n")
@@ -764,8 +764,10 @@ async def main():
     print("\n" + "=" * 80)
     print("BENCHMARK SUMMARY")
     print("=" * 80)
-    print(f"\n📊 Overall: {report.passed_scenarios}/{report.total_scenarios} passed "
-          f"({report.passed_scenarios/report.total_scenarios*100:.1f}%)")
+    print(
+        f"\n📊 Overall: {report.passed_scenarios}/{report.total_scenarios} passed "
+        f"({report.passed_scenarios / report.total_scenarios * 100:.1f}%)"
+    )
     print(f"⏱️  Avg Latency: {report.avg_latency_ms:.0f}ms")
     print(f"🎯 Avg Precision: {report.avg_precision:.3f}")
     print(f"📈 Avg MRR: {report.avg_mrr:.3f}")
@@ -773,8 +775,10 @@ async def main():
     print(f"\n📁 By Category:")
     for cat, metrics in sorted(report.by_category.items()):
         status = "✅" if metrics["pass_rate"] >= 0.7 else "⚠️"
-        print(f"  {status} {cat:25s}: {metrics['pass_rate']:>6.1%} pass, "
-              f"{metrics['avg_latency_ms']:>6.0f}ms, precision {metrics['avg_precision']:.3f}")
+        print(
+            f"  {status} {cat:25s}: {metrics['pass_rate']:>6.1%} pass, "
+            f"{metrics['avg_latency_ms']:>6.0f}ms, precision {metrics['avg_precision']:.3f}"
+        )
 
     print(f"\n💡 Recommendations:")
     for rec in report.recommendations:

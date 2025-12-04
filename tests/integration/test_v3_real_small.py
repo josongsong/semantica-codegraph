@@ -13,7 +13,6 @@ Phase 1 Scope:
 - Duration: ~5-10 seconds per test
 """
 
-
 import pytest
 
 from src.retriever.v3.models import FusedResultV3
@@ -98,22 +97,23 @@ class TestV3IntegrationSmallScale:
 
         # Validate flow intent
         intent = results[0].intent_prob
-        assert intent.dominant_intent() == query_spec["expected_intent"], \
+        assert intent.dominant_intent() == query_spec["expected_intent"], (
             f"Expected flow intent, got {intent.dominant_intent()}"
+        )
 
         # Validate flow intent boosting applied (P1 improvement)
         if intent.flow > 0.2:
             # Graph weight should be boosted
             weights = results[0].weights
-            assert weights.graph > 0.22, \
-                f"Expected graph weight > 0.22 with flow boosting, got {weights.graph}"
+            assert weights.graph > 0.22, f"Expected graph weight > 0.22 with flow boosting, got {weights.graph}"
 
         # Validate graph strategy contributed
         top_result = results[0]
-        assert "graph" in top_result.strategies, \
-            f"Expected graph strategy in top result, got {top_result.strategies}"
+        assert "graph" in top_result.strategies, f"Expected graph strategy in top result, got {top_result.strategies}"
 
-        print(f"✅ Query 2 passed: {len(results)} results, intent={intent.dominant_intent()}, graph_weight={results[0].weights.graph:.3f}")
+        print(
+            f"✅ Query 2 passed: {len(results)} results, intent={intent.dominant_intent()}, graph_weight={results[0].weights.graph:.3f}"
+        )
 
     def test_query_3_code_fusion_implementation(
         self,
@@ -141,8 +141,7 @@ class TestV3IntegrationSmallScale:
 
         # Validate FusionEngineV3 is in top results
         top_symbols = [r.chunk.symbol_id for r in results[:5] if r.chunk.symbol_id]
-        assert any("FusionEngineV3" in s for s in top_symbols), \
-            f"Expected FusionEngineV3 in top results: {top_symbols}"
+        assert any("FusionEngineV3" in s for s in top_symbols), f"Expected FusionEngineV3 in top results: {top_symbols}"
 
         print(f"✅ Query 3 passed: {len(results)} results, intent={intent.dominant_intent()}")
 
@@ -172,8 +171,9 @@ class TestV3IntegrationSmallScale:
 
         # Validate vector strategy contributes (semantic similarity)
         top_result = results[0]
-        assert "vector" in top_result.strategies, \
+        assert "vector" in top_result.strategies, (
             f"Expected vector strategy for concept query, got {top_result.strategies}"
+        )
 
         print(f"✅ Query 4 passed: {len(results)} results, intent={intent.dominant_intent()}")
 
@@ -231,10 +231,11 @@ class TestV3IntegrationSmallScale:
         # Validate symbol intent boosting applied (P1 improvement)
         if intent.symbol > 0.3:
             weights = results[0].weights
-            assert weights.sym > 0.25, \
-                f"Expected symbol weight > 0.25 with symbol boosting, got {weights.sym}"
+            assert weights.sym > 0.25, f"Expected symbol weight > 0.25 with symbol boosting, got {weights.sym}"
 
-        print(f"✅ Query 6 passed: {len(results)} results, intent={intent.dominant_intent()}, symbol_weight={results[0].weights.sym:.3f}")
+        print(
+            f"✅ Query 6 passed: {len(results)} results, intent={intent.dominant_intent()}, symbol_weight={results[0].weights.sym:.3f}"
+        )
 
     def test_query_7_config_dataclass(
         self,
@@ -259,8 +260,9 @@ class TestV3IntegrationSmallScale:
 
         # Top result should be exact class definition
         top_result = results[0]
-        assert "RetrieverV3Config" in (top_result.chunk.symbol_id or ""), \
+        assert "RetrieverV3Config" in (top_result.chunk.symbol_id or ""), (
             f"Expected RetrieverV3Config in top result, got {top_result.chunk.symbol_id}"
+        )
 
         print(f"✅ Query 7 passed: {len(results)} results")
 
@@ -287,8 +289,7 @@ class TestV3IntegrationSmallScale:
 
         # Validate top result
         top_symbols = [r.chunk.symbol_id for r in results[:3] if r.chunk.symbol_id]
-        assert any("FusedResultV3" in s for s in top_symbols), \
-            f"Expected FusedResultV3 in top results: {top_symbols}"
+        assert any("FusedResultV3" in s for s in top_symbols), f"Expected FusedResultV3 in top results: {top_symbols}"
 
         print(f"✅ Query 8 passed: {len(results)} results")
 
@@ -315,10 +316,8 @@ class TestV3IntegrationSmallScale:
 
         # Validate feature vectors are populated in results
         for result in results[:3]:
-            assert result.feature_vector is not None, \
-                "Expected feature vectors to be generated"
-            assert len(result.feature_vector.features) > 0, \
-                "Expected non-empty feature vector"
+            assert result.feature_vector is not None, "Expected feature vectors to be generated"
+            assert len(result.feature_vector.features) > 0, "Expected non-empty feature vector"
 
         print(f"✅ Query 9 passed: {len(results)} results with feature vectors")
 
@@ -349,8 +348,7 @@ class TestV3IntegrationSmallScale:
         weight_sum = weights.vec + weights.lex + weights.sym + weights.graph
 
         # Weights should sum to approximately 1.0
-        assert 0.95 <= weight_sum <= 1.05, \
-            f"Expected weight sum ~1.0, got {weight_sum:.3f}"
+        assert 0.95 <= weight_sum <= 1.05, f"Expected weight sum ~1.0, got {weight_sum:.3f}"
 
         print(f"✅ Query 10 passed: {len(results)} results, weight_sum={weight_sum:.3f}")
 
@@ -412,8 +410,9 @@ class TestV3IntegrationSmallScale:
 
         # Check that consensus boost was applied
         for result in consensus_results:
-            assert result.consensus.boost_factor >= 1.15, \
+            assert result.consensus.boost_factor >= 1.15, (
                 f"Expected consensus boost >= 1.15, got {result.consensus.boost_factor}"
+            )
 
         print(f"✅ Consensus boosting test passed: {len(consensus_results)} results with boost >= 1.15")
 
@@ -439,12 +438,14 @@ class TestV3IntegrationSmallScale:
 
         # Top result should be the exact class definition
         top_result = results[0]
-        assert "RetrieverV3Service" in (top_result.chunk.symbol_id or ""), \
+        assert "RetrieverV3Service" in (top_result.chunk.symbol_id or ""), (
             f"Expected RetrieverV3Service in top result (expansion boost), got {top_result.chunk.symbol_id}"
+        )
 
         # Check that file path matching works
-        assert "service.py" in (top_result.chunk.file_path or ""), \
+        assert "service.py" in (top_result.chunk.file_path or ""), (
             f"Expected service.py in top result file path, got {top_result.chunk.file_path}"
+        )
 
         print("✅ P1 query expansion test passed: Exact symbol and file path match in top result")
 
@@ -525,7 +526,8 @@ class TestV3IntegrationPerformance:
         print(f"  - Speedup: {latency_cold / latency_warm:.2f}x")
 
         # Warm cache should be at least 20% faster
-        assert latency_warm < latency_cold * 0.8, \
+        assert latency_warm < latency_cold * 0.8, (
             f"Expected warm cache speedup, but got {latency_warm:.2f}ms vs {latency_cold:.2f}ms"
+        )
 
         print(f"✅ Cache test passed: {latency_cold / latency_warm:.2f}x speedup")

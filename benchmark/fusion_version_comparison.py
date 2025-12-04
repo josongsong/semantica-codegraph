@@ -15,9 +15,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -57,9 +55,7 @@ class MockMultiStrategyRetrieval:
         """
         self.quality_level = quality_level
 
-    async def __call__(
-        self, repo_id: str, snapshot_id: str, query: str
-    ) -> dict[str, list[dict[str, Any]]]:
+    async def __call__(self, repo_id: str, snapshot_id: str, query: str) -> dict[str, list[dict[str, Any]]]:
         """
         Mock multi-strategy retrieval.
 
@@ -351,9 +347,9 @@ async def run_fusion_comparison(quality_level: str = "good"):
         ("v1", SmartInterleaver),
         ("v2", SmartInterleaverV2),
     ]:
-        logger.info(f"\n{'='*80}")
+        logger.info(f"\n{'=' * 80}")
         logger.info(f"Testing Fusion {fusion_version.upper()}")
-        logger.info(f"{'='*80}\n")
+        logger.info(f"{'=' * 80}\n")
 
         total_passed = 0
         total_queries = len(test_queries)
@@ -399,9 +395,7 @@ async def run_fusion_comparison(quality_level: str = "good"):
 
             # Create interleaver
             if fusion_version == "v2":
-                interleaver = SmartInterleaverV2(
-                    rrf_k=60, consensus_boost_base=0.15, consensus_max_strategies=3
-                )
+                interleaver = SmartInterleaverV2(rrf_k=60, consensus_boost_base=0.15, consensus_max_strategies=3)
             else:
                 interleaver = interleaver_cls()
 
@@ -415,9 +409,7 @@ async def run_fusion_comparison(quality_level: str = "good"):
             all_latencies.append(latency_ms)
 
             # Calculate precision
-            relevant_in_top10 = sum(
-                1 for chunk in interleaved[:10] if chunk.get("is_relevant", False)
-            )
+            relevant_in_top10 = sum(1 for chunk in interleaved[:10] if chunk.get("is_relevant", False))
             precision = relevant_in_top10 / 10 if interleaved else 0.0
             all_precisions.append(precision)
 
@@ -437,7 +429,7 @@ async def run_fusion_comparison(quality_level: str = "good"):
                 score = chunk.get("interleaving_score", chunk.get("final_score", 0))
                 strategies = chunk.get("strategies", [])
                 logger.info(
-                    f"    {i+1}. {chunk['chunk_id']}: "
+                    f"    {i + 1}. {chunk['chunk_id']}: "
                     f"score={score:.4f}, "
                     f"strategies={strategies}, "
                     f"relevant={chunk.get('is_relevant', False)}"
@@ -462,9 +454,9 @@ async def run_fusion_comparison(quality_level: str = "good"):
         }
 
     # Compare
-    logger.info(f"\n{'='*80}")
+    logger.info(f"\n{'=' * 80}")
     logger.info("COMPARISON SUMMARY")
-    logger.info(f"{'='*80}\n")
+    logger.info(f"{'=' * 80}\n")
 
     v1_results = results_by_version["v1"]
     v2_results = results_by_version["v2"]
@@ -493,7 +485,7 @@ async def run_fusion_comparison(quality_level: str = "good"):
         f"({'✅ Faster' if v2_results['avg_latency'] < v1_results['avg_latency'] else '⚠️ Slower'})"
     )
 
-    logger.info(f"\n{'='*80}\n")
+    logger.info(f"\n{'=' * 80}\n")
 
     return results_by_version
 
@@ -521,12 +513,8 @@ async def run_all_quality_levels():
         v2 = all_results[quality]["v2"]
 
         logger.info(f"{quality.upper()}:")
-        logger.info(
-            f"  v1: {v1['pass_rate']:.0%} pass, {v1['avg_precision']:.2f} precision"
-        )
-        logger.info(
-            f"  v2: {v2['pass_rate']:.0%} pass, {v2['avg_precision']:.2f} precision"
-        )
+        logger.info(f"  v1: {v1['pass_rate']:.0%} pass, {v1['avg_precision']:.2f} precision")
+        logger.info(f"  v2: {v2['pass_rate']:.0%} pass, {v2['avg_precision']:.2f} precision")
         logger.info(
             f"  Winner: {'v2 ✅' if v2['avg_precision'] > v1['avg_precision'] else 'v1' if v1['avg_precision'] > v2['avg_precision'] else 'Tie'}\n"
         )

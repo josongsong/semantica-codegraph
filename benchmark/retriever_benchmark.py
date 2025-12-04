@@ -115,9 +115,7 @@ class RetrieverBenchmark:
         self.config = config
         self.results: list[dict[str, Any]] = []
 
-    async def run_benchmark(
-        self, retrieval_func: Callable[[str, str, str], Any]
-    ) -> BenchmarkResult:
+    async def run_benchmark(self, retrieval_func: Callable[[str, str, str], Any]) -> BenchmarkResult:
         """
         Run full benchmark suite.
 
@@ -150,9 +148,7 @@ class RetrieverBenchmark:
 
         return benchmark_result
 
-    async def _run_test_case(
-        self, test_case: QueryTestCase, retrieval_func: Callable
-    ) -> dict[str, Any]:
+    async def _run_test_case(self, test_case: QueryTestCase, retrieval_func: Callable) -> dict[str, Any]:
         """
         Run single test case.
 
@@ -167,17 +163,13 @@ class RetrieverBenchmark:
 
         try:
             # Execute retrieval
-            result = await retrieval_func(
-                self.config.repo_id, self.config.snapshot_id, test_case.query
-            )
+            result = await retrieval_func(self.config.repo_id, self.config.snapshot_id, test_case.query)
 
             latency_ms = (time.time() - start_time) * 1000
 
             # Extract results
             retrieved_ids = self._extract_result_ids(result)
-            metrics = self._compute_test_metrics(
-                test_case, retrieved_ids, result, latency_ms
-            )
+            metrics = self._compute_test_metrics(test_case, retrieved_ids, result, latency_ms)
 
             return {
                 "query": test_case.query,
@@ -234,22 +226,10 @@ class RetrieverBenchmark:
         hit_at_10 = len(expected_set & set(retrieved_ids[:10])) > 0
 
         # Precision/Recall @K
-        precision_at_3 = (
-            len(expected_set & set(retrieved_ids[:3])) / 3
-            if len(retrieved_ids) >= 3
-            else 0.0
-        )
-        precision_at_10 = (
-            len(expected_set & set(retrieved_ids[:10])) / 10
-            if len(retrieved_ids) >= 10
-            else 0.0
-        )
+        precision_at_3 = len(expected_set & set(retrieved_ids[:3])) / 3 if len(retrieved_ids) >= 3 else 0.0
+        precision_at_10 = len(expected_set & set(retrieved_ids[:10])) / 10 if len(retrieved_ids) >= 10 else 0.0
 
-        recall_at_10 = (
-            len(expected_set & set(retrieved_ids[:10])) / len(expected_set)
-            if expected_set
-            else 0.0
-        )
+        recall_at_10 = len(expected_set & set(retrieved_ids[:10])) / len(expected_set) if expected_set else 0.0
 
         # MRR (Mean Reciprocal Rank)
         mrr = 0.0
@@ -340,19 +320,14 @@ class RetrieverBenchmark:
         # Phase 2 Metrics
         symbol_nav_results = [r for r in successful if r["intent"] == "symbol_nav"]
         if symbol_nav_results:
-            symbol_nav_hit_rate = (
-                sum(r["metrics"]["hit_at_3"] for r in symbol_nav_results)
-                / len(symbol_nav_results)
-            )
+            symbol_nav_hit_rate = sum(r["metrics"]["hit_at_3"] for r in symbol_nav_results) / len(symbol_nav_results)
         else:
             symbol_nav_hit_rate = 0.0
 
         # Late interaction precision gain (requires baseline comparison)
         # For now, use improvement in precision@10
         precisions_at_10 = [r["metrics"]["precision_at_10"] for r in successful]
-        late_interaction_precision_gain = (
-            sum(precisions_at_10) / len(precisions_at_10) if precisions_at_10 else 0.0
-        )
+        late_interaction_precision_gain = sum(precisions_at_10) / len(precisions_at_10) if precisions_at_10 else 0.0
 
         # Cross-encoder latency (if available)
         cross_encoder_latency_p95_ms = 0.0  # Would need to track separately
@@ -363,10 +338,7 @@ class RetrieverBenchmark:
 
         multi_hop_results = [r for r in successful if r["category"] == "multi_hop"]
         if multi_hop_results:
-            multi_hop_success_rate = (
-                sum(r["metrics"]["hit_at_3"] for r in multi_hop_results)
-                / len(multi_hop_results)
-            )
+            multi_hop_success_rate = sum(r["metrics"]["hit_at_3"] for r in multi_hop_results) / len(multi_hop_results)
         else:
             multi_hop_success_rate = 0.0
 
@@ -399,9 +371,7 @@ class RetrieverBenchmark:
             by_category_metrics=by_category_metrics,
         )
 
-    def _compute_by_dimension_metrics(
-        self, results: list[dict], dimension: str
-    ) -> dict[str, dict[str, float]]:
+    def _compute_by_dimension_metrics(self, results: list[dict], dimension: str) -> dict[str, dict[str, float]]:
         """Compute metrics grouped by dimension (intent or category)."""
         by_dimension = defaultdict(list)
         for r in results:
@@ -411,10 +381,8 @@ class RetrieverBenchmark:
         for dim_value, dim_results in by_dimension.items():
             metrics[dim_value] = {
                 "count": len(dim_results),
-                "hit_at_3": sum(r["metrics"]["hit_at_3"] for r in dim_results)
-                / len(dim_results),
-                "avg_latency_ms": sum(r["latency_ms"] for r in dim_results)
-                / len(dim_results),
+                "hit_at_3": sum(r["metrics"]["hit_at_3"] for r in dim_results) / len(dim_results),
+                "avg_latency_ms": sum(r["latency_ms"] for r in dim_results) / len(dim_results),
                 "mrr": sum(r["metrics"]["mrr"] for r in dim_results) / len(dim_results),
             }
 
@@ -498,9 +466,7 @@ class RetrieverBenchmark:
 
         print("\n--- Phase 1 Metrics ---")
         print(f"Top-3 Hit Rate: {result.top_3_hit_rate:.1%} (target: >70%)")
-        print(
-            f"Intent Latency (p95): {result.intent_latency_p95_ms:.0f}ms (target: <2000ms)"
-        )
+        print(f"Intent Latency (p95): {result.intent_latency_p95_ms:.0f}ms (target: <2000ms)")
         print(f"Snapshot Consistency: {result.snapshot_consistency:.1%} (target: 100%)")
         print(f"Dedup Token Waste: {result.dedup_token_waste:.1%} (target: <15%)")
         print(f"E2E Latency (p95): {result.e2e_latency_p95_ms:.0f}ms (target: <4000ms)")
@@ -508,32 +474,20 @@ class RetrieverBenchmark:
 
         print("\n--- Phase 2 Metrics ---")
         print(f"Symbol Nav Hit Rate: {result.symbol_nav_hit_rate:.1%} (target: >85%)")
-        print(
-            f"Late Interaction Precision: {result.late_interaction_precision_gain:.1%} (target: +10%p)"
-        )
+        print(f"Late Interaction Precision: {result.late_interaction_precision_gain:.1%} (target: +10%p)")
         print(f"✓ Phase 2: {'PASSED' if result.phase_2_passed else 'FAILED'}")
 
         print("\n--- Phase 3 Metrics ---")
-        print(
-            f"Context Relevance Score: {result.context_relevance_score:.3f} (target: >0.9)"
-        )
-        print(
-            f"Multi-hop Success Rate: {result.multi_hop_success_rate:.1%} (target: >80%)"
-        )
+        print(f"Context Relevance Score: {result.context_relevance_score:.3f} (target: >0.9)")
+        print(f"Multi-hop Success Rate: {result.multi_hop_success_rate:.1%} (target: >80%)")
         print(f"✓ Phase 3: {'PASSED' if result.phase_3_passed else 'FAILED'}")
 
         print("\n--- By Intent ---")
         for intent, metrics in result.by_intent_metrics.items():
-            print(
-                f"{intent}: Hit@3={metrics['hit_at_3']:.1%}, "
-                f"Latency={metrics['avg_latency_ms']:.0f}ms"
-            )
+            print(f"{intent}: Hit@3={metrics['hit_at_3']:.1%}, Latency={metrics['avg_latency_ms']:.0f}ms")
 
         print("\n--- By Category ---")
         for category, metrics in result.by_category_metrics.items():
-            print(
-                f"{category}: Hit@3={metrics['hit_at_3']:.1%}, "
-                f"MRR={metrics['mrr']:.3f}"
-            )
+            print(f"{category}: Hit@3={metrics['hit_at_3']:.1%}, MRR={metrics['mrr']:.3f}")
 
         print("\n" + "=" * 80)

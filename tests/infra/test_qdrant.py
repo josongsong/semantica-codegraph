@@ -80,9 +80,7 @@ class TestQdrantAdapterBasics:
 
     def test_qdrant_adapter_custom_config(self):
         """Test creating Qdrant adapter with custom config."""
-        adapter = QdrantAdapter(
-            host="qdrant.example.com", port=6334, collection="custom-collection"
-        )
+        adapter = QdrantAdapter(host="qdrant.example.com", port=6334, collection="custom-collection")
 
         assert adapter.host == "qdrant.example.com"
         assert adapter.port == 6334
@@ -433,9 +431,7 @@ class TestDeletion:
 
             await adapter.delete_collection()
 
-            mock_qdrant_client.delete_collection.assert_called_once_with(
-                collection_name="codegraph"
-            )
+            mock_qdrant_client.delete_collection.assert_called_once_with(collection_name="codegraph")
 
 
 # ============================================================

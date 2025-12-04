@@ -131,7 +131,7 @@ async def test_kuzu_symbol_index():
     for query, expected_file in test_queries:
         logger.info("")
         logger.info(f'Query: "{query}"')
-        logger.info(f'  Expected: {expected_file}')
+        logger.info(f"  Expected: {expected_file}")
 
         try:
             results = await symbol_index.search(repo_id, snapshot_id, query, limit=5)
@@ -139,7 +139,7 @@ async def test_kuzu_symbol_index():
             if results:
                 logger.info(f"  Results: {len(results)} hits")
                 for i, hit in enumerate(results[:3]):
-                    logger.info(f"    {i+1}. {hit.file_path} (score: {hit.score:.3f})")
+                    logger.info(f"    {i + 1}. {hit.file_path} (score: {hit.score:.3f})")
 
                 # Check if expected file is in results
                 found = any(expected_file in hit.file_path for hit in results)

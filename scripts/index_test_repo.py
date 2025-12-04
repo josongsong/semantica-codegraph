@@ -70,11 +70,13 @@ async def index_repository(
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        files.append({
-            "file_path": str(rel_path),
-            "content": content,
-            "language": "python",
-        })
+        files.append(
+            {
+                "file_path": str(rel_path),
+                "content": content,
+                "language": "python",
+            }
+        )
 
     print(f"   ✅ Loaded {len(files)} Python files")
 
@@ -209,6 +211,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Error during indexing: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

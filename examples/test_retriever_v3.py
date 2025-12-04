@@ -104,9 +104,9 @@ def create_sample_hits():
 
 def test_query(service, query, hits):
     """Test a single query and display results."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Query: '{query}'")
-    print('='*80)
+    print("=" * 80)
 
     results, intent = service.retrieve(
         query=query,
@@ -172,7 +172,7 @@ def main():
     test_query(service, "find LoginHandler class", hits)
 
     # Summary
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("✅ All tests completed successfully!")
     print("=" * 80)
 

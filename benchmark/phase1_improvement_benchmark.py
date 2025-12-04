@@ -212,12 +212,15 @@ async def run_phase1_comparison(src_dir: Path):
     logger.info("Improvement Summary")
     logger.info("=" * 80)
 
-    logger.info(f"Precision: {basic_avg_precision:.3f} → {enhanced_avg_precision:.3f} "
-                f"({precision_improvement:+.3f}, {precision_improvement/basic_avg_precision*100:+.1f}%)")
-    logger.info(f"NDCG:      {basic_avg_ndcg:.3f} → {enhanced_avg_ndcg:.3f} "
-                f"({ndcg_improvement:+.3f}, {ndcg_improvement/basic_avg_ndcg*100:+.1f}%)")
-    logger.info(f"Latency:   {basic_avg_latency:.1f}ms → {enhanced_avg_latency:.1f}ms "
-                f"({latency_change:+.1f}ms)")
+    logger.info(
+        f"Precision: {basic_avg_precision:.3f} → {enhanced_avg_precision:.3f} "
+        f"({precision_improvement:+.3f}, {precision_improvement / basic_avg_precision * 100:+.1f}%)"
+    )
+    logger.info(
+        f"NDCG:      {basic_avg_ndcg:.3f} → {enhanced_avg_ndcg:.3f} "
+        f"({ndcg_improvement:+.3f}, {ndcg_improvement / basic_avg_ndcg * 100:+.1f}%)"
+    )
+    logger.info(f"Latency:   {basic_avg_latency:.1f}ms → {enhanced_avg_latency:.1f}ms ({latency_change:+.1f}ms)")
     logger.info("")
 
     # Category-wise improvement
@@ -227,28 +230,30 @@ async def run_phase1_comparison(src_dir: Path):
 
     # Symbol Navigation queries (first 3)
     symbol_nav_queries = BENCHMARK_QUERIES[:3]
-    basic_symbol_precision = sum(
-        r.precision_at_k for i, r in enumerate(basic_results) if i < 3
-    ) / len(symbol_nav_queries)
-    enhanced_symbol_precision = sum(
-        r.precision_at_k for i, r in enumerate(enhanced_results) if i < 3
-    ) / len(symbol_nav_queries)
+    basic_symbol_precision = sum(r.precision_at_k for i, r in enumerate(basic_results) if i < 3) / len(
+        symbol_nav_queries
+    )
+    enhanced_symbol_precision = sum(r.precision_at_k for i, r in enumerate(enhanced_results) if i < 3) / len(
+        symbol_nav_queries
+    )
 
     logger.info("Symbol Navigation (Queries 1-3):")
     logger.info(f"  Basic:    {basic_symbol_precision:.3f}")
     logger.info(f"  Enhanced: {enhanced_symbol_precision:.3f}")
-    logger.info(f"  Improvement: {enhanced_symbol_precision - basic_symbol_precision:+.3f} "
-                f"({(enhanced_symbol_precision - basic_symbol_precision)/basic_symbol_precision*100:+.1f}%)")
+    logger.info(
+        f"  Improvement: {enhanced_symbol_precision - basic_symbol_precision:+.3f} "
+        f"({(enhanced_symbol_precision - basic_symbol_precision) / basic_symbol_precision * 100:+.1f}%)"
+    )
     logger.info("")
 
     # Code Search queries (queries 4-5)
     code_search_queries = BENCHMARK_QUERIES[3:5]
-    basic_code_precision = sum(
-        r.precision_at_k for i, r in enumerate(basic_results) if 3 <= i < 5
-    ) / len(code_search_queries)
-    enhanced_code_precision = sum(
-        r.precision_at_k for i, r in enumerate(enhanced_results) if 3 <= i < 5
-    ) / len(code_search_queries)
+    basic_code_precision = sum(r.precision_at_k for i, r in enumerate(basic_results) if 3 <= i < 5) / len(
+        code_search_queries
+    )
+    enhanced_code_precision = sum(r.precision_at_k for i, r in enumerate(enhanced_results) if 3 <= i < 5) / len(
+        code_search_queries
+    )
 
     logger.info("Code Search (Queries 4-5):")
     logger.info(f"  Basic:    {basic_code_precision:.3f}")

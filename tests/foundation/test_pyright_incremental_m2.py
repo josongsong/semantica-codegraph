@@ -52,6 +52,7 @@ def git_repo():
 
     # Create pyrightconfig.json to help Pyright recognize the workspace
     import json
+
     config = {
         "include": ["**/*.py"],
         "typeCheckingMode": "basic",
@@ -176,14 +177,10 @@ def test_change_detector_get_current_commit(git_repo):
 
 def test_snapshot_delta_empty():
     """Test SnapshotDelta with no changes."""
-    snapshot1 = PyrightSemanticSnapshot(
-        snapshot_id="s1", project_id="test", files=["a.py"]
-    )
+    snapshot1 = PyrightSemanticSnapshot(snapshot_id="s1", project_id="test", files=["a.py"])
     snapshot1.add_type_info("a.py", Span(1, 0, 1, 0), "int")
 
-    snapshot2 = PyrightSemanticSnapshot(
-        snapshot_id="s2", project_id="test", files=["a.py"]
-    )
+    snapshot2 = PyrightSemanticSnapshot(snapshot_id="s2", project_id="test", files=["a.py"])
     snapshot2.add_type_info("a.py", Span(1, 0, 1, 0), "int")
 
     # No changes
@@ -196,14 +193,10 @@ def test_snapshot_delta_empty():
 
 def test_snapshot_delta_added():
     """Test SnapshotDelta with added types."""
-    snapshot1 = PyrightSemanticSnapshot(
-        snapshot_id="s1", project_id="test", files=["a.py"]
-    )
+    snapshot1 = PyrightSemanticSnapshot(snapshot_id="s1", project_id="test", files=["a.py"])
     snapshot1.add_type_info("a.py", Span(1, 0, 1, 0), "int")
 
-    snapshot2 = PyrightSemanticSnapshot(
-        snapshot_id="s2", project_id="test", files=["a.py"]
-    )
+    snapshot2 = PyrightSemanticSnapshot(snapshot_id="s2", project_id="test", files=["a.py"])
     snapshot2.add_type_info("a.py", Span(1, 0, 1, 0), "int")
     snapshot2.add_type_info("a.py", Span(2, 0, 2, 0), "str")  # Added
 
@@ -217,15 +210,11 @@ def test_snapshot_delta_added():
 
 def test_snapshot_delta_removed():
     """Test SnapshotDelta with removed types."""
-    snapshot1 = PyrightSemanticSnapshot(
-        snapshot_id="s1", project_id="test", files=["a.py"]
-    )
+    snapshot1 = PyrightSemanticSnapshot(snapshot_id="s1", project_id="test", files=["a.py"])
     snapshot1.add_type_info("a.py", Span(1, 0, 1, 0), "int")
     snapshot1.add_type_info("a.py", Span(2, 0, 2, 0), "str")
 
-    snapshot2 = PyrightSemanticSnapshot(
-        snapshot_id="s2", project_id="test", files=["a.py"]
-    )
+    snapshot2 = PyrightSemanticSnapshot(snapshot_id="s2", project_id="test", files=["a.py"])
     snapshot2.add_type_info("a.py", Span(1, 0, 1, 0), "int")
     # Removed Span(2, 0)
 
@@ -239,14 +228,10 @@ def test_snapshot_delta_removed():
 
 def test_snapshot_delta_modified():
     """Test SnapshotDelta with modified types."""
-    snapshot1 = PyrightSemanticSnapshot(
-        snapshot_id="s1", project_id="test", files=["a.py"]
-    )
+    snapshot1 = PyrightSemanticSnapshot(snapshot_id="s1", project_id="test", files=["a.py"])
     snapshot1.add_type_info("a.py", Span(1, 0, 1, 0), "int")
 
-    snapshot2 = PyrightSemanticSnapshot(
-        snapshot_id="s2", project_id="test", files=["a.py"]
-    )
+    snapshot2 = PyrightSemanticSnapshot(snapshot_id="s2", project_id="test", files=["a.py"])
     snapshot2.add_type_info("a.py", Span(1, 0, 1, 0), "str")  # Modified
 
     delta = snapshot2.compute_delta(snapshot1)
@@ -303,9 +288,7 @@ def test_snapshot_merge_with_delta():
 
 def test_snapshot_filter_by_files():
     """Test filtering snapshot by files."""
-    snapshot = PyrightSemanticSnapshot(
-        snapshot_id="s1", project_id="test", files=["a.py", "b.py", "c.py"]
-    )
+    snapshot = PyrightSemanticSnapshot(snapshot_id="s1", project_id="test", files=["a.py", "b.py", "c.py"])
     snapshot.add_type_info("a.py", Span(1, 0, 1, 0), "int")
     snapshot.add_type_info("b.py", Span(1, 0, 1, 0), "str")
     snapshot.add_type_info("c.py", Span(1, 0, 1, 0), "bool")
@@ -340,9 +323,7 @@ def hello() -> str:
 
     # Incremental export (no previous snapshot)
     changed_files = {file_path: [(1, 4)]}  # def hello
-    snapshot = daemon.export_semantic_incremental(
-        changed_files=changed_files, previous_snapshot=None
-    )
+    snapshot = daemon.export_semantic_incremental(changed_files=changed_files, previous_snapshot=None)
 
     # Should return snapshot with just changed files
     assert snapshot is not None
@@ -370,9 +351,7 @@ def func2() -> str:
 
     # Incremental export (only file2 changed)
     changed_files = {file2: [(1, 4)]}
-    new_snapshot = daemon.export_semantic_incremental(
-        changed_files=changed_files, previous_snapshot=previous
-    )
+    new_snapshot = daemon.export_semantic_incremental(changed_files=changed_files, previous_snapshot=previous)
 
     # Should contain both files
     assert len(new_snapshot.files) >= 2
@@ -437,14 +416,12 @@ def func{i}() -> int:
     # Incremental analysis (1 file changed)
     start = time.perf_counter()
     changed_locations = {files[0]: [(1, 4)]}  # Only file0 changed
-    inc_snapshot = daemon.export_semantic_incremental(
-        changed_files=changed_locations, previous_snapshot=full_snapshot
-    )
+    inc_snapshot = daemon.export_semantic_incremental(changed_files=changed_locations, previous_snapshot=full_snapshot)
     inc_time = time.perf_counter() - start
 
     # Incremental should be faster (or similar for small examples)
-    print(f"\nFull: {full_time*1000:.2f}ms, Incremental: {inc_time*1000:.2f}ms")
-    print(f"Speedup: {full_time/inc_time:.1f}x")
+    print(f"\nFull: {full_time * 1000:.2f}ms, Incremental: {inc_time * 1000:.2f}ms")
+    print(f"Speedup: {full_time / inc_time:.1f}x")
 
     # Both snapshots should be valid
     assert full_snapshot.stats()["total_files"] >= 5

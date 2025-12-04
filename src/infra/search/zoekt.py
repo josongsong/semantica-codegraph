@@ -28,12 +28,12 @@ Response:
     }
 """
 
-import logging
-
 import httpx
 from pydantic import BaseModel
 
-logger = logging.getLogger(__name__)
+from src.common.observability import get_logger
+
+logger = get_logger(__name__)
 
 
 class ZoektMatchFragment(BaseModel):

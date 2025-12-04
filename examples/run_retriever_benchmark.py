@@ -9,9 +9,7 @@ import logging
 from typing import Any
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -27,9 +25,7 @@ class MockRetrievalFunction:
         """
         self.quality_level = quality_level
 
-    async def __call__(
-        self, repo_id: str, snapshot_id: str, query: str
-    ) -> list[dict[str, Any]]:
+    async def __call__(self, repo_id: str, snapshot_id: str, query: str) -> list[dict[str, Any]]:
         """
         Mock retrieval function.
 
@@ -112,10 +108,10 @@ class MockRetrievalFunction:
                 if i + 1 < top_k:
                     results.append(
                         {
-                            "chunk_id": f"irrelevant_{i+1}",
+                            "chunk_id": f"irrelevant_{i + 1}",
                             "content": "Not relevant",
                             "score": 0.8 - ((i + 1) * 0.02),
-                            "file_path": f"src/other_{i+1}.py",
+                            "file_path": f"src/other_{i + 1}.py",
                             "is_relevant": False,
                         }
                     )
@@ -331,15 +327,9 @@ async def run_quick_benchmark():
     logger.info(f"  • Multi-hop Rate:  {result.multi_hop_success_rate:.1%}")
 
     logger.info("\n🎯 Exit Criteria:")
-    logger.info(
-        f"  • Phase 1 (MVP):      {'✅ PASS' if result.phase_1_passed else '❌ FAIL'}"
-    )
-    logger.info(
-        f"  • Phase 2 (Enhanced): {'✅ PASS' if result.phase_2_passed else '❌ FAIL'}"
-    )
-    logger.info(
-        f"  • Phase 3 (SOTA):     {'✅ PASS' if result.phase_3_passed else '❌ FAIL'}"
-    )
+    logger.info(f"  • Phase 1 (MVP):      {'✅ PASS' if result.phase_1_passed else '❌ FAIL'}")
+    logger.info(f"  • Phase 2 (Enhanced): {'✅ PASS' if result.phase_2_passed else '❌ FAIL'}")
+    logger.info(f"  • Phase 3 (SOTA):     {'✅ PASS' if result.phase_3_passed else '❌ FAIL'}")
 
     logger.info("\n📈 By Intent:")
     for intent, metrics in sorted(result.by_intent_metrics.items()):
@@ -349,20 +339,14 @@ async def run_quick_benchmark():
     for category, metrics in sorted(result.by_category_metrics.items()):
         logger.info(f"  • {category:15s}: {metrics}")
 
-    logger.info(
-        f"\n✅ Test Cases: {result.successful_queries}/{result.total_queries} passed"
-    )
+    logger.info(f"\n✅ Test Cases: {result.successful_queries}/{result.total_queries} passed")
 
     if not result.phase_3_passed:
         logger.info("\n⚠️  Recommendations:")
         if result.top_3_hit_rate < 0.7:
-            logger.info(
-                "  • Improve ranking: Consider using learned reranker or cross-encoder"
-            )
+            logger.info("  • Improve ranking: Consider using learned reranker or cross-encoder")
         if result.avg_latency_ms > 500:
-            logger.info(
-                "  • Reduce latency: Enable embedding cache and adaptive top-k"
-            )
+            logger.info("  • Reduce latency: Enable embedding cache and adaptive top-k")
         if result.symbol_nav_hit_rate < 0.85:
             logger.info("  • Improve symbol navigation: Check symbol index quality")
 

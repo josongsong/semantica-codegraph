@@ -33,9 +33,7 @@ def profile_ir_generation_detailed(repo_path: Path, limit: int = 50):
     # Find Python files
     python_files = list(repo_path.rglob("*.py"))
     exclude_patterns = ["venv", ".venv", "node_modules", ".git", "__pycache__", "build", "dist"]
-    python_files = [
-        f for f in python_files if not any(pattern in str(f) for pattern in exclude_patterns)
-    ]
+    python_files = [f for f in python_files if not any(pattern in str(f) for pattern in exclude_patterns)]
     python_files = python_files[:limit]
 
     print(f"Profiling IR generation (detailed) for {len(python_files)} files...")
@@ -54,9 +52,7 @@ def profile_ir_generation_detailed(repo_path: Path, limit: int = 50):
             source_code = file_path.read_text(encoding="utf-8")
             relative_path = str(file_path.relative_to(repo_path))
 
-            source_file = SourceFile.from_content(
-                file_path=relative_path, content=source_code, language="python"
-            )
+            source_file = SourceFile.from_content(file_path=relative_path, content=source_code, language="python")
 
             # Measure parsing separately
             parse_start = time.perf_counter()
@@ -87,8 +83,12 @@ def profile_ir_generation_detailed(repo_path: Path, limit: int = 50):
     print()
 
     print("Phase Breakdown:")
-    print(f"  1. Parsing (benchmark):          {total_parsing_ms:>8.0f}ms ({total_parsing_ms/total_combined_ms*100:>5.1f}%)")
-    print(f"  2. IR Generation (includes parse): {total_ir_gen_ms:>8.0f}ms ({total_ir_gen_ms/total_combined_ms*100:>5.1f}%)")
+    print(
+        f"  1. Parsing (benchmark):          {total_parsing_ms:>8.0f}ms ({total_parsing_ms / total_combined_ms * 100:>5.1f}%)"
+    )
+    print(
+        f"  2. IR Generation (includes parse): {total_ir_gen_ms:>8.0f}ms ({total_ir_gen_ms / total_combined_ms * 100:>5.1f}%)"
+    )
     print(f"  " + "-" * 50)
     print(f"  Total (benchmark):               {total_combined_ms:>8.0f}ms (100.0%)")
     print()
@@ -113,12 +113,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Detailed IR generation profiling")
-    parser.add_argument(
-        "repo_path", nargs="?", default="src/", help="Path to repository (default: src/)"
-    )
-    parser.add_argument(
-        "-n", "--limit", type=int, default=50, help="Maximum number of files (default: 50)"
-    )
+    parser.add_argument("repo_path", nargs="?", default="src/", help="Path to repository (default: src/)")
+    parser.add_argument("-n", "--limit", type=int, default=50, help="Maximum number of files (default: 50)")
 
     args = parser.parse_args()
 

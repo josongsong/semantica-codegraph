@@ -2,7 +2,6 @@
 Fake LLM Provider for Unit Testing
 """
 
-
 import numpy as np
 
 

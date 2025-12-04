@@ -95,7 +95,7 @@ async def get_orchestrator(container: Container = Depends(get_container)):
 @router.post("/repo", response_model=IndexingResponse)
 async def index_repository(
     req: IndexRepoRequest,
-    orchestrator = Depends(get_orchestrator),
+    orchestrator=Depends(get_orchestrator),
 ):
     """
     Full repository indexing.
@@ -133,10 +133,7 @@ async def index_repository(
 
         # Build response
         if result.success:
-            message = (
-                f"Successfully indexed {result.files_processed} files, "
-                f"created {result.chunks_created} chunks"
-            )
+            message = f"Successfully indexed {result.files_processed} files, created {result.chunks_created} chunks"
         else:
             message = "Indexing completed with errors"
 
@@ -156,15 +153,13 @@ async def index_repository(
 
     except Exception as e:
         logger.error(f"Indexing failed for {req.repo_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Indexing failed: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Indexing failed: {str(e)}") from e
 
 
 @router.post("/incremental", response_model=IndexingResponse)
 async def index_incremental(
     req: IncrementalIndexRequest,
-    orchestrator = Depends(get_orchestrator),
+    orchestrator=Depends(get_orchestrator),
 ):
     """
     Incremental repository indexing.
@@ -202,10 +197,7 @@ async def index_incremental(
 
         # Build response
         if result.success:
-            message = (
-                f"Successfully processed {result.files_processed} files, "
-                f"updated {result.chunks_indexed} chunks"
-            )
+            message = f"Successfully processed {result.files_processed} files, updated {result.chunks_indexed} chunks"
         else:
             message = "Incremental indexing completed with errors"
 
@@ -225,9 +217,7 @@ async def index_incremental(
 
     except Exception as e:
         logger.error(f"Incremental indexing failed for {req.repo_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Incremental indexing failed: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Incremental indexing failed: {str(e)}") from e
 
 
 @router.delete("/repo", response_model=IndexingResponse)
@@ -261,9 +251,7 @@ async def delete_repository_index(
 
     except Exception as e:
         logger.error(f"Index deletion failed for {req.repo_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Index deletion failed: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Index deletion failed: {str(e)}") from e
 
 
 @router.get("/status/{repo_id}")
@@ -304,9 +292,7 @@ async def get_indexing_status(
 
     except Exception as e:
         logger.error(f"Status check failed for {repo_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Status check failed: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Status check failed: {str(e)}") from e
 
 
 # ============================================================

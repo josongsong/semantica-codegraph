@@ -154,8 +154,9 @@ def main():
 
         # Show feature vector (abbreviated)
         fv = result.feature_vector
-        print(f"   RRF Scores: vec={fv.rrf_vec:.4f}, lex={fv.rrf_lex:.4f}, "
-              f"sym={fv.rrf_sym:.4f}, graph={fv.rrf_graph:.4f}")
+        print(
+            f"   RRF Scores: vec={fv.rrf_vec:.4f}, lex={fv.rrf_lex:.4f}, sym={fv.rrf_sym:.4f}, graph={fv.rrf_graph:.4f}"
+        )
 
         # Show explanation
         if result.explanation:
@@ -193,12 +194,16 @@ def main():
     symbol_fv = results[0].feature_vector
     concept_fv = concept_results[0].feature_vector
 
-    print(f"  Symbol query weights: vec={symbol_fv.weight_vec:.2f}, "
-          f"lex={symbol_fv.weight_lex:.2f}, sym={symbol_fv.weight_sym:.2f}, "
-          f"graph={symbol_fv.weight_graph:.2f}")
-    print(f"  Concept query weights: vec={concept_fv.weight_vec:.2f}, "
-          f"lex={concept_fv.weight_lex:.2f}, sym={concept_fv.weight_sym:.2f}, "
-          f"graph={concept_fv.weight_graph:.2f}")
+    print(
+        f"  Symbol query weights: vec={symbol_fv.weight_vec:.2f}, "
+        f"lex={symbol_fv.weight_lex:.2f}, sym={symbol_fv.weight_sym:.2f}, "
+        f"graph={symbol_fv.weight_graph:.2f}"
+    )
+    print(
+        f"  Concept query weights: vec={concept_fv.weight_vec:.2f}, "
+        f"lex={concept_fv.weight_lex:.2f}, sym={concept_fv.weight_sym:.2f}, "
+        f"graph={concept_fv.weight_graph:.2f}"
+    )
 
 
 if __name__ == "__main__":

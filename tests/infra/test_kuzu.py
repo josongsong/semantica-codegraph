@@ -80,9 +80,7 @@ class TestKuzuAdapterBasics:
             assert adapter.buffer_pool_size == 2048
 
             # Verify foundation store was created with correct args
-            mock_class.assert_called_once_with(
-                db_path="/custom/path.db", include_framework_rels=True
-            )
+            mock_class.assert_called_once_with(db_path="/custom/path.db", include_framework_rels=True)
 
 
 # ============================================================
@@ -253,14 +251,10 @@ class TestDelete:
 
             adapter = KuzuGraphStore(db_path="/tmp/test.db")
 
-            count = adapter.delete_nodes_by_filter(
-                repo_id="repo:test", snapshot_id="snap:001", kind="function"
-            )
+            count = adapter.delete_nodes_by_filter(repo_id="repo:test", snapshot_id="snap:001", kind="function")
 
             assert count == 3
-            mock_foundation_store.delete_nodes_by_filter.assert_called_once_with(
-                "repo:test", "snap:001", "function"
-            )
+            mock_foundation_store.delete_nodes_by_filter.assert_called_once_with("repo:test", "snap:001", "function")
 
 
 # ============================================================
@@ -290,9 +284,7 @@ class TestLegacyInterface:
 
             adapter = KuzuGraphStore(db_path="/tmp/test.db")
 
-            with pytest.raises(
-                NotImplementedError, match="create_relationship\\(\\) is deprecated"
-            ):
+            with pytest.raises(NotImplementedError, match="create_relationship\\(\\) is deprecated"):
                 await adapter.create_relationship("src", "tgt", "CALLS")
 
     @pytest.mark.asyncio

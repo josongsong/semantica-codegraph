@@ -455,9 +455,7 @@ class FusionV2:
                 chunk_scores[chunk_id]["final_score"] += rrf_component
                 chunk_scores[chunk_id]["strategies"].append(strategy)
                 chunk_scores[chunk_id]["rrf_components"].append(rrf_component)
-                chunk_scores[chunk_id]["max_rrf"] = max(
-                    chunk_scores[chunk_id]["max_rrf"], rrf_component
-                )
+                chunk_scores[chunk_id]["max_rrf"] = max(chunk_scores[chunk_id]["max_rrf"], rrf_component)
 
         # Quality-aware consensus boost (v2: sqrt growth)
         consensus_boost_base = 0.15
@@ -622,7 +620,7 @@ async def run_single_query_benchmark(
             logger.info(f"      Top-3: {[r['file_path'][:50] for r in symbol_results[:3]]}")
         logger.info(f"    Fused top-{query_spec.k}:")
         for i, r in enumerate(top_k):
-            logger.info(f"      {i+1}. {r['file_path']}")
+            logger.info(f"      {i + 1}. {r['file_path']}")
         logger.info(f"    Expected: {query_spec.expected_in_top_k}")
         logger.info("")
 

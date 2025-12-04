@@ -67,7 +67,7 @@ def add(a: int, b: int) -> int:
     )
 
     # 1. Structural IR 검증
-    func_nodes = [n for n in ir_doc.nodes if n.kind == NodeKind.FUNCTION and not n.attrs.get('is_external')]
+    func_nodes = [n for n in ir_doc.nodes if n.kind == NodeKind.FUNCTION and not n.attrs.get("is_external")]
     assert len(func_nodes) == 1
     func_node = func_nodes[0]
     assert func_node.name == "add"
@@ -133,7 +133,7 @@ def process_items(items: list, threshold: int) -> int:
     )
 
     # 1. Structural IR 검증 - loop, conditional
-    func_nodes = [n for n in ir_doc.nodes if n.kind == NodeKind.FUNCTION and not n.attrs.get('is_external')]
+    func_nodes = [n for n in ir_doc.nodes if n.kind == NodeKind.FUNCTION and not n.attrs.get("is_external")]
     assert len(func_nodes) == 1
 
     # Loop와 Conditional은 control_flow_summary에 기록됨
@@ -209,7 +209,7 @@ def process_circle(r: Optional[float]) -> float:
     assert len(call_edges) >= 1  # At least one call
 
     # 3. Function 검증 - external 함수 제외
-    func_nodes = [n for n in ir_doc.nodes if n.kind == NodeKind.FUNCTION and not n.attrs.get('is_external')]
+    func_nodes = [n for n in ir_doc.nodes if n.kind == NodeKind.FUNCTION and not n.attrs.get("is_external")]
     assert len(func_nodes) >= 2  # calculate_area, process_circle
 
     # 4. Type 검증 - Optional
@@ -327,7 +327,7 @@ def read_file(path: str) -> str:
     )
 
     # 1. Try-Catch 검증 - control_flow_summary에 기록됨
-    func_nodes = [n for n in ir_doc.nodes if n.kind == NodeKind.FUNCTION and not n.attrs.get('is_external')]
+    func_nodes = [n for n in ir_doc.nodes if n.kind == NodeKind.FUNCTION and not n.attrs.get("is_external")]
     assert len(func_nodes) == 1
     func_node = func_nodes[0]
     if func_node.control_flow_summary:
@@ -341,7 +341,11 @@ def read_file(path: str) -> str:
 
     # 3. CFG 검증 - 복잡한 예외 경로
     # Note: External functions also get CFGs
-    cfg_graphs_non_external = [g for g in semantic_snapshot.cfg_graphs if not g.function_node_id.startswith('function:test-scenarios:<external>')]
+    cfg_graphs_non_external = [
+        g
+        for g in semantic_snapshot.cfg_graphs
+        if not g.function_node_id.startswith("function:test-scenarios:<external>")
+    ]
     assert len(cfg_graphs_non_external) >= 1
     cfg_graph = cfg_graphs_non_external[0]
     # Note: Current BFG builder does not split per exception handler
@@ -524,11 +528,13 @@ def process(
     # 3. Function + Method 검증
     # Methods in class: __init__, get (NodeKind.METHOD)
     # Module-level function: process (NodeKind.FUNCTION)
-    func_and_method_nodes = [n for n in ir_doc.nodes if n.kind in [NodeKind.FUNCTION, NodeKind.METHOD] and not n.attrs.get("is_external")]
+    func_and_method_nodes = [
+        n for n in ir_doc.nodes if n.kind in [NodeKind.FUNCTION, NodeKind.METHOD] and not n.attrs.get("is_external")
+    ]
     assert len(func_and_method_nodes) >= 3  # __init__, get, process
 
     # 4. Signature 검증 - Union return type
-    process_sig = [s for s in semantic_snapshot.signatures if 'process' in s.id]
+    process_sig = [s for s in semantic_snapshot.signatures if "process" in s.id]
     if process_sig:
         sig = process_sig[0]
         # Note: Default parameters may not all be captured (current limitation)
@@ -708,7 +714,7 @@ def mixed_types(x: int, y):
 
     # 2. Type 검증 - Any 타입 처리
     # TypeResolver가 Any 타입을 unknown으로 처리
-    any_types = [t for t in semantic_snapshot.types if 'Any' in t.raw or 'unknown' in t.raw.lower()]
+    any_types = [t for t in semantic_snapshot.types if "Any" in t.raw or "unknown" in t.raw.lower()]
 
     # 3. Signature 검증
     assert len(semantic_snapshot.signatures) == 3
@@ -821,7 +827,11 @@ def constant_branch(x: int) -> int:
 
     # 2. CFG 검증 - Dead code detection
     # Note: External functions also get CFGs
-    cfg_graphs_non_external = [g for g in semantic_snapshot.cfg_graphs if not g.function_node_id.startswith('function:test-scenarios:<external>')]
+    cfg_graphs_non_external = [
+        g
+        for g in semantic_snapshot.cfg_graphs
+        if not g.function_node_id.startswith("function:test-scenarios:<external>")
+    ]
     assert len(cfg_graphs_non_external) == 2
 
     # First function CFG
@@ -1261,6 +1271,7 @@ class ServiceB:
     # Merge IR documents for cross-file analysis
     # In real implementation, this would be done by the orchestrator
     from src.foundation.ir.models import IRDocument
+
     merged_ir = IRDocument(
         repo_id=ir_doc_a.repo_id,
         snapshot_id="scenario:020",
@@ -1297,7 +1308,7 @@ class ServiceB:
     assert len(call_edges) >= 2  # At least validate() and process() calls
 
     # 6. Type 검증 - ServiceA type in ServiceB
-    service_a_types = [t for t in semantic_snapshot.types if 'ServiceA' in t.raw]
+    service_a_types = [t for t in semantic_snapshot.types if "ServiceA" in t.raw]
     # ServiceA is referenced as return type in ServiceB.get_service_a()
 
     # 7. CFG 검증 - Both files

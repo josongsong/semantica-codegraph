@@ -182,9 +182,7 @@ async def orchestrator(container_with_postgres):
 
 
 @pytest.mark.asyncio
-async def test_full_indexing_with_pyright_snapshot_persistence(
-    test_repo, orchestrator, snapshot_store
-):
+async def test_full_indexing_with_pyright_snapshot_persistence(test_repo, orchestrator, snapshot_store):
     """
     E2E Test 1: Full indexing with Pyright + snapshot persistence (M1).
 
@@ -198,9 +196,9 @@ async def test_full_indexing_with_pyright_snapshot_persistence(
     try:
         project_id = "test-e2e-project"
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("E2E Test 1: Full Indexing + Snapshot Persistence")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # Step 1: Full indexing
         print("Step 1: Running full indexing...")
@@ -240,9 +238,7 @@ async def test_full_indexing_with_pyright_snapshot_persistence(
 
 
 @pytest.mark.asyncio
-async def test_incremental_indexing_with_change_detector(
-    test_repo, orchestrator, snapshot_store
-):
+async def test_incremental_indexing_with_change_detector(test_repo, orchestrator, snapshot_store):
     """
     E2E Test 2: Incremental indexing with ChangeDetector (M2).
 
@@ -258,9 +254,9 @@ async def test_incremental_indexing_with_change_detector(
     try:
         project_id = "test-e2e-incremental"
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("E2E Test 2: Incremental Indexing + ChangeDetector")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # Step 1: Full indexing
         print("Step 1: Running full indexing...")
@@ -358,9 +354,9 @@ async def test_snapshot_history_and_cleanup(test_repo, orchestrator, snapshot_st
     try:
         project_id = "test-e2e-history"
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("E2E Test 3: Snapshot History & Cleanup")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # Create 3 snapshots
         print("Step 1: Creating 3 snapshots...")
@@ -391,7 +387,7 @@ async def test_snapshot_history_and_cleanup(test_repo, orchestrator, snapshot_st
                 snapshot_id="main",
                 incremental=i > 0,  # First is full, rest are incremental
             )
-            print(f"  ✓ Snapshot {i+1} created")
+            print(f"  ✓ Snapshot {i + 1} created")
 
             # Small delay to ensure different timestamps
             await asyncio.sleep(0.1)
@@ -428,9 +424,7 @@ async def test_snapshot_history_and_cleanup(test_repo, orchestrator, snapshot_st
 
 @pytest.mark.asyncio
 @pytest.mark.slow
-async def test_performance_benchmark_full_vs_incremental(
-    test_repo, orchestrator, snapshot_store
-):
+async def test_performance_benchmark_full_vs_incremental(test_repo, orchestrator, snapshot_store):
     """
     Performance Benchmark: Full vs Incremental indexing.
 
@@ -443,9 +437,9 @@ async def test_performance_benchmark_full_vs_incremental(
     try:
         project_id = "test-e2e-benchmark"
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Performance Benchmark: Full vs Incremental")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # Benchmark 1: Full indexing
         print("Benchmark 1: Full indexing (2 files)...")
@@ -460,7 +454,7 @@ async def test_performance_benchmark_full_vs_incremental(
             )
             elapsed = time.perf_counter() - start
             times_full.append(elapsed)
-            print(f"  Run {i+1}: {elapsed:.3f}s")
+            print(f"  Run {i + 1}: {elapsed:.3f}s")
 
         avg_full = sum(times_full) / len(times_full)
         print(f"✓ Full indexing average: {avg_full:.3f}s")
@@ -505,7 +499,7 @@ async def test_performance_benchmark_full_vs_incremental(
             )
             elapsed = time.perf_counter() - start
             times_incr.append(elapsed)
-            print(f"  Run {i+1}: {elapsed:.3f}s")
+            print(f"  Run {i + 1}: {elapsed:.3f}s")
 
         avg_incr = sum(times_incr) / len(times_incr)
         print(f"✓ Incremental indexing average: {avg_incr:.3f}s")

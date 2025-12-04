@@ -4,7 +4,6 @@ Test BFG (Basic Flow Graph) Builder
 Tests basic block extraction from IR.
 """
 
-
 from src.foundation.ir.models import IRDocument, Node, NodeKind, Span
 from src.foundation.parsing import SourceFile
 from src.foundation.semantic_ir.bfg.builder import BfgBuilder

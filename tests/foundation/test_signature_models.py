@@ -4,7 +4,6 @@ Signature Models Tests
 Tests for function/method signature data models.
 """
 
-
 from src.foundation.semantic_ir.signature.models import (
     SignatureEntity,
     Visibility,

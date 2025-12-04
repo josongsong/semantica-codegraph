@@ -29,11 +29,7 @@ def scan_repository(profiler: IndexingProfiler, repo_path: Path):
 
     # Filter out common exclude patterns
     exclude_patterns = ["venv", ".venv", "node_modules", ".git", "__pycache__", "build", "dist"]
-    python_files = [
-        f
-        for f in python_files
-        if not any(pattern in str(f) for pattern in exclude_patterns)
-    ]
+    python_files = [f for f in python_files if not any(pattern in str(f) for pattern in exclude_patterns)]
 
     profiler.record_counter("files_found", len(python_files))
     profiler.end_phase("scan_files")
@@ -80,9 +76,7 @@ def process_file(profiler: IndexingProfiler, file_path: Path, repo_path: Path):
         profiler.start_phase(parse_phase_name)
         parse_start = time.time()
 
-        source_file = SourceFile.from_content(
-            file_path=relative_path, content=source_code, language="python"
-        )
+        source_file = SourceFile.from_content(file_path=relative_path, content=source_code, language="python")
         ast_tree = AstTree.parse(source_file)
 
         parse_time_ms = (time.time() - parse_start) * 1000
@@ -95,7 +89,9 @@ def process_file(profiler: IndexingProfiler, file_path: Path, repo_path: Path):
 
         ir_generator = PythonIRGenerator(repo_id=profiler.repo_id)
         ir_doc = ir_generator.generate(
-            source_file, snapshot_id="bench-snapshot", ast=ast_tree  # ← Reuse AST!
+            source_file,
+            snapshot_id="bench-snapshot",
+            ast=ast_tree,  # ← Reuse AST!
         )
 
         # Get IR generation timing breakdown
@@ -159,13 +155,7 @@ def process_file(profiler: IndexingProfiler, file_path: Path, repo_path: Path):
         profiler.end_phase(chunk_build_phase_name)
 
         # Total build time (for backward compatibility)
-        build_time_ms = (
-            ir_gen_time_ms
-            + semantic_time_ms
-            + graph_time_ms
-            + symbol_time_ms
-            + chunk_time_ms
-        )
+        build_time_ms = ir_gen_time_ms + semantic_time_ms + graph_time_ms + symbol_time_ms + chunk_time_ms
 
         # Record file metrics
         profiler.record_file(

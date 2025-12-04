@@ -107,9 +107,7 @@ class TestClone:
 
             adapter.clone("https://github.com/user/repo.git", "/tmp/repo")
 
-            mock_repo_class.clone_from.assert_called_once_with(
-                "https://github.com/user/repo.git", "/tmp/repo"
-            )
+            mock_repo_class.clone_from.assert_called_once_with("https://github.com/user/repo.git", "/tmp/repo")
 
     def test_clone_error(self):
         """Test clone with git error."""

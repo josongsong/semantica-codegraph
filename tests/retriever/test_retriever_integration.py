@@ -13,6 +13,7 @@ from src.retriever.intent import IntentKind, RuleBasedClassifier
 
 pytestmark = pytest.mark.skip(reason="Retriever integration pending Priority 2 work")
 
+
 class TestIntentClassifier:
     """Test intent classification."""
 
@@ -103,15 +104,9 @@ class TestScoreNormalization:
 
         # Create test hits with varying scores
         hits = [
-            SearchHit(
-                chunk_id="chunk1", file_path="test.py", score=10.0, source="lexical", metadata={}
-            ),
-            SearchHit(
-                chunk_id="chunk2", file_path="test.py", score=5.0, source="lexical", metadata={}
-            ),
-            SearchHit(
-                chunk_id="chunk3", file_path="test.py", score=1.0, source="lexical", metadata={}
-            ),
+            SearchHit(chunk_id="chunk1", file_path="test.py", score=10.0, source="lexical", metadata={}),
+            SearchHit(chunk_id="chunk2", file_path="test.py", score=5.0, source="lexical", metadata={}),
+            SearchHit(chunk_id="chunk3", file_path="test.py", score=1.0, source="lexical", metadata={}),
         ]
 
         normalized = normalizer.normalize_hits(hits, "lexical")
@@ -132,12 +127,8 @@ class TestScoreNormalization:
 
         # Vector scores should already be 0-1 (cosine similarity)
         hits = [
-            SearchHit(
-                chunk_id="chunk1", file_path="test.py", score=0.95, source="vector", metadata={}
-            ),
-            SearchHit(
-                chunk_id="chunk2", file_path="test.py", score=0.75, source="vector", metadata={}
-            ),
+            SearchHit(chunk_id="chunk1", file_path="test.py", score=0.95, source="vector", metadata={}),
+            SearchHit(chunk_id="chunk2", file_path="test.py", score=0.75, source="vector", metadata={}),
         ]
 
         normalized = normalizer.normalize_hits(hits, "vector")

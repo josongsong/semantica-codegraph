@@ -263,21 +263,15 @@ async def main():
     print("Step 10: Demonstrating snapshot cleanup...")
 
     # Check current count
-    before_count = len(
-        await snapshot_store.list_snapshots("semantica-codegraph", limit=100)
-    )
+    before_count = len(await snapshot_store.list_snapshots("semantica-codegraph", limit=100))
     print(f"  Snapshots before cleanup: {before_count}")
 
     # Keep only 3 most recent
-    deleted_count = await snapshot_store.delete_old_snapshots(
-        "semantica-codegraph", keep_count=3
-    )
+    deleted_count = await snapshot_store.delete_old_snapshots("semantica-codegraph", keep_count=3)
     print(f"  ✓ Deleted {deleted_count} old snapshot(s)")
 
     # Check after count
-    after_count = len(
-        await snapshot_store.list_snapshots("semantica-codegraph", limit=100)
-    )
+    after_count = len(await snapshot_store.list_snapshots("semantica-codegraph", limit=100))
     print(f"  Snapshots after cleanup: {after_count}")
     print()
 

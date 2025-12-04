@@ -75,9 +75,7 @@ def create_test_file(num_functions: int) -> tuple[Path, str, list[tuple[int, int
 # ============================================================
 
 
-def benchmark_sequential(
-    daemon: PyrightSemanticDaemon, file_path: Path, locations: list[tuple[int, int]]
-):
+def benchmark_sequential(daemon: PyrightSemanticDaemon, file_path: Path, locations: list[tuple[int, int]]):
     """
     Benchmark: Sequential hover (M0/M1/M2).
 
@@ -96,9 +94,7 @@ def benchmark_sequential(
     return snapshot, elapsed
 
 
-async def benchmark_parallel(
-    daemon: PyrightSemanticDaemon, file_path: Path, locations: list[tuple[int, int]]
-):
+async def benchmark_parallel(daemon: PyrightSemanticDaemon, file_path: Path, locations: list[tuple[int, int]]):
     """
     Benchmark: Parallel hover (M2.3).
 
@@ -179,7 +175,7 @@ async def run_scenario(scenario: dict):
         print(f"  Sequential:    {time_seq:8.2f}ms  ({time_per_loc_seq:.1f}ms/loc)")
         print(f"  Parallel:      {time_par:8.2f}ms  ({time_per_loc_par:.1f}ms/loc)")
         print(f"  Speedup:       {speedup:8.1f}x")
-        print(f"  Improvement:   {((1 - time_par/time_seq) * 100):6.1f}%")
+        print(f"  Improvement:   {((1 - time_par / time_seq) * 100):6.1f}%")
         print(f"{'─' * 80}")
 
         # Cleanup
@@ -229,9 +225,7 @@ async def main():
     print("BENCHMARK SUMMARY")
     print("=" * 80)
     print()
-    print(
-        f"{'Scenario':<25} {'Sequential (ms)':>15} {'Parallel (ms)':>15} {'Speedup':>10}"
-    )
+    print(f"{'Scenario':<25} {'Sequential (ms)':>15} {'Parallel (ms)':>15} {'Speedup':>10}")
     print("─" * 80)
 
     for result in results:

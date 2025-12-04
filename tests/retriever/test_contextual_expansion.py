@@ -164,10 +164,7 @@ def test_vocabulary_with_embeddings(sample_chunks):
     # Should find authentication-related terms (specific term may vary due to embeddings)
     similar_terms = [term for term, score in similar]
     # Check that we found some authentication-related terms
-    auth_related = any(
-        "auth" in term.lower() or "user" in term.lower()
-        for term in similar_terms
-    )
+    auth_related = any("auth" in term.lower() or "user" in term.lower() for term in similar_terms)
     assert auth_related, f"Expected authentication-related terms, got: {similar_terms}"
 
 
@@ -207,9 +204,7 @@ def test_contextual_query_expander_basic(sample_chunks):
     vocab = CodebaseVocabulary(embedding_model=embedding_model)
     vocab.learn_from_chunks(sample_chunks)
 
-    expander = ContextualQueryExpander(
-        vocabulary=vocab, embedding_model=embedding_model
-    )
+    expander = ContextualQueryExpander(vocabulary=vocab, embedding_model=embedding_model)
 
     # Expand query
     result = expander.expand("authenticate", max_expansions=5, similarity_threshold=0.0)
@@ -233,9 +228,7 @@ def test_contextual_query_expander_relevance(sample_chunks):
     vocab = CodebaseVocabulary(embedding_model=embedding_model)
     vocab.learn_from_chunks(sample_chunks)
 
-    expander = ContextualQueryExpander(
-        vocabulary=vocab, embedding_model=embedding_model
-    )
+    expander = ContextualQueryExpander(vocabulary=vocab, embedding_model=embedding_model)
 
     # Expand with very low threshold to ensure we get some results
     result = expander.expand("test", max_expansions=10, similarity_threshold=0.0, frequency_min=1)
@@ -257,22 +250,16 @@ def test_contextual_query_expander_frequency_filter(sample_chunks):
     vocab = CodebaseVocabulary(embedding_model=embedding_model)
     vocab.learn_from_chunks(sample_chunks)
 
-    expander = ContextualQueryExpander(
-        vocabulary=vocab, embedding_model=embedding_model
-    )
+    expander = ContextualQueryExpander(vocabulary=vocab, embedding_model=embedding_model)
 
     # Expand with high frequency requirement (most terms appear only once)
-    result_high_freq = expander.expand(
-        "function", max_expansions=10, frequency_min=10, similarity_threshold=0.0
-    )
+    result_high_freq = expander.expand("function", max_expansions=10, frequency_min=10, similarity_threshold=0.0)
 
     # Should have fewer expansions (high frequency requirement)
     assert result_high_freq["num_expansions"] == 0  # No terms appear 10+ times
 
     # Expand with low frequency requirement
-    result_low_freq = expander.expand(
-        "function", max_expansions=10, frequency_min=1, similarity_threshold=0.0
-    )
+    result_low_freq = expander.expand("function", max_expansions=10, frequency_min=1, similarity_threshold=0.0)
 
     # Should have more expansions
     assert result_low_freq["num_expansions"] > 0
@@ -284,9 +271,7 @@ def test_contextual_query_expander_no_duplicates(sample_chunks):
     vocab = CodebaseVocabulary(embedding_model=embedding_model)
     vocab.learn_from_chunks(sample_chunks)
 
-    expander = ContextualQueryExpander(
-        vocabulary=vocab, embedding_model=embedding_model
-    )
+    expander = ContextualQueryExpander(vocabulary=vocab, embedding_model=embedding_model)
 
     # Expand query with term that exists in vocabulary
     result = expander.expand("authenticate_user", max_expansions=5, similarity_threshold=0.0)
@@ -303,9 +288,7 @@ def test_contextual_query_expander_explain(sample_chunks):
     vocab = CodebaseVocabulary(embedding_model=embedding_model)
     vocab.learn_from_chunks(sample_chunks)
 
-    expander = ContextualQueryExpander(
-        vocabulary=vocab, embedding_model=embedding_model
-    )
+    expander = ContextualQueryExpander(vocabulary=vocab, embedding_model=embedding_model)
 
     result = expander.expand("authenticate", max_expansions=5, similarity_threshold=0.0)
     explanation = expander.explain(result)

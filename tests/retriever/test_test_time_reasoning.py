@@ -56,9 +56,7 @@ class MockRetrieverService:
     async def retrieve(self, repo_id, snapshot_id, query, scope=None, **kwargs):
         """Mock retrieve."""
         return {
-            "results": [
-                {"chunk_id": f"chunk_{query[:5]}", "score": 0.85, "content": query}
-            ],
+            "results": [{"chunk_id": f"chunk_{query[:5]}", "score": 0.85, "content": query}],
             "count": 1,
         }
 

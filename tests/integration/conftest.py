@@ -56,7 +56,6 @@ def retriever_v3_config() -> RetrieverV3Config:
         enable_query_expansion=True,
         enable_explainability=True,
         enable_cache=True,
-
         # Cache TTL
         cache_ttl=300,
     )

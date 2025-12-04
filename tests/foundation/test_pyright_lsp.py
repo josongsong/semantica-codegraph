@@ -4,7 +4,6 @@ Test Pyright LSP Client
 Tests the LSP client implementation.
 """
 
-
 import pytest
 
 from src.foundation.ir.external_analyzers.pyright_lsp import PyrightLSPClient

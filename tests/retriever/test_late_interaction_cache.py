@@ -206,9 +206,7 @@ def test_optimized_late_interaction_quantization(simple_model, sample_chunks):
     assert results_no_quant[0]["chunk_id"] == results_quant[0]["chunk_id"]
 
     # Scores should be close (within 5% due to quantization)
-    score_diff = abs(
-        results_no_quant[0]["score"] - results_quant[0]["score"]
-    ) / results_no_quant[0]["score"]
+    score_diff = abs(results_no_quant[0]["score"] - results_quant[0]["score"]) / results_no_quant[0]["score"]
     assert score_diff < 0.05, f"Quantization error too large: {score_diff:.2%}"
 
 

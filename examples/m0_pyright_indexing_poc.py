@@ -212,7 +212,7 @@ def main():
     print(f"  Locations queried: {len(locations)}")
     print(f"  Nodes augmented:   {augmented_count}")
     if len(locations) > 0:
-        print(f"  Time per location: {export_time/len(locations):.2f}ms")
+        print(f"  Time per location: {export_time / len(locations):.2f}ms")
     else:
         print("  Time per location: N/A (no locations)")
     print()

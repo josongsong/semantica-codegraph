@@ -28,9 +28,7 @@ def profile_ir_generation(repo_path: Path, limit: int = 50):
     # Find Python files
     python_files = list(repo_path.rglob("*.py"))
     exclude_patterns = ["venv", ".venv", "node_modules", ".git", "__pycache__", "build", "dist"]
-    python_files = [
-        f for f in python_files if not any(pattern in str(f) for pattern in exclude_patterns)
-    ]
+    python_files = [f for f in python_files if not any(pattern in str(f) for pattern in exclude_patterns)]
 
     # Limit files for faster profiling
     python_files = python_files[:limit]
@@ -53,9 +51,7 @@ def profile_ir_generation(repo_path: Path, limit: int = 50):
             relative_path = str(file_path.relative_to(repo_path))
 
             # Parse
-            source_file = SourceFile.from_content(
-                file_path=relative_path, content=source_code, language="python"
-            )
+            source_file = SourceFile.from_content(file_path=relative_path, content=source_code, language="python")
             ast_tree = AstTree.parse(source_file)
 
             # Generate IR (this is what we're profiling)
@@ -112,12 +108,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Profile IR generation performance")
-    parser.add_argument(
-        "repo_path", nargs="?", default="src/", help="Path to repository (default: src/)"
-    )
-    parser.add_argument(
-        "-n", "--limit", type=int, default=50, help="Maximum number of files to process (default: 50)"
-    )
+    parser.add_argument("repo_path", nargs="?", default="src/", help="Path to repository (default: src/)")
+    parser.add_argument("-n", "--limit", type=int, default=50, help="Maximum number of files to process (default: 50)")
 
     args = parser.parse_args()
 

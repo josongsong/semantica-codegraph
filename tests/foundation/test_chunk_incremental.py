@@ -4,7 +4,6 @@ Test Chunk Incremental Refresh (Phase A - MVP)
 Tests incremental chunk updates for file changes.
 """
 
-
 from src.foundation.chunk import (
     Chunk,
     ChunkBuilder,

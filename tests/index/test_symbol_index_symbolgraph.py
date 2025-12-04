@@ -147,9 +147,7 @@ async def test_index_symbol_graph_basic(temp_kuzu_db, sample_symbol_graph):
     index = KuzuSymbolIndex(db_path=temp_kuzu_db)
 
     # Index the symbol graph
-    await index.index_symbol_graph(
-        repo_id="test_repo", snapshot_id="snap_001", symbol_graph=sample_symbol_graph
-    )
+    await index.index_symbol_graph(repo_id="test_repo", snapshot_id="snap_001", symbol_graph=sample_symbol_graph)
 
     # Verify we can search for symbols
     results = await index.search(repo_id="test_repo", snapshot_id="snap_001", query="Calculator")
@@ -168,9 +166,7 @@ async def test_index_symbol_graph_search_method(temp_kuzu_db, sample_symbol_grap
     """Test searching for methods"""
     index = KuzuSymbolIndex(db_path=temp_kuzu_db)
 
-    await index.index_symbol_graph(
-        repo_id="test_repo", snapshot_id="snap_001", symbol_graph=sample_symbol_graph
-    )
+    await index.index_symbol_graph(repo_id="test_repo", snapshot_id="snap_001", symbol_graph=sample_symbol_graph)
 
     # Search for method
     results = await index.search(repo_id="test_repo", snapshot_id="snap_001", query="add")
@@ -190,9 +186,7 @@ async def test_get_callees_from_symbol_graph(temp_kuzu_db, sample_symbol_graph):
     """Test getting callees (functions called by a method)"""
     index = KuzuSymbolIndex(db_path=temp_kuzu_db)
 
-    await index.index_symbol_graph(
-        repo_id="test_repo", snapshot_id="snap_001", symbol_graph=sample_symbol_graph
-    )
+    await index.index_symbol_graph(repo_id="test_repo", snapshot_id="snap_001", symbol_graph=sample_symbol_graph)
 
     # Get callees of Calculator.add method
     callees = await index.get_callees(symbol_id="method:main.Calculator.add")
@@ -209,9 +203,7 @@ async def test_get_callers_from_symbol_graph(temp_kuzu_db, sample_symbol_graph):
     """Test getting callers (who calls this function)"""
     index = KuzuSymbolIndex(db_path=temp_kuzu_db)
 
-    await index.index_symbol_graph(
-        repo_id="test_repo", snapshot_id="snap_001", symbol_graph=sample_symbol_graph
-    )
+    await index.index_symbol_graph(repo_id="test_repo", snapshot_id="snap_001", symbol_graph=sample_symbol_graph)
 
     # Get callers of helper function
     callers = await index.get_callers(symbol_id="function:main.helper")
@@ -229,9 +221,7 @@ async def test_symbol_graph_multiple_snapshots(temp_kuzu_db, sample_symbol_graph
     index = KuzuSymbolIndex(db_path=temp_kuzu_db)
 
     # Index snapshot 1
-    await index.index_symbol_graph(
-        repo_id="test_repo", snapshot_id="snap_001", symbol_graph=sample_symbol_graph
-    )
+    await index.index_symbol_graph(repo_id="test_repo", snapshot_id="snap_001", symbol_graph=sample_symbol_graph)
 
     # Create modified symbol graph for snapshot 2
     symbol_graph_v2 = SymbolGraph(
@@ -250,14 +240,10 @@ async def test_symbol_graph_multiple_snapshots(temp_kuzu_db, sample_symbol_graph
         relations=[],
     )
 
-    await index.index_symbol_graph(
-        repo_id="test_repo", snapshot_id="snap_002", symbol_graph=symbol_graph_v2
-    )
+    await index.index_symbol_graph(repo_id="test_repo", snapshot_id="snap_002", symbol_graph=symbol_graph_v2)
 
     # Search in snapshot 1 - should find Calculator
-    results_v1 = await index.search(
-        repo_id="test_repo", snapshot_id="snap_001", query="Calculator"
-    )
+    results_v1 = await index.search(repo_id="test_repo", snapshot_id="snap_001", query="Calculator")
     assert len(results_v1) > 0
     assert results_v1[0].metadata["name"] == "Calculator"
 
@@ -267,9 +253,7 @@ async def test_symbol_graph_multiple_snapshots(temp_kuzu_db, sample_symbol_graph
     assert results_v2[0].metadata["name"] == "NewClass"
 
     # Search in snapshot 2 should NOT find Calculator
-    results_v2_calc = await index.search(
-        repo_id="test_repo", snapshot_id="snap_002", query="Calculator"
-    )
+    results_v2_calc = await index.search(repo_id="test_repo", snapshot_id="snap_002", query="Calculator")
     assert len(results_v2_calc) == 0
 
     index.close()
@@ -283,9 +267,7 @@ async def test_symbol_graph_empty_case(temp_kuzu_db):
     empty_graph = SymbolGraph(repo_id="test_repo", snapshot_id="snap_empty")
 
     # Should not raise error
-    await index.index_symbol_graph(
-        repo_id="test_repo", snapshot_id="snap_empty", symbol_graph=empty_graph
-    )
+    await index.index_symbol_graph(repo_id="test_repo", snapshot_id="snap_empty", symbol_graph=empty_graph)
 
     # Search should return empty
     results = await index.search(repo_id="test_repo", snapshot_id="snap_empty", query="anything")

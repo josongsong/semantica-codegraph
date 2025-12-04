@@ -155,9 +155,7 @@ class TestServices:
     @patch("src.index.fuzzy.adapter_pgtrgm.PostgresFuzzyIndex")
     @patch("src.index.domain_meta.adapter_meta.DomainMetaIndex")
     @patch("src.infra.storage.postgres.PostgresStore")
-    def test_indexing_service(
-        self, mock_postgres, mock_domain, mock_fuzzy, mock_service_class
-    ):
+    def test_indexing_service(self, mock_postgres, mock_domain, mock_fuzzy, mock_service_class):
         """Test indexing service creation with all index dependencies."""
         container = Container()
 

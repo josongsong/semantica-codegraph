@@ -36,6 +36,7 @@ def main():
 # Resolution Methods
 # ============================================================
 
+
 def demo_self_resolution():
     """
     자체 구현 (Tree-sitter + IR)
@@ -183,6 +184,7 @@ def demo_hybrid_approach():
 # Pyright Data Flow
 # ============================================================
 
+
 def show_pyright_data_flow():
     """
     Pyright 데이터 활용 흐름
@@ -242,6 +244,7 @@ def show_pyright_data_flow():
 # ============================================================
 # Main
 # ============================================================
+
 
 def main():
     print("\n" + "🔍 Name Resolution: Pyright 활용 전략".center(60))

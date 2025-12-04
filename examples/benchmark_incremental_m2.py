@@ -114,9 +114,9 @@ def extract_ir_locations(file_path: Path, code: str) -> list[tuple[int, int]]:
     # Simulate IR extraction: functions at lines 3, 6, class at line 9
     # In real usage: parse → generate IR → extract locations
     return [
-        (3, 4),   # func_X
-        (6, 4),   # helper_X
-        (9, 6),   # Class_X
+        (3, 4),  # func_X
+        (6, 4),  # helper_X
+        (9, 6),  # Class_X
         (10, 8),  # __init__
         (13, 8),  # process
         (17, 0),  # result_X
@@ -128,9 +128,7 @@ def extract_ir_locations(file_path: Path, code: str) -> list[tuple[int, int]]:
 # ============================================================
 
 
-def benchmark_full_analysis(
-    daemon: PyrightSemanticDaemon, project_root: Path, num_files: int
-):
+def benchmark_full_analysis(daemon: PyrightSemanticDaemon, project_root: Path, num_files: int):
     """
     Benchmark: Full analysis (all files).
 
@@ -189,9 +187,7 @@ def benchmark_incremental_analysis(
 
     # Time incremental analysis
     start = time.perf_counter()
-    snapshot = daemon.export_semantic_incremental(
-        changed_files=changed_locations, previous_snapshot=previous_snapshot
-    )
+    snapshot = daemon.export_semantic_incremental(changed_files=changed_locations, previous_snapshot=previous_snapshot)
     elapsed = (time.perf_counter() - start) * 1000
 
     return snapshot, elapsed
@@ -233,18 +229,14 @@ def run_benchmark(scenario: dict):
 
         # Benchmark 1: Full analysis
         print(f"\n[1/2] Running full analysis ({total_files} files)...")
-        full_snapshot, full_time = benchmark_full_analysis(
-            daemon, project_root, total_files
-        )
+        full_snapshot, full_time = benchmark_full_analysis(daemon, project_root, total_files)
         print(f"  ✓ Full analysis: {full_time:.2f}ms")
         print(f"  ✓ Snapshot: {full_snapshot.stats()}")
 
         # Benchmark 2: Incremental analysis
         print(f"\n[2/2] Running incremental analysis ({changed_files} files)...")
         changed_indices = list(range(changed_files))
-        inc_snapshot, inc_time = benchmark_incremental_analysis(
-            daemon, project_root, full_snapshot, changed_indices
-        )
+        inc_snapshot, inc_time = benchmark_incremental_analysis(daemon, project_root, full_snapshot, changed_indices)
         print(f"  ✓ Incremental analysis: {inc_time:.2f}ms")
         print(f"  ✓ Snapshot: {inc_snapshot.stats()}")
 

@@ -109,9 +109,7 @@ y: str = "test"
     snapshot_sync = daemon.export_semantic_for_locations(file_path, locations)
 
     # Async version
-    snapshot_async = await daemon.export_semantic_for_locations_async(
-        file_path, locations
-    )
+    snapshot_async = await daemon.export_semantic_for_locations_async(file_path, locations)
 
     # Compare results (both should have same number of types)
     assert len(snapshot_sync.typing_info) == len(snapshot_async.typing_info)
@@ -159,9 +157,7 @@ async def test_parallel_hover_performance(daemon, temp_project):
 
     # Async version
     start_async = time.perf_counter()
-    snapshot_async = await daemon.export_semantic_for_locations_async(
-        file_path, locations
-    )
+    snapshot_async = await daemon.export_semantic_for_locations_async(file_path, locations)
     time_async = (time.perf_counter() - start_async) * 1000
 
     # Calculate speedup

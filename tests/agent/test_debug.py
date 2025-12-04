@@ -91,13 +91,13 @@ class TestDebugMode:
         """Test Python stack trace parsing."""
         mode = DebugMode()
 
-        error_text = '''Traceback (most recent call last):
+        error_text = """Traceback (most recent call last):
   File "/app/main.py", line 42, in main
     result = calculate(x)
   File "/app/utils.py", line 10, in calculate
     return x / 0
 ZeroDivisionError: division by zero
-'''
+"""
 
         error_info = {"raw": error_text}
         location = mode._analyze_stacktrace(error_info)
@@ -278,10 +278,10 @@ ZeroDivisionError: division by zero
         context = ModeContext()
 
         # Error in divide function
-        error_msg = '''
+        error_msg = """
         File "calculator.py", line 10, in divide
             ZeroDivisionError: division by zero
-        '''
+        """
 
         task = Task(query=error_msg)
         result = await mode.execute(task, context)
@@ -313,10 +313,10 @@ ZeroDivisionError: division by zero
         mode = DebugMode(llm_client=mock_llm)  # No graph
         context = ModeContext()
 
-        error_msg = '''
+        error_msg = """
         File "calculator.py", line 10, in divide
             ZeroDivisionError: division by zero
-        '''
+        """
 
         task = Task(query=error_msg)
         result = await mode.execute(task, context)

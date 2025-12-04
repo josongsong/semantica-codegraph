@@ -545,8 +545,7 @@ class TestScenario1_CallRelationDependency:
             "code": intent.code,
             "balanced": intent.balanced,
         }
-        assert intent.flow == max(intent_dict.values()), \
-            f"Flow should be dominant: {intent_dict}"
+        assert intent.flow == max(intent_dict.values()), f"Flow should be dominant: {intent_dict}"
 
         # Should find multiple callers
         assert len(results) >= 3, "Should find all callers"
@@ -651,8 +650,9 @@ class TestScenario1_CallRelationDependency:
         )
 
         # Either flow or symbol should be reasonably high
-        assert intent.flow > 0.15 or intent.symbol > 0.15, \
+        assert intent.flow > 0.15 or intent.symbol > 0.15, (
             f"Flow or Symbol should be significant: flow={intent.flow:.3f}, symbol={intent.symbol:.3f}"
+        )
 
         # Should find multiple usage locations
         assert len(results) >= 3, "Should find multiple usage locations"
@@ -771,18 +771,15 @@ class TestScenario1_CallRelationDependency:
         top_result = results[0]
         num_strategies = top_result.consensus_stats.num_strategies
 
-        assert num_strategies >= 3, \
-            f"Should have consensus from multiple strategies: {num_strategies}"
+        assert num_strategies >= 3, f"Should have consensus from multiple strategies: {num_strategies}"
 
         # Consensus boost should be applied
-        assert top_result.consensus_stats.consensus_factor > 1.0, \
-            "Consensus boost should be applied"
+        assert top_result.consensus_stats.consensus_factor > 1.0, "Consensus boost should be applied"
 
         # Should include both definition and usage sites
         chunk_ids = [r.chunk_id for r in results]
         assert "chunk_builder_def" in chunk_ids, "Should include definition"
-        assert any("incremental" in cid or "orchestrator" in cid for cid in chunk_ids), \
-            "Should include usage sites"
+        assert any("incremental" in cid or "orchestrator" in cid for cid in chunk_ids), "Should include usage sites"
 
         print("\n✅ Scenario 1-8: Refactoring impact analysis")
         print(f"   Intent: flow={intent.flow:.3f}, balanced={intent.balanced:.3f}")
@@ -885,8 +882,9 @@ class TestScenario1_PipelineEndToEnd:
         )
 
         # Flow intent for pipeline tracing
-        assert intent.flow > 0.15 or intent.balanced > 0.15, \
+        assert intent.flow > 0.15 or intent.balanced > 0.15, (
             f"Flow or balanced intent expected: flow={intent.flow:.3f}, balanced={intent.balanced:.3f}"
+        )
 
         # Should find pipeline stages
         assert len(results) >= 3, "Should find multiple pipeline stages"
@@ -1456,8 +1454,7 @@ class TestScenario1_ApiDto:
         # Should include both definition and usage
         chunk_ids = [r.chunk_id for r in results]
         assert "search_request_dto" in chunk_ids, "Should include definition"
-        assert any("endpoint" in cid or "validator" in cid for cid in chunk_ids), \
-            "Should include usage sites"
+        assert any("endpoint" in cid or "validator" in cid for cid in chunk_ids), "Should include usage sites"
 
         print("\n✅ Scenario 1-15: DTO usage impact")
         print(f"   Intent: symbol={intent.symbol:.3f}, flow={intent.flow:.3f}")
@@ -1794,8 +1791,7 @@ class TestScenario1_ConfigEnvironmentService:
 
         # Symbol or lexical should find it
         top_result = results[0]
-        assert "symbol" in top_result.consensus_stats.ranks or \
-               "lexical" in top_result.consensus_stats.ranks
+        assert "symbol" in top_result.consensus_stats.ranks or "lexical" in top_result.consensus_stats.ranks
 
         print("\n✅ Scenario 1-19: Batch scheduler")
         print(f"   Intent: code={intent.code:.3f}, balanced={intent.balanced:.3f}")

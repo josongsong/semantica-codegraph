@@ -1,16 +1,15 @@
 """
-Pipeline Layer
+Pipeline Components
 
-End-to-end orchestration of parsing, IR generation, graph building,
-chunking, and indexing.
-
-Components:
-- IndexingOrchestrator: Full pipeline from source files to indexed chunks
+Provides reusable pipeline infrastructure including:
+- Stage decorators for common boilerplate
+- Context management
+- Progress tracking
 """
 
-from .orchestrator import IndexingOrchestrator, IndexingResult
+from src.pipeline.decorators import index_execution, stage_execution
 
 __all__ = [
-    "IndexingOrchestrator",
-    "IndexingResult",
+    "stage_execution",
+    "index_execution",
 ]

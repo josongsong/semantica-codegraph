@@ -4,7 +4,6 @@ Scope Stack Tests
 Tests for scope tracking during AST traversal.
 """
 
-
 from src.foundation.generators.scope_stack import ScopeFrame, ScopeStack
 
 

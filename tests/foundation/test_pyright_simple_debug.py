@@ -19,6 +19,7 @@ def test_simple_hover():
     try:
         # Create pyrightconfig.json
         import json
+
         config = {
             "include": ["**/*.py"],
             "typeCheckingMode": "basic",
@@ -32,11 +33,11 @@ x: int = 42
         file_path = temp_dir / "test.py"
         file_path.write_text(code)
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print(f"Test Directory: {temp_dir}")
         print(f"File: {file_path}")
         print(f"File exists: {file_path.exists()}")
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
         # Create LSP client
         print("Creating Pyright LSP client...")
@@ -57,9 +58,9 @@ x: int = 42
         print("Attempting hover at line 2, col 0 (variable 'x')...")
         result = lsp_client.hover(file_path, 2, 0)
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print(f"FINAL RESULT: {result}")
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
         # Cleanup
         lsp_client.shutdown()

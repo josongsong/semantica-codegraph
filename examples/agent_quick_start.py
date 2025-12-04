@@ -75,17 +75,13 @@ async def example_1_basic_workflow():
             super().__init__(AgentMode.TEST)
 
         async def execute(self, task, context):
-            return self._create_result(
-                data={"tests_passed": True}, trigger=None, explanation="Tests passed"
-            )
+            return self._create_result(data={"tests_passed": True}, trigger=None, explanation="Tests passed")
 
     # 1. Create FSM and register modes
     fsm = AgentFSM()
     fsm.register(
         AgentMode.CONTEXT_NAV,
-        ContextNavigationModeSimple(
-            mock_results=[{"file_path": "auth.py", "content": "existing auth code"}]
-        ),
+        ContextNavigationModeSimple(mock_results=[{"file_path": "auth.py", "content": "existing auth code"}]),
     )
     fsm.register(
         AgentMode.IMPLEMENTATION,
@@ -94,9 +90,7 @@ async def example_1_basic_workflow():
     fsm.register(AgentMode.TEST, SimpleTestMode())
 
     # 2. Create orchestrator with auto-approve (for demo)
-    orchestrator = AgentOrchestrator(
-        fsm=fsm, auto_approve=True, base_path="/tmp/agent_demo"
-    )
+    orchestrator = AgentOrchestrator(fsm=fsm, auto_approve=True, base_path="/tmp/agent_demo")
 
     # 3. Execute workflow
     print("\n📝 Task: Implement login function")
@@ -364,9 +358,7 @@ async def example_5_error_handling():
 
     # Setup
     fsm = AgentFSM()
-    impl_mode = ImplementationMode(
-        llm_client=FailingLLM(), approval_callback=rejecting_approval
-    )
+    impl_mode = ImplementationMode(llm_client=FailingLLM(), approval_callback=rejecting_approval)
     fsm.register(AgentMode.IMPLEMENTATION, impl_mode)
 
     orchestrator = AgentOrchestrator(fsm=fsm, base_path="/tmp/agent_demo")
@@ -374,9 +366,7 @@ async def example_5_error_handling():
     # Test 1: LLM failure
     print("\n🧪 Test 1: LLM Failure Handling")
     try:
-        await orchestrator.execute_task(
-            Task(query="implement feature"), start_mode=AgentMode.IMPLEMENTATION
-        )
+        await orchestrator.execute_task(Task(query="implement feature"), start_mode=AgentMode.IMPLEMENTATION)
         print("   LLM error handled gracefully")
     except Exception as e:
         print(f"   ❌ Unexpected error: {e}")
@@ -384,9 +374,7 @@ async def example_5_error_handling():
     # Test 2: Approval rejection
     print("\n🧪 Test 2: Approval Rejection")
     orchestrator.fsm.context.approval_level = "high"
-    result = await orchestrator.execute_task(
-        Task(query="add feature"), start_mode=AgentMode.IMPLEMENTATION
-    )
+    result = await orchestrator.execute_task(Task(query="add feature"), start_mode=AgentMode.IMPLEMENTATION)
 
     if result.trigger == "rejected":
         print("   ✅ Rejection handled (would transition to CONTEXT_NAV)")

@@ -2,7 +2,6 @@
 Tests for SymbolGraph models and builder
 """
 
-
 from src.foundation.graph.models import (
     GraphDocument,
     GraphEdge,

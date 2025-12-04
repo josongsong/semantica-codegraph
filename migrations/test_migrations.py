@@ -26,10 +26,7 @@ except ImportError:
     sys.exit(1)
 
 
-DATABASE_URL = os.getenv(
-    "SEMANTICA_DATABASE_URL",
-    "postgresql://localhost:5432/semantica"
-)
+DATABASE_URL = os.getenv("SEMANTICA_DATABASE_URL", "postgresql://localhost:5432/semantica")
 
 
 async def test_connection(conn: asyncpg.Connection) -> bool:
@@ -233,6 +230,7 @@ async def test_fuzzy_search(conn: asyncpg.Connection) -> bool:
     except Exception as e:
         print(f"   ✗ Fuzzy search test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -268,7 +266,9 @@ async def test_domain_search(conn: asyncpg.Connection) -> bool:
         """)
 
         if result and len(result) > 0:
-            print(f"   ✓ Search 'authentication': '{result[0]['title']}' ({result[0]['doc_type']}, score: {result[0]['score']:.3f})")
+            print(
+                f"   ✓ Search 'authentication': '{result[0]['title']}' ({result[0]['doc_type']}, score: {result[0]['score']:.3f})"
+            )
         else:
             print("   ✗ Full-text search failed")
             return False
@@ -284,7 +284,9 @@ async def test_domain_search(conn: asyncpg.Connection) -> bool:
         """)
 
         if result and len(result) > 0:
-            print(f"   ✓ Search 'search API': '{result[0]['title']}' ({result[0]['doc_type']}, score: {result[0]['score']:.3f})")
+            print(
+                f"   ✓ Search 'search API': '{result[0]['title']}' ({result[0]['doc_type']}, score: {result[0]['score']:.3f})"
+            )
         else:
             print("   ✗ Multi-word search failed")
             return False
@@ -333,6 +335,7 @@ async def test_domain_search(conn: asyncpg.Connection) -> bool:
     except Exception as e:
         print(f"   ✗ Domain search test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -374,7 +377,7 @@ async def main():
     except Exception as e:
         print(f"✗ Failed to connect to database: {e}")
         print("\nMake sure PostgreSQL is running and DATABASE_URL is correct:")
-        print(f"  export SEMANTICA_DATABASE_URL=\"{DATABASE_URL}\"")
+        print(f'  export SEMANTICA_DATABASE_URL="{DATABASE_URL}"')
         sys.exit(1)
 
     try:

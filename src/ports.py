@@ -5,10 +5,35 @@ Defines interfaces for both server layer and foundation layer components.
 """
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from dataclasses import dataclass, field
+from typing import Any, Protocol, runtime_checkable
 
-if TYPE_CHECKING:
-    from src.index.common.documents import IndexDocument, SearchHit
+# ============================================================
+# Common Types (shared across layers)
+# ============================================================
+
+
+@dataclass
+class SearchHit:
+    """Search result from any index."""
+
+    chunk_id: str
+    score: float
+    source: str  # "lexical", "vector", "symbol", "graph", etc.
+    content: str = ""
+    file_path: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class IndexDocument:
+    """Document to be indexed."""
+
+    chunk_id: str
+    content: str
+    file_path: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
 
 # ============================================================
 # Foundation Layer Ports (Index Layer)
@@ -47,7 +72,7 @@ class LexicalIndexPort(Protocol):
         ...
 
     @abstractmethod
-    async def search(self, repo_id: str, snapshot_id: str, query: str, limit: int = 50) -> "list[SearchHit]":
+    async def search(self, repo_id: str, snapshot_id: str, query: str, limit: int = 50) -> list[SearchHit]:
         """
         Search with lexical query.
 
@@ -77,7 +102,7 @@ class VectorIndexPort(Protocol):
     """
 
     @abstractmethod
-    async def index(self, repo_id: str, snapshot_id: str, docs: "list[IndexDocument]") -> None:
+    async def index(self, repo_id: str, snapshot_id: str, docs: list[IndexDocument]) -> None:
         """
         Full index creation.
 
@@ -89,7 +114,7 @@ class VectorIndexPort(Protocol):
         ...
 
     @abstractmethod
-    async def upsert(self, repo_id: str, snapshot_id: str, docs: "list[IndexDocument]") -> None:
+    async def upsert(self, repo_id: str, snapshot_id: str, docs: list[IndexDocument]) -> None:
         """
         Incremental upsert.
 
@@ -113,7 +138,14 @@ class VectorIndexPort(Protocol):
         ...
 
     @abstractmethod
-    async def search(self, repo_id: str, snapshot_id: str, query: str, limit: int = 50) -> "list[SearchHit]":
+    async def search(
+        self,
+        repo_id: str,
+        snapshot_id: str,
+        query: str,
+        limit: int = 50,
+        chunk_ids: list[str] | None = None,
+    ) -> list[SearchHit]:
         """
         Semantic search.
 
@@ -122,6 +154,7 @@ class VectorIndexPort(Protocol):
             snapshot_id: Snapshot identifier
             query: Natural language query
             limit: Maximum results
+            chunk_ids: Optional list of chunk IDs to filter (DB-level filtering)
 
         Returns:
             List of SearchHit with source="vector"
@@ -138,7 +171,7 @@ class SymbolIndexPort(Protocol):
     """
 
     @abstractmethod
-    async def search(self, repo_id: str, snapshot_id: str, query: str, limit: int = 50) -> "list[SearchHit]":
+    async def search(self, repo_id: str, snapshot_id: str, query: str, limit: int = 50) -> list[SearchHit]:
         """
         Symbol search (go-to-def, find-refs).
 
@@ -175,6 +208,32 @@ class SymbolIndexPort(Protocol):
         """Get symbols called by this symbol (returns dict for flexibility)"""
         ...
 
+    @abstractmethod
+    async def get_node_by_id(self, node_id: str) -> dict[str, Any] | None:
+        """
+        Get node by ID.
+
+        Args:
+            node_id: Node/symbol identifier
+
+        Returns:
+            Node data as dict or None if not found
+        """
+        ...
+
+    @abstractmethod
+    async def get_references(self, symbol_id: str) -> list[dict[str, Any]]:
+        """
+        Get all nodes that reference this symbol.
+
+        Args:
+            symbol_id: Symbol identifier
+
+        Returns:
+            List of nodes that reference this symbol
+        """
+        ...
+
 
 @runtime_checkable
 class FuzzyIndexPort(Protocol):
@@ -185,12 +244,12 @@ class FuzzyIndexPort(Protocol):
     """
 
     @abstractmethod
-    async def index(self, repo_id: str, snapshot_id: str, docs: "list[IndexDocument]") -> None:
+    async def index(self, repo_id: str, snapshot_id: str, docs: list[IndexDocument]) -> None:
         """Index documents for fuzzy search."""
         ...
 
     @abstractmethod
-    async def upsert(self, repo_id: str, snapshot_id: str, docs: "list[IndexDocument]") -> None:
+    async def upsert(self, repo_id: str, snapshot_id: str, docs: list[IndexDocument]) -> None:
         """Upsert documents for fuzzy search."""
         ...
 
@@ -200,7 +259,7 @@ class FuzzyIndexPort(Protocol):
         ...
 
     @abstractmethod
-    async def search(self, repo_id: str, snapshot_id: str, query: str, limit: int = 50) -> "list[SearchHit]":
+    async def search(self, repo_id: str, snapshot_id: str, query: str, limit: int = 50) -> list[SearchHit]:
         """
         Fuzzy search for identifiers/symbols.
 
@@ -225,12 +284,12 @@ class DomainMetaIndexPort(Protocol):
     """
 
     @abstractmethod
-    async def index(self, repo_id: str, snapshot_id: str, docs: "list[IndexDocument]") -> None:
+    async def index(self, repo_id: str, snapshot_id: str, docs: list[IndexDocument]) -> None:
         """Index domain documents (README, ADR, API specs)"""
         ...
 
     @abstractmethod
-    async def upsert(self, repo_id: str, snapshot_id: str, docs: "list[IndexDocument]") -> None:
+    async def upsert(self, repo_id: str, snapshot_id: str, docs: list[IndexDocument]) -> None:
         """Upsert domain documents."""
         ...
 
@@ -240,7 +299,7 @@ class DomainMetaIndexPort(Protocol):
         ...
 
     @abstractmethod
-    async def search(self, repo_id: str, snapshot_id: str, query: str, limit: int = 50) -> "list[SearchHit]":
+    async def search(self, repo_id: str, snapshot_id: str, query: str, limit: int = 50) -> list[SearchHit]:
         """
         Search domain documents.
 
@@ -264,7 +323,7 @@ class RuntimeIndexPort(Protocol):
         ...
 
     @abstractmethod
-    async def search(self, repo_id: str, snapshot_id: str, query: str, limit: int = 50) -> "list[SearchHit]":
+    async def search(self, repo_id: str, snapshot_id: str, query: str, limit: int = 50) -> list[SearchHit]:
         """
         Search based on runtime metrics.
 
@@ -284,7 +343,7 @@ class RepoMapPort(Protocol):
     Usage:
         repomap_port = PostgresRepoMapStore(...)
         nodes = repomap_port.get_topk_by_importance(repo_id, snapshot_id, k=100)
-        subtree = repomap_port.get_subtree(repo_id, snapshot_id, node_id)
+        subtree = repomap_port.get_subtree(node_id)
     """
 
     @abstractmethod
@@ -330,14 +389,13 @@ class RepoMapPort(Protocol):
         ...
 
     @abstractmethod
-    def get_subtree(self, repo_id: str, snapshot_id: str, root_node_id: str) -> list[Any]:  # list[RepoMapNode]
+    def get_subtree(self, node_id: str) -> list[Any]:  # list[RepoMapNode]
         """
         Get node and all descendants.
 
         Args:
-            repo_id: Repository identifier
-            snapshot_id: Snapshot identifier
-            root_node_id: Root node ID for subtree
+            node_id: RepoMap node ID (format: repomap:{repo_id}:{snapshot_id}:{kind}:{path})
+                    Contains repo_id and snapshot_id embedded in the ID.
 
         Returns:
             List of RepoMapNode (root + all children recursively)

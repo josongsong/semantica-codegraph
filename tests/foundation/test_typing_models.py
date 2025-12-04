@@ -4,7 +4,6 @@ Type System Models Tests
 Tests for type system data models.
 """
 
-
 from src.foundation.semantic_ir.typing.models import (
     TypeEntity,
     TypeFlavor,

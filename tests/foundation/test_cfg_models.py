@@ -4,7 +4,6 @@ CFG Models Tests
 Tests for Control Flow Graph data models.
 """
 
-
 from src.foundation.ir.models.core import Span
 from src.foundation.semantic_ir.cfg.models import (
     CFGBlockKind,

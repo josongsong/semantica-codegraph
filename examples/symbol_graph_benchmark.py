@@ -36,9 +36,9 @@ def benchmark_file(file_path: str, repo_id: str = "test-repo"):
 
     tracemalloc.start()
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Benchmarking: {file_path}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Read source file
     with open(file_path) as f:
@@ -50,12 +50,10 @@ def benchmark_file(file_path: str, repo_id: str = "test-repo"):
     # Step 1: Parse AST
     print("\n[1/5] Parsing AST...")
     start = time.time()
-    source_file = SourceFile.from_content(
-        file_path=file_path, content=source_code, language="python"
-    )
+    source_file = SourceFile.from_content(file_path=file_path, content=source_code, language="python")
     ast_tree = AstTree.parse(source_file)
     parse_time = time.time() - start
-    print(f"  ✓ Parse time: {parse_time*1000:.2f}ms")
+    print(f"  ✓ Parse time: {parse_time * 1000:.2f}ms")
 
     mem_after_parse = get_memory_usage()
     print(f"  Memory: {mem_after_parse[0]:.2f}MB (peak: {mem_after_parse[1]:.2f}MB)")
@@ -68,7 +66,7 @@ def benchmark_file(file_path: str, repo_id: str = "test-repo"):
     ir_generator = PythonIRGenerator(repo_id)
     ir_doc = ir_generator.generate(source_file, snapshot_id="bench-snapshot")
     ir_time = time.time() - start
-    print(f"  ✓ IR generation time: {ir_time*1000:.2f}ms")
+    print(f"  ✓ IR generation time: {ir_time * 1000:.2f}ms")
     print(f"  IR nodes: {len(ir_doc.nodes)}")
 
     mem_after_ir = get_memory_usage()
@@ -82,7 +80,7 @@ def benchmark_file(file_path: str, repo_id: str = "test-repo"):
     semantic_builder = DefaultSemanticIrBuilder()
     semantic_snapshot, _ = semantic_builder.build_full(ir_doc)
     semantic_time = time.time() - start
-    print(f"  ✓ Semantic IR build time: {semantic_time*1000:.2f}ms")
+    print(f"  ✓ Semantic IR build time: {semantic_time * 1000:.2f}ms")
 
     mem_after_semantic = get_memory_usage()
     print(f"  Memory: {mem_after_semantic[0]:.2f}MB (peak: {mem_after_semantic[1]:.2f}MB)")
@@ -93,7 +91,7 @@ def benchmark_file(file_path: str, repo_id: str = "test-repo"):
     graph_builder = GraphBuilder()
     graph_doc = graph_builder.build_full(ir_doc, semantic_snapshot)
     graph_time = time.time() - start
-    print(f"  ✓ Graph build time: {graph_time*1000:.2f}ms")
+    print(f"  ✓ Graph build time: {graph_time * 1000:.2f}ms")
     print(f"  Graph nodes: {len(graph_doc.graph_nodes)}")
     print(f"  Graph edges: {len(graph_doc.graph_edges)}")
 
@@ -108,7 +106,7 @@ def benchmark_file(file_path: str, repo_id: str = "test-repo"):
     symbol_builder = SymbolGraphBuilder()
     symbol_graph = symbol_builder.build_from_graph(graph_doc)
     symbol_time = time.time() - start
-    print(f"  ✓ SymbolGraph build time: {symbol_time*1000:.2f}ms")
+    print(f"  ✓ SymbolGraph build time: {symbol_time * 1000:.2f}ms")
     print(f"  Symbols: {symbol_graph.symbol_count}")
     print(f"  Relations: {symbol_graph.relation_count}")
 
@@ -134,21 +132,21 @@ def benchmark_file(file_path: str, repo_id: str = "test-repo"):
         for _ in range(1000):
             symbol = symbol_graph.get_symbol(test_symbol_id)
         get_symbol_time = (time.perf_counter() - start) / 1000
-        print(f"  get_symbol() avg: {get_symbol_time*1_000_000:.2f}μs (1000 iterations)")
+        print(f"  get_symbol() avg: {get_symbol_time * 1_000_000:.2f}μs (1000 iterations)")
 
         # Test get_children (index lookup)
         start = time.perf_counter()
         for _ in range(1000):
             children = symbol_graph.indexes.get_children(test_symbol_id)
         get_children_time = (time.perf_counter() - start) / 1000
-        print(f"  get_children() avg: {get_children_time*1_000_000:.2f}μs (1000 iterations)")
+        print(f"  get_children() avg: {get_children_time * 1_000_000:.2f}μs (1000 iterations)")
 
         # Test get_callers (index lookup)
         start = time.perf_counter()
         for _ in range(1000):
             callers = symbol_graph.indexes.get_callers(test_symbol_id)
         get_callers_time = (time.perf_counter() - start) / 1000
-        print(f"  get_callers() avg: {get_callers_time*1_000_000:.2f}μs (1000 iterations)")
+        print(f"  get_callers() avg: {get_callers_time * 1_000_000:.2f}μs (1000 iterations)")
 
         # Test get_symbols_by_kind (filter)
         from src.foundation.symbol_graph.models import SymbolKind
@@ -157,7 +155,7 @@ def benchmark_file(file_path: str, repo_id: str = "test-repo"):
         for _ in range(100):
             funcs = symbol_graph.get_symbols_by_kind(SymbolKind.FUNCTION)
         get_by_kind_time = (time.perf_counter() - start) / 100
-        print(f"  get_symbols_by_kind() avg: {get_by_kind_time*1000:.2f}ms (100 iterations)")
+        print(f"  get_symbols_by_kind() avg: {get_by_kind_time * 1000:.2f}ms (100 iterations)")
         print(f"  Found {len(funcs)} functions")
 
     tracemalloc.stop()
@@ -243,9 +241,7 @@ def main():
         print("-" * 85)
         for r in results:
             file_name = Path(r["file"]).name
-            print(
-                f"{file_name:<50} {r['symbols']:<10} {r['memory_reduction_pct']:>10.1f}% {r['get_symbol_us']:>10.2f}"
-            )
+            print(f"{file_name:<50} {r['symbols']:<10} {r['memory_reduction_pct']:>10.1f}% {r['get_symbol_us']:>10.2f}")
 
 
 if __name__ == "__main__":

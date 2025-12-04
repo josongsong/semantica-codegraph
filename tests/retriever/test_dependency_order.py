@@ -9,7 +9,6 @@ Verifies:
 5. Integration with GraphDocument/SymbolGraph
 """
 
-
 from src.foundation.graph.models import (
     GraphDocument,
     GraphEdge,

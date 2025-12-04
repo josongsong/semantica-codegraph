@@ -171,16 +171,14 @@ Platform: {platform.system()} {platform.release()}"""
         lines.append(
             f"{' ' * 32}0.0s"
             + f"{' ' * 9}{quarter:.1f}s"
-            + f"{' ' * 9}{quarter*2:.1f}s"
-            + f"{' ' * 9}{quarter*3:.1f}s"
+            + f"{' ' * 9}{quarter * 2:.1f}s"
+            + f"{' ' * 9}{quarter * 3:.1f}s"
             + f"{' ' * 8}{total_duration:.1f}s"
         )
 
         return "\n".join(lines)
 
-    def _render_phase_waterfall(
-        self, phase: PhaseMetrics, lines: list[str], total_duration: float, indent: int = 0
-    ):
+    def _render_phase_waterfall(self, phase: PhaseMetrics, lines: list[str], total_duration: float, indent: int = 0):
         """Render a single phase in waterfall view."""
         if total_duration == 0:
             return
@@ -248,9 +246,7 @@ Platform: {platform.system()} {platform.release()}"""
 
         return "\n".join(lines)
 
-    def _render_phase_row(
-        self, phase: PhaseMetrics, lines: list[str], total_duration: float, indent: int = 0
-    ):
+    def _render_phase_row(self, phase: PhaseMetrics, lines: list[str], total_duration: float, indent: int = 0):
         """Render a single phase row in table."""
         indent_str = "  " * indent
         if indent > 0:
@@ -331,12 +327,9 @@ Platform: {platform.system()} {platform.release()}"""
         if root_phases:
             slowest_phase = max(root_phases, key=lambda p: p.duration_ms)
             total_duration_ms = self.profiler.total_duration_s * 1000
-            slowest_pct = (
-                (slowest_phase.duration_ms / total_duration_ms * 100) if total_duration_ms > 0 else 0
-            )
+            slowest_pct = (slowest_phase.duration_ms / total_duration_ms * 100) if total_duration_ms > 0 else 0
             bottleneck_info = (
-                f"가장 느린 Phase: {slowest_phase.name} "
-                f"({slowest_phase.duration_ms / 1000:.2f}초, {slowest_pct:.1f}%)"
+                f"가장 느린 Phase: {slowest_phase.name} ({slowest_phase.duration_ms / 1000:.2f}초, {slowest_pct:.1f}%)"
             )
         else:
             bottleneck_info = "N/A"

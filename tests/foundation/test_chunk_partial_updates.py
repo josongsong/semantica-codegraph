@@ -4,7 +4,6 @@ Tests for Phase C: Diff-based Partial Updates
 Tests the git diff parser, affected chunk detection, and selective chunk updates.
 """
 
-
 from src.foundation.chunk import (
     Chunk,
     ChunkBuilder,

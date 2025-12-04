@@ -288,6 +288,7 @@ class TestLanguageRegistration:
     @patch("src.foundation.parsing.parser_registry.get_language")
     def test_language_registration_failure(self, mock_get_language):
         """Test language registration handles failures gracefully."""
+
         # Make get_language fail for one language
         def side_effect(name):
             if name == "python":

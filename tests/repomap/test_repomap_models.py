@@ -2,7 +2,6 @@
 Tests for RepoMap models and ID generation.
 """
 
-
 from src.repomap.id_strategy import RepoMapIdContext, RepoMapIdGenerator
 from src.repomap.models import RepoMapMetrics, RepoMapNode, RepoMapSnapshot
 

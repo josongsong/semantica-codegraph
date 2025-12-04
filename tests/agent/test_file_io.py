@@ -121,7 +121,7 @@ class TestReadMultipleFiles:
             # Create test files
             for i in range(3):
                 with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".py") as f:
-                    f.write(f"# File {i+1}\ncode here\n")
+                    f.write(f"# File {i + 1}\ncode here\n")
                     temp_files.append(f.name)
 
             content = read_multiple_files(temp_files)

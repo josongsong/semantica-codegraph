@@ -2,7 +2,6 @@
 Tests for IR-to-Chunk Adapter
 """
 
-
 from src.chunking.ir_adapter import IRChunkAdapter
 from src.ir.python_builder import PythonIRBuilder
 

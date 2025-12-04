@@ -138,9 +138,7 @@ async def index_codebase(container: Container, src_dir: Path) -> tuple[str, str]
     chunks = []
     for file_path, content, tree in parsed_files:
         try:
-            file_chunks = chunk_builder.build_chunks(
-                file_path=str(file_path), source_code=content, tree=tree
-            )
+            file_chunks = chunk_builder.build_chunks(file_path=str(file_path), source_code=content, tree=tree)
             chunks.extend(file_chunks)
         except Exception as e:
             logger.warning(f"  Failed to chunk {file_path}: {e}")
@@ -171,9 +169,7 @@ async def index_codebase(container: Container, src_dir: Path) -> tuple[str, str]
     graph_doc = None
     try:
         graph_doc = graph_builder.build_graph(ir_documents=ir_docs)
-        logger.info(
-            f"  Built graph with {len(graph_doc.nodes)} nodes and {len(graph_doc.edges)} edges"
-        )
+        logger.info(f"  Built graph with {len(graph_doc.nodes)} nodes and {len(graph_doc.edges)} edges")
     except Exception as e:
         logger.error(f"  Failed to build graph: {e}")
 
@@ -208,7 +204,9 @@ async def index_codebase(container: Container, src_dir: Path) -> tuple[str, str]
             source_codes=source_codes,
         )
         logger.info(f"  ✅ Indexing complete!")
-        logger.info(f"     Indexes: Lexical(Zoekt) ✅, Symbol(Kuzu) ✅, Vector(Qdrant) {'✅' if has_openai_key else '⚠️ skipped'}")
+        logger.info(
+            f"     Indexes: Lexical(Zoekt) ✅, Symbol(Kuzu) ✅, Vector(Qdrant) {'✅' if has_openai_key else '⚠️ skipped'}"
+        )
         logger.info(f"     Repo ID: {repo_id}")
         logger.info(f"     Snapshot ID: {snapshot_id}")
     except Exception as e:
@@ -218,9 +216,7 @@ async def index_codebase(container: Container, src_dir: Path) -> tuple[str, str]
     return repo_id, snapshot_id
 
 
-async def run_real_benchmark(
-    container: Container, repo_id: str, snapshot_id: str
-) -> list[BenchmarkResult]:
+async def run_real_benchmark(container: Container, repo_id: str, snapshot_id: str) -> list[BenchmarkResult]:
     """Run benchmark queries against real infrastructure."""
     logger.info("")
     logger.info("=" * 80)
@@ -248,6 +244,7 @@ async def run_real_benchmark(
         class EmptyAdapter:
             async def search(self, query: str, limit: int = 50):
                 return []
+
         vector_adapter = EmptyAdapter()
 
     symbol_adapter = RealInfrastructureAdapter(indexing_service, repo_id, snapshot_id)

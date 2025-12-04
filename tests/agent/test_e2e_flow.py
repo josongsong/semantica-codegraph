@@ -27,15 +27,21 @@ def full_fsm():
     fsm.register(AgentMode.CONTEXT_NAV, context_nav)
 
     # Register Implementation mode
-    implementation = ImplementationModeSimple(mock_code="def validate_email(email: str) -> bool:\n    return '@' in email")
+    implementation = ImplementationModeSimple(
+        mock_code="def validate_email(email: str) -> bool:\n    return '@' in email"
+    )
     fsm.register(AgentMode.IMPLEMENTATION, implementation)
 
     # Register Debug mode
-    debug = DebugModeSimple(mock_fix="def fixed_validate_email(email: str) -> bool:\n    if not email:\n        return False\n    return '@' in email")
+    debug = DebugModeSimple(
+        mock_fix="def fixed_validate_email(email: str) -> bool:\n    if not email:\n        return False\n    return '@' in email"
+    )
     fsm.register(AgentMode.DEBUG, debug)
 
     # Register Test mode
-    test_mode = TestModeSimple(mock_test_code="def test_validate_email():\n    assert validate_email('test@example.com')")
+    test_mode = TestModeSimple(
+        mock_test_code="def test_validate_email():\n    assert validate_email('test@example.com')"
+    )
     fsm.register(AgentMode.TEST, test_mode)
 
     return fsm

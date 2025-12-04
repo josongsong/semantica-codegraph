@@ -10,7 +10,6 @@ Tests all 4 SOTA enhancements working together:
 Simulates real-world retrieval pipeline.
 """
 
-
 import numpy as np
 import pytest
 
@@ -218,7 +217,9 @@ def test_full_sota_pipeline(sample_codebase):
 
     # Verify cache hit
     cache_stats = search.get_cache_stats()
-    print(f"Cache stats: hits={cache_stats['cache_hits']}, misses={cache_stats['cache_misses']}, hit_rate={cache_stats['hit_rate_pct']:.1f}%")
+    print(
+        f"Cache stats: hits={cache_stats['cache_hits']}, misses={cache_stats['cache_misses']}, hit_rate={cache_stats['hit_rate_pct']:.1f}%"
+    )
 
     # 4. LLM Reranking (Simulated - skip async complexity in integration test)
     print("\n=== Step 4: Simulated LLM Reranking ===")
@@ -245,10 +246,12 @@ def test_full_sota_pipeline(sample_codebase):
 
     # Create mock dependency graph
     # User → UserService → AuthenticationHandler
-    mock_graph = MockGraphDoc([
-        ("UserService", "User", "INSTANTIATES"),
-        ("AuthenticationHandler", "UserService", "INSTANTIATES"),
-    ])
+    mock_graph = MockGraphDoc(
+        [
+            ("UserService", "User", "INSTANTIATES"),
+            ("AuthenticationHandler", "UserService", "INSTANTIATES"),
+        ]
+    )
     orderer.extractor.graph_doc = mock_graph
 
     ordered = orderer.order_chunks(reranked)

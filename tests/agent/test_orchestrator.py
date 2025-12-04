@@ -186,9 +186,7 @@ class TestAgentOrchestrator:
         # Add mock results to context nav
         orchestrator.fsm.register(
             AgentMode.CONTEXT_NAV,
-            ContextNavigationModeSimple(
-                mock_results=[{"file_path": "auth.py", "content": "code"}]
-            ),
+            ContextNavigationModeSimple(mock_results=[{"file_path": "auth.py", "content": "code"}]),
         )
 
         task = Task(query="add login function")
@@ -224,9 +222,7 @@ class TestAgentOrchestrator:
         async def approve_callback(changes, context):
             return True
 
-        orchestrator = AgentOrchestrator(
-            base_path=temp_dir, approval_callback=approve_callback, auto_approve=False
-        )
+        orchestrator = AgentOrchestrator(base_path=temp_dir, approval_callback=approve_callback, auto_approve=False)
 
         orchestrator.fsm.context.add_pending_change(
             {"file_path": "test.py", "content": "content", "change_type": "add"}
@@ -244,9 +240,7 @@ class TestAgentOrchestrator:
         async def reject_callback(changes, context):
             return False
 
-        orchestrator = AgentOrchestrator(
-            base_path=temp_dir, approval_callback=reject_callback, auto_approve=False
-        )
+        orchestrator = AgentOrchestrator(base_path=temp_dir, approval_callback=reject_callback, auto_approve=False)
 
         orchestrator.fsm.context.add_pending_change(
             {"file_path": "test.py", "content": "content", "change_type": "add"}
@@ -325,9 +319,7 @@ class TestAgentOrchestrator:
         async def failing_callback(changes, context):
             raise RuntimeError("Approval system error")
 
-        orchestrator = AgentOrchestrator(
-            base_path=temp_dir, approval_callback=failing_callback, auto_approve=False
-        )
+        orchestrator = AgentOrchestrator(base_path=temp_dir, approval_callback=failing_callback, auto_approve=False)
 
         orchestrator.fsm.context.add_pending_change(
             {"file_path": "test.py", "content": "content", "change_type": "add"}
@@ -403,22 +395,16 @@ class TestEndToEndScenarios:
                 super().__init__(AgentMode.TEST)
 
             async def execute(self, task, context):
-                return self._create_result(
-                    data={"tests_passed": True}, trigger=None, explanation="Tests passed"
-                )
+                return self._create_result(data={"tests_passed": True}, trigger=None, explanation="Tests passed")
 
         fsm = AgentFSM()
 
         # Register modes with mock data
         fsm.register(
             AgentMode.CONTEXT_NAV,
-            ContextNavigationModeSimple(
-                mock_results=[{"file_path": "auth.py", "content": "existing code"}]
-            ),
+            ContextNavigationModeSimple(mock_results=[{"file_path": "auth.py", "content": "existing code"}]),
         )
-        fsm.register(
-            AgentMode.IMPLEMENTATION, ImplementationModeSimple(mock_code="def login():\n    pass")
-        )
+        fsm.register(AgentMode.IMPLEMENTATION, ImplementationModeSimple(mock_code="def login():\n    pass"))
         fsm.register(AgentMode.TEST, SimpleTestMode())
 
         orchestrator = AgentOrchestrator(fsm=fsm, auto_approve=True, base_path=temp_dir)
@@ -452,23 +438,17 @@ class TestEndToEndScenarios:
                 super().__init__(AgentMode.TEST)
 
             async def execute(self, task, context):
-                return self._create_result(
-                    data={"tests_passed": True}, trigger=None, explanation="Tests passed"
-                )
+                return self._create_result(data={"tests_passed": True}, trigger=None, explanation="Tests passed")
 
         fsm = AgentFSM()
         fsm.register(
             AgentMode.CONTEXT_NAV,
-            ContextNavigationModeSimple(
-                mock_results=[{"file_path": "example.py", "content": "code"}]
-            ),
+            ContextNavigationModeSimple(mock_results=[{"file_path": "example.py", "content": "code"}]),
         )
         fsm.register(AgentMode.IMPLEMENTATION, ImplementationModeSimple())
         fsm.register(AgentMode.TEST, SimpleTestMode())
 
-        orchestrator = AgentOrchestrator(
-            fsm=fsm, approval_callback=reject_all, auto_approve=False, base_path=temp_dir
-        )
+        orchestrator = AgentOrchestrator(fsm=fsm, approval_callback=reject_all, auto_approve=False, base_path=temp_dir)
 
         task = Task(query="implement new feature")
         result = await orchestrator.execute_workflow(task, apply_changes=True)

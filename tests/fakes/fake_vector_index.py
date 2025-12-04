@@ -4,7 +4,6 @@ Fake Vector Index for Testing
 Implements VectorIndexPort with in-memory storage.
 """
 
-
 from src.index.common.documents import IndexDocument, SearchHit
 
 

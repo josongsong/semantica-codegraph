@@ -25,7 +25,8 @@ def measure_ir_generation(repo_path: Path, num_files: int = 50):
     """
     python_files = list(repo_path.rglob("*.py"))
     python_files = [
-        f for f in python_files
+        f
+        for f in python_files
         if not any(p in str(f) for p in ["venv", ".venv", "node_modules", ".git", "__pycache__", "build", "dist"])
     ][:num_files]
 
@@ -42,11 +43,7 @@ def measure_ir_generation(repo_path: Path, num_files: int = 50):
             relative_path = str(file_path.relative_to(repo_path))
 
             # Parse
-            source_file = SourceFile.from_content(
-                file_path=relative_path,
-                content=source_code,
-                language="python"
-            )
+            source_file = SourceFile.from_content(file_path=relative_path, content=source_code, language="python")
             ast_tree = AstTree.parse(source_file)
 
             # Generate IR
@@ -76,10 +73,10 @@ def measure_ir_generation(repo_path: Path, num_files: int = 50):
     print("=" * 70)
     print(f"Total IR Generation Time: {total_ir_time:.1f} ms")
     print(f"Total Parameter Processing Time: {total_param_time:.1f} ms")
-    print(f"Parameter % of IR Time: {(total_param_time/total_ir_time*100):.1f}%")
+    print(f"Parameter % of IR Time: {(total_param_time / total_ir_time * 100):.1f}%")
     print()
-    print(f"Average IR Time per File: {total_ir_time/len(python_files):.3f} ms/file")
-    print(f"Average Param Time per File: {total_param_time/len(python_files):.3f} ms/file")
+    print(f"Average IR Time per File: {total_ir_time / len(python_files):.3f} ms/file")
+    print(f"Average Param Time per File: {total_param_time / len(python_files):.3f} ms/file")
     print()
     print(f"Files with Parameters: {total_params}")
 

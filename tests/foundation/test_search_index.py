@@ -2,7 +2,6 @@
 Tests for SearchIndex models and builder
 """
 
-
 from src.foundation.search_index import SearchableSymbol, SearchIndexBuilder
 from src.foundation.symbol_graph import (
     Relation,

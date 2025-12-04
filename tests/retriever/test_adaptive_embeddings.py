@@ -33,9 +33,7 @@ def test_adaptation_collector_basic():
         collector.log_user_selection(
             repo_id="test-repo",
             query=f"query_{i}",
-            shown_results=[
-                {"chunk_id": f"chunk_{j}"} for j in range(10)
-            ],
+            shown_results=[{"chunk_id": f"chunk_{j}"} for j in range(10)],
             selected_chunk_id=f"chunk_{i % 10}",
             selected_rank=5,
         )
@@ -81,9 +79,7 @@ def test_collector_implicit_negatives():
     """Test implicit negative logging."""
     collector = AdaptationCollector()
 
-    shown_results = [
-        {"chunk_id": f"chunk_{i}"} for i in range(5)
-    ]
+    shown_results = [{"chunk_id": f"chunk_{i}"} for i in range(5)]
 
     collector.log_implicit_negative(
         repo_id="repo1",

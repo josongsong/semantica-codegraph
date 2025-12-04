@@ -117,9 +117,7 @@ async def test_multi_hop_retriever_integration():
         async def retrieve(self, repo_id, snapshot_id, query, **kwargs):
             """Mock retrieve returns results based on query."""
             return {
-                "results": [
-                    {"chunk_id": f"chunk_{query[:10]}", "score": 0.9, "content": query}
-                ],
+                "results": [{"chunk_id": f"chunk_{query[:10]}", "score": 0.9, "content": query}],
                 "count": 1,
             }
 
@@ -131,9 +129,7 @@ async def test_multi_hop_retriever_integration():
     query = "Find authentication function and its usages"
     decomposed = await decomposer.decompose(query)
 
-    result = await multi_hop.retrieve_multi_hop(
-        repo_id="test-repo", snapshot_id="main", decomposed=decomposed
-    )
+    result = await multi_hop.retrieve_multi_hop(repo_id="test-repo", snapshot_id="main", decomposed=decomposed)
 
     # Verify multi-hop result structure
     assert result.original_query == query
