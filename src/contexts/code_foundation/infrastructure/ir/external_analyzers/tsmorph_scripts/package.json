@@ -1,0 +1,14 @@
+{
+  "name": "semantica-tsmorph-analyzer",
+  "version": "0.1.0",
+  "description": "TypeScript analyzer using ts-morph for Semantica",
+  "main": "analyzer.js",
+  "scripts": {
+    "test": "node analyzer.js"
+  },
+  "dependencies": {
+    "ts-morph": "^21.0.1",
+    "typescript": "^5.3.3"
+  }
+}
+

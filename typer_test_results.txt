@@ -1,0 +1,224 @@
+
+🚀==========================================================🚀
+   Typer 레포지토리 종합 테스트
+   SOTA IR 시스템 실전 검증
+🚀==========================================================🚀
+
+Typer 레포지토리: /Users/songmin/Documents/code-jo/semantica-v2/codegraph/benchmark/repo-test/small/typer
+Python 파일: 603개 (전체), typer/ 패키지만 테스트
+
+============================================================
+시나리오 1: 전체 레포지토리 IR 생성
+============================================================
+
+Python 파일: 16개 (typer/ 패키지)
+2025-12-05 00:18:34 [debug    ] Loaded python parser with aliases ['py']
+2025-12-05 00:18:34 [debug    ] Loaded typescript parser with aliases ['ts']
+2025-12-05 00:18:34 [debug    ] Loaded tsx parser
+2025-12-05 00:18:34 [debug    ] Loaded javascript parser with aliases ['js']
+2025-12-05 00:18:34 [debug    ] Loaded go parser
+2025-12-05 00:18:34 [debug    ] Loaded java parser
+2025-12-05 00:18:34 [debug    ] Loaded rust parser
+2025-12-05 00:18:34 [debug    ] Loaded c parser
+2025-12-05 00:18:34 [debug    ] Loaded cpp parser
+  처리 중: 5/16 files (270 nodes, 354 edges)  처리 중: 10/16 files (923 nodes, 1,373 edges)  처리 중: 15/16 files (1,451 nodes, 2,174 edges)  처리 중: 16/16 files (1,452 nodes, 2,174 edges)
+
+✅ IR 생성 완료!
+  - 처리: 16/16 files
+  - 실패: 0 files
+  - Nodes: 1,452
+  - Edges: 2,174
+  - 총 시간: 76.99ms (0.08s)
+  - 평균: 4.81ms/file
+
+============================================================
+시나리오 2: Cross-file Resolution
+============================================================
+
+IR Documents: 16개
+2025-12-05 00:18:34 [info     ] Resolving cross-file references for 16 files
+2025-12-05 00:18:34 [debug    ] Built symbol table: 1452 symbols
+2025-12-05 00:18:34 [debug    ] Built dependency graph: 0 files in topological order
+2025-12-05 00:18:34 [info     ] Resolved 1452 symbols, 0 files, 0 dependencies
+
+✅ Cross-file Resolution 완료!
+  - 시간: 0.60ms
+  - 총 심볼: 1,452
+  - 파일: 0
+  - 의존성: 0
+
+샘플 심볼 조회:
+  - .Users.songmin.Documents.code-jo.semantica-v2.codegraph.benchmark.repo-test.smal...
+  - .Users.songmin.Documents.code-jo.semantica-v2.codegraph.benchmark.repo-test.smal...
+  - .Users.songmin.Documents.code-jo.semantica-v2.codegraph.benchmark.repo-test.smal...
+  - .Users.songmin.Documents.code-jo.semantica-v2.codegraph.benchmark.repo-test.smal...
+  - .Users.songmin.Documents.code-jo.semantica-v2.codegraph.benchmark.repo-test.smal...
+
+============================================================
+시나리오 3: Occurrence 생성
+============================================================
+
+IR Documents: 16개
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 15 nodes, 20 edges
+2025-12-05 00:18:34 [info     ] Generated 19 occurrences (9 definitions, 5 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 21 nodes, 32 edges
+2025-12-05 00:18:34 [info     ] Generated 22 occurrences (8 definitions, 2 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 39 nodes, 60 edges
+2025-12-05 00:18:34 [info     ] Generated 45 occurrences (20 definitions, 7 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 135 nodes, 157 edges
+2025-12-05 00:18:34 [info     ] Generated 145 occurrences (117 definitions, 11 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 60 nodes, 85 edges
+2025-12-05 00:18:34 [info     ] Generated 90 occurrences (45 definitions, 31 references)
+  처리 중: 5/16 docs (321 occurrences)2025-12-05 00:18:34 [debug    ] Generating occurrences for 85 nodes, 134 edges
+2025-12-05 00:18:34 [info     ] Generated 129 occurrences (65 definitions, 45 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 34 nodes, 66 edges
+2025-12-05 00:18:34 [info     ] Generated 33 occurrences (0 definitions, 0 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 218 nodes, 331 edges
+2025-12-05 00:18:34 [info     ] Generated 366 occurrences (191 definitions, 149 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 225 nodes, 366 edges
+2025-12-05 00:18:34 [info     ] Generated 422 occurrences (191 definitions, 198 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 91 nodes, 122 edges
+2025-12-05 00:18:34 [info     ] Generated 147 occurrences (81 definitions, 57 references)
+  처리 중: 10/16 docs (1,418 occurrences)2025-12-05 00:18:34 [debug    ] Generating occurrences for 126 nodes, 185 edges
+2025-12-05 00:18:34 [info     ] Generated 213 occurrences (110 definitions, 88 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 82 nodes, 116 edges
+2025-12-05 00:18:34 [info     ] Generated 109 occurrences (63 definitions, 28 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 300 nodes, 471 edges
+2025-12-05 00:18:34 [info     ] Generated 506 occurrences (241 definitions, 207 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 18 nodes, 27 edges
+2025-12-05 00:18:34 [info     ] Generated 20 occurrences (7 definitions, 3 references)
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 2 nodes, 2 edges
+2025-12-05 00:18:34 [info     ] Generated 1 occurrences (0 definitions, 0 references)
+  처리 중: 15/16 docs (2,267 occurrences)2025-12-05 00:18:34 [debug    ] Generating occurrences for 1 nodes, 0 edges
+2025-12-05 00:18:34 [info     ] Generated 0 occurrences (0 definitions, 0 references)
+  처리 중: 16/16 docs (2,267 occurrences)
+
+✅ Occurrence 생성 완료!
+  - 총 Occurrences: 2,267
+  - 총 시간: 22.53ms
+  - 평균: 1.41ms/doc
+
+  Role 분포:
+    - DEFINITION          :  1,148 ( 50.6%)
+    - READ                :    831 ( 36.7%)
+    - IMPORT              :    288 ( 12.7%)
+
+============================================================
+시나리오 4: Retrieval Index 구축
+============================================================
+
+IR Documents: 16개
+  인덱싱 중: 5/16 docs  인덱싱 중: 10/16 docs  인덱싱 중: 15/16 docs  인덱싱 중: 16/16 docs
+
+✅ Index 구축 완료!
+  - 시간: 0.63ms
+  - 평균: 0.04ms/doc
+
+============================================================
+시나리오 5: 검색 쿼리 테스트
+============================================================
+
+테스트 쿼리: 14개
+
+검색 결과:
+Query           Description                 Exact   Fuzzy   Time(ms)
+---------------------------------------------------------------------------
+Typer           Core Typer class                1       0       0.00
+TyperGroup      Command group class             1       0       0.00
+Argument        Argument class                  3       0       0.00
+Option          Option class                    3       0       0.00
+run             Main run function               1       0       0.00
+echo            Print function                  0       0       0.00
+confirm         Confirmation prompt             0       0       0.00
+prompt          User prompt                     1       0       0.00
+callback        Callback functions              5       0       0.00
+command         Command decorators              4       0       0.00
+get_            Getter methods                  0       0       0.00
+_init_          Init methods                    0       0       0.00
+typr            Typo: Typer                     0       0       0.00
+optn            Typo: Option                    0       0       0.00
+
+상위 매칭 샘플:
+  'Typer' → Typer (score: 0.65) @ main.py
+  'TyperGroup' → TyperGroup (score: 0.65) @ core.py
+  'Argument' → Argument (score: 0.65) @ params.py
+  'Option' → Option (score: 0.65) @ params.py
+  'run' → run (score: 0.65) @ main.py
+
+============================================================
+시나리오 6: 특정 사용 사례 테스트
+============================================================
+
+1. Typer 클래스의 메소드 찾기
+   - Found: Typer (FQN: .Users.songmin.Documents.code-jo.semantica-v2.codegraph.benchmark.repo-test.small.typer.typer.main.Typer)
+   - File: main.py
+   - Line: 115
+
+2. 'command' 관련 함수 찾기
+   - Found 4 results
+     1. command @ rich_utils.py:646
+     2. command @ main.py:218
+     3. command @ main.py:472
+
+3. main.py의 모든 정의 찾기
+2025-12-05 00:18:34 [debug    ] Generating occurrences for 300 nodes, 471 edges
+2025-12-05 00:18:34 [info     ] Generated 506 occurrences (241 definitions, 207 references)
+   - Found 241 definitions in main.py
+     1. except_hook @ line 57
+     2. exc_type @ line 58
+     3. exc_value @ line 58
+     4. tb @ line 58
+     5. exception_config @ line 60
+
+4. Import 관계 샘플
+   - models.py: 0 dependencies
+   - completion.py: 0 dependencies
+   - _types.py: 0 dependencies
+
+============================================================
+시나리오 7: 품질 검증
+============================================================
+
+1. FQN 유니크성 검증
+   - Total FQNs: 1,452
+   - Unique FQNs: 1,364
+   - Duplicates: 88
+   ⚠️ Some FQNs are duplicated (may be ok for overloads)
+
+2. Node-Edge 일관성 검증
+   - Invalid edges: 0
+   ✅ All edges reference valid nodes
+
+3. Occurrence file_path 유효성
+   - Local occurrences: 1,886 (83.2%)
+   - External occurrences: 381 (16.8%)
+
+4. Span 유효성
+   - Invalid spans: 0
+   ✅ All spans are valid
+
+============================================================
+처리 통계
+============================================================
+파일: 16 처리, 0 실패
+IR Nodes: 1,452
+IR Edges: 2,174
+Occurrences: 2,267
+
+평균 처리 시간:
+  - ir_generation            :     4.81ms avg,      76.94ms total
+  - cross_file_resolution    :     0.60ms avg,       0.60ms total
+  - occurrence_generation    :     1.41ms avg,      22.49ms total
+  - index_building           :     0.63ms avg,       0.63ms total
+  - search_exact             :     0.00ms avg,       0.02ms total
+  - search_fuzzy             :     0.16ms avg,       2.31ms total
+
+============================================================
+최종 결과
+============================================================
+✅ 전체 시나리오 완료!
+✅ 16개 파일 처리
+✅ 1,452개 IR Nodes 생성
+✅ 2,267개 Occurrences 생성
+✅ 검색 기능 동작
+✅ 품질 검증 통과
