@@ -124,7 +124,9 @@ class OverlayIRBuilder:
             ir_docs, _, _ = await self.ir_builder.build_full(files=[file_path_obj])
             
             if file_path in ir_docs:
-                ir_doc = ir_docs[file_path]
+                ir_doc_obj = ir_docs[file_path]
+                # Convert IRDocument to dict
+                ir_doc = self._ir_document_to_dict(ir_doc_obj)
             else:
                 # Fallback: create minimal IR
                 ir_doc = {"file": file_path, "symbols": []}
@@ -204,6 +206,36 @@ class OverlayIRBuilder:
         # TODO: More sophisticated check (AST comparison)
         return False
 
+    def _ir_document_to_dict(self, ir_doc) -> dict:
+        """Convert IRDocument object to dict"""
+        try:
+            # If it's already a dict, return it
+            if isinstance(ir_doc, dict):
+                return ir_doc
+            
+            # Convert IRDocument to dict
+            result = {
+                "file": getattr(ir_doc, "file", ""),
+                "symbols": [],
+            }
+            
+            # Extract symbols if available
+            if hasattr(ir_doc, "symbols"):
+                symbols = ir_doc.symbols
+                for symbol in symbols:
+                    sym_dict = {
+                        "id": getattr(symbol, "id", ""),
+                        "name": getattr(symbol, "name", ""),
+                        "signature": getattr(symbol, "signature", ""),
+                    }
+                    result["symbols"].append(sym_dict)
+            
+            return result
+            
+        except Exception as e:
+            logger.warning("ir_document_conversion_failed", error=str(e))
+            return {"file": "", "symbols": []}
+    
     def _compute_hash(self, content: str) -> str:
         """Compute SHA256 hash of content"""
         return hashlib.sha256(content.encode()).hexdigest()
