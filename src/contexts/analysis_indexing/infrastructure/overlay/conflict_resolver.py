@@ -4,7 +4,7 @@ Conflict Resolver
 Resolves conflicts between base and overlay symbols.
 """
 
-from src.infra.observability import get_logger
+from src.common.observability import get_logger
 from .models import SymbolConflict
 
 logger = get_logger(__name__)

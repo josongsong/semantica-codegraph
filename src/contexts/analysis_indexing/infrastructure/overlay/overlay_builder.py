@@ -9,7 +9,8 @@ from typing import Dict, Set, Optional
 from pathlib import Path
 from datetime import datetime
 
-from src.infra.observability import get_logger
+from src.common.observability import get_logger
+from src.contexts.code_foundation.infrastructure.ir.sota_ir_builder import SOTAIRBuilder
 from .models import (
     OverlaySnapshot,
     UncommittedFile,
@@ -29,10 +30,12 @@ class OverlayIRBuilder:
 
     def __init__(
         self,
-        ir_builder,  # BaseIRBuilder from code_foundation
+        ir_builder: Optional[SOTAIRBuilder] = None,  # SOTA IR Builder
         config: Optional[OverlayConfig] = None,
+        project_root: Optional[Path] = None,
     ):
-        self.ir_builder = ir_builder
+        self.project_root = project_root or Path.cwd()
+        self.ir_builder = ir_builder or SOTAIRBuilder(project_root=self.project_root)
         self.config = config or OverlayConfig()
 
     async def build_overlay(
@@ -115,7 +118,17 @@ class OverlayIRBuilder:
 
         # Parse to IR
         try:
-            ir_doc = await self.ir_builder.build_file_ir(file_path=file_path, content=content)
+            # Use SOTA IR Builder to build IR for single file
+            # For now, use simplified approach - just build structural IR
+            file_path_obj = Path(file_path)
+            ir_docs, _, _ = await self.ir_builder.build_full(files=[file_path_obj])
+            
+            if file_path in ir_docs:
+                ir_doc = ir_docs[file_path]
+            else:
+                # Fallback: create minimal IR
+                ir_doc = {"file": file_path, "symbols": []}
+                logger.warning("failed_to_build_ir", file_path=file_path, reason="not_in_result")
 
             overlay.overlay_ir_docs[file_path] = ir_doc
 

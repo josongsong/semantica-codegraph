@@ -7,7 +7,8 @@ Merges base graph with overlay graph to create a unified view.
 from typing import Dict, Set, Optional, Tuple
 from collections import defaultdict
 
-from src.infra.observability import get_logger
+from src.common.observability import get_logger
+from src.infra.graph.memgraph import MemgraphGraphStore
 from .models import (
     OverlaySnapshot,
     MergedSnapshot,
@@ -30,10 +31,10 @@ class GraphMerger:
 
     def __init__(
         self,
-        graph_store,  # KuzuGraphStore
+        graph_store: Optional[MemgraphGraphStore] = None,  # Memgraph Graph Store
         conflict_resolver: Optional[ConflictResolver] = None,
     ):
-        self.graph_store = graph_store
+        self.graph_store = graph_store or MemgraphGraphStore()
         self.conflict_resolver = conflict_resolver or ConflictResolver()
 
     async def merge_graphs(
