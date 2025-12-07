@@ -16,7 +16,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from src.foundation.ir.external_analyzers import (
     ChangeDetector,
     PyrightSemanticDaemon,

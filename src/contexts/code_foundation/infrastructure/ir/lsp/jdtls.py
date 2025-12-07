@@ -157,7 +157,7 @@ class JdtlsAdapter:
         # Fallback: first word that looks like a type
         words = code.split()
         for word in words:
-            if word and word[0].isupper() and not word in ["public", "private", "protected", "static", "final"]:
+            if word and word[0].isupper() and word not in ["public", "private", "protected", "static", "final"]:
                 return word
 
         return code

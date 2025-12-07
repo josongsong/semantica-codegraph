@@ -9,7 +9,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from src.foundation.chunk import GitFileLoader, get_file_at_commit
 
 

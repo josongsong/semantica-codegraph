@@ -7,7 +7,6 @@ Tests for Tree-sitter AST wrapper.
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from src.foundation.parsing.ast_tree import AstTree
 from src.foundation.parsing.source_file import SourceFile
 

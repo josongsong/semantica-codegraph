@@ -8,12 +8,14 @@ Tests:
 4. Confidence scoring
 """
 
-import pytest
 from dataclasses import dataclass
 from pathlib import Path
+
+import pytest
+
 from src.contexts.code_foundation.infrastructure.analyzers.sanitizer_detector_v2 import (
-    SanitizerSignature,
     ImprovedSanitizerDetector,
+    SanitizerSignature,
     create_sanitizer_detector,
 )
 

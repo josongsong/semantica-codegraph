@@ -11,7 +11,6 @@ Set POSTGRES_TEST_URL environment variable to run these tests:
 import os
 
 import pytest
-
 from src.foundation.chunk import Chunk, PostgresChunkStore
 
 # Skip all tests if POSTGRES_TEST_URL not set

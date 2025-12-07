@@ -3,7 +3,6 @@ Tests for Consensus Engine V3.
 """
 
 import pytest
-
 from src.retriever.v3.config import ConsensusConfig
 from src.retriever.v3.consensus_engine import ConsensusEngine
 from src.retriever.v3.models import RankedHit

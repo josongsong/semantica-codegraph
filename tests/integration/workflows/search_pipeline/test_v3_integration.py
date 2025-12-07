@@ -5,7 +5,6 @@ Tests the complete end-to-end pipeline.
 """
 
 import pytest
-
 from src.index.common.documents import SearchHit
 from src.retriever.v3.config import RetrieverV3Config
 from src.retriever.v3.service import RetrieverV3Service

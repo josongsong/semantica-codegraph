@@ -9,11 +9,10 @@ Priority order:
 Key insight: Known libraries are 100% reliable, heuristics need review.
 """
 
-from dataclasses import dataclass
-from typing import Dict, Optional
-from pathlib import Path
-import re
 import logging
+import re
+from dataclasses import dataclass
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +90,7 @@ class ImprovedSanitizerDetector:
     """
 
     # Tier 1: Known library sanitizers
-    KNOWN_SANITIZERS: Dict[str, SanitizerSignature] = {
+    KNOWN_SANITIZERS: dict[str, SanitizerSignature] = {
         # SQL Injection
         "sqlalchemy.text": SanitizerSignature(
             "sqlalchemy.text",
@@ -162,7 +161,7 @@ class ImprovedSanitizerDetector:
         ),
     }
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         """
         Initialize sanitizer detector
 
@@ -170,7 +169,7 @@ class ImprovedSanitizerDetector:
             config_path: Path to user config file (YAML)
                 Default: .semantica/sanitizers.yaml
         """
-        self.user_sanitizers: Dict[str, SanitizerSignature] = {}
+        self.user_sanitizers: dict[str, SanitizerSignature] = {}
 
         # Load user config
         if config_path:
@@ -182,7 +181,7 @@ class ImprovedSanitizerDetector:
             f"{len(self.user_sanitizers)} user-defined"
         )
 
-    def detect(self, function_def) -> Optional[SanitizerSignature]:
+    def detect(self, function_def) -> SanitizerSignature | None:
         """
         Detect if function is a sanitizer (3-tier)
 
@@ -220,7 +219,7 @@ class ImprovedSanitizerDetector:
 
         return None
 
-    def _check_known_library(self, func_def) -> Optional[SanitizerSignature]:
+    def _check_known_library(self, func_def) -> SanitizerSignature | None:
         """
         Check against known library sanitizers
 
@@ -249,7 +248,7 @@ class ImprovedSanitizerDetector:
 
         return None
 
-    def _check_user_config(self, func_def) -> Optional[SanitizerSignature]:
+    def _check_user_config(self, func_def) -> SanitizerSignature | None:
         """
         Check user-defined sanitizers
 
@@ -273,7 +272,7 @@ class ImprovedSanitizerDetector:
 
         return None
 
-    def _heuristic_detection(self, func_def) -> Optional[SanitizerSignature]:
+    def _heuristic_detection(self, func_def) -> SanitizerSignature | None:
         """
         Heuristic-based detection (low confidence)
 
@@ -406,7 +405,7 @@ class ImprovedSanitizerDetector:
 
         return 0.0, None
 
-    def _load_user_config(self, config_path: str) -> Dict[str, SanitizerSignature]:
+    def _load_user_config(self, config_path: str) -> dict[str, SanitizerSignature]:
         """
         Load user-defined sanitizers from YAML config
 
@@ -493,7 +492,7 @@ class ImprovedSanitizerDetector:
 # Convenience function
 
 
-def create_sanitizer_detector(config_path: Optional[str] = None):
+def create_sanitizer_detector(config_path: str | None = None):
     """
     Create sanitizer detector with optional user config
 

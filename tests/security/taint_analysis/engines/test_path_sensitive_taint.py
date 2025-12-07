@@ -9,12 +9,14 @@ Tests:
 5. Loop limiting
 """
 
-import pytest
 from dataclasses import dataclass
 from typing import List, Set
+
+import pytest
+
 from src.contexts.code_foundation.infrastructure.analyzers.path_sensitive_taint import (
-    TaintState,
     PathSensitiveTaintAnalyzer,
+    TaintState,
     create_path_sensitive_analyzer,
 )
 

@@ -73,7 +73,7 @@ async def benchmark_indexing(repo_path: str, sample_size: int = 50):
 
     container = Container()
 
-    print(f"  ✅ Container 초기화 완료\n")
+    print("  ✅ Container 초기화 완료\n")
 
     # Phase 3: 개별 파일 처리
     print(f"{'─' * 80}")

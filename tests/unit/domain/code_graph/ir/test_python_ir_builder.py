@@ -3,7 +3,6 @@ Tests for Python IR Builder
 """
 
 import pytest
-
 from src.ir import IRBuilderFactory, NodeKind, validate_ir
 from src.ir.python_builder import PythonIRBuilder
 

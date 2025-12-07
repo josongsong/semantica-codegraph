@@ -13,10 +13,9 @@ Algorithm:
 
 import logging
 from collections import deque
-from typing import List, Dict, Set, Tuple
 
+from src.contexts.code_foundation.infrastructure.ir.models.core import Edge, EdgeKind
 from src.contexts.code_foundation.infrastructure.ir.models.document import IRDocument
-from src.contexts.code_foundation.infrastructure.ir.models.core import Edge, EdgeKind, Node
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +33,8 @@ class VariableDataFlowTracker:
 
     def __init__(self):
         """Initialize tracker"""
-        self._edge_cache: Dict[str, List[Edge]] = {}
-        self._path_cache: Dict[Tuple[str, str], List[List[str]]] = {}
+        self._edge_cache: dict[str, list[Edge]] = {}
+        self._path_cache: dict[tuple[str, str], list[list[str]]] = {}
 
     def find_data_flow_paths(
         self,
@@ -44,7 +43,7 @@ class VariableDataFlowTracker:
         sink_id: str,
         max_depth: int = 20,
         max_paths: int = 10,
-    ) -> List[List[str]]:
+    ) -> list[list[str]]:
         """
         Find data flow paths from source to sink through variables.
 
@@ -78,9 +77,9 @@ class VariableDataFlowTracker:
         print(f"[DATA FLOW] Writers: {len(writes_by_source)}, Readers: {len(reads_by_target)}")
 
         # BFS to find paths
-        paths: List[List[str]] = []
+        paths: list[list[str]] = []
         queue: deque = deque([(source_id, [source_id], 0)])  # (current_id, path, depth)
-        visited: Set[Tuple[str, ...]] = set()  # Set of path tuples to detect cycles
+        visited: set[tuple[str, ...]] = set()  # Set of path tuples to detect cycles
 
         iterations = 0
         while queue and len(paths) < max_paths:
@@ -95,7 +94,7 @@ class VariableDataFlowTracker:
             # Max depth check
             if depth > max_depth:
                 if iterations <= 10:
-                    print(f"  → Max depth reached!")
+                    print("  → Max depth reached!")
                 continue
 
             # Cycle detection (same node sequence)
@@ -171,7 +170,7 @@ class VariableDataFlowTracker:
     def _build_edge_indexes(
         self,
         ir_document: IRDocument,
-    ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+    ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
         """
         Build indexes for fast edge lookup.
 
@@ -180,8 +179,8 @@ class VariableDataFlowTracker:
             - writes_by_source[func_id] = [var1_id, var2_id, ...]
             - reads_by_target[var_id] = [func1_id, func2_id, ...]
         """
-        writes_by_source: Dict[str, List[str]] = {}
-        reads_by_target: Dict[str, List[str]] = {}
+        writes_by_source: dict[str, list[str]] = {}
+        reads_by_target: dict[str, list[str]] = {}
 
         for edge in ir_document.edges:
             if edge.kind == EdgeKind.WRITES:
@@ -209,7 +208,7 @@ class VariableDataFlowTracker:
         self._path_cache.clear()
         logger.debug("Cleared data flow tracker caches")
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """Get cache statistics"""
         return {
             "cached_paths": len(self._path_cache),

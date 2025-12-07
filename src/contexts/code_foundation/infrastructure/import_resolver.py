@@ -8,10 +8,9 @@ SOTA-level import resolution supporting:
 - Cross-language import mapping
 """
 
-from dataclasses import dataclass, field
-from typing import Optional
-from pathlib import Path
 import re
+from dataclasses import dataclass, field
+from pathlib import Path
 
 
 @dataclass
@@ -35,9 +34,9 @@ class ResolvedImport:
     """Resolved import with target information"""
 
     import_stmt: ImportStatement
-    target_file: Optional[str] = None  # Resolved file path
-    target_package: Optional[str] = None  # Package name
-    target_language: Optional[str] = None  # Target language
+    target_file: str | None = None  # Resolved file path
+    target_package: str | None = None  # Package name
+    target_language: str | None = None  # Target language
     is_external: bool = False  # External library
     confidence: float = 1.0  # Resolution confidence [0.0-1.0]
 
@@ -85,7 +84,7 @@ class ImportResolver:
         self.project_root = Path(project_root)
         self._module_cache: dict[str, str] = {}  # module_path → file_path
 
-    def parse_import(self, line: str, language: str, source_file: str) -> Optional[ImportStatement]:
+    def parse_import(self, line: str, language: str, source_file: str) -> ImportStatement | None:
         """Parse import statement from source line"""
         line = line.strip()
 
@@ -98,7 +97,7 @@ class ImportResolver:
 
         return None
 
-    def _parse_python_import(self, line: str, source_file: str) -> Optional[ImportStatement]:
+    def _parse_python_import(self, line: str, source_file: str) -> ImportStatement | None:
         """Parse Python import statement"""
         # Simple import: import x.y.z as alias
         match = re.match(r"^import\s+([a-zA-Z0-9_.]+)(?:\s+as\s+([a-zA-Z0-9_]+))?", line)
@@ -155,7 +154,7 @@ class ImportResolver:
 
         return None
 
-    def _parse_java_import(self, line: str, source_file: str) -> Optional[ImportStatement]:
+    def _parse_java_import(self, line: str, source_file: str) -> ImportStatement | None:
         """Parse Java import statement"""
         match = re.match(r"^import\s+(static\s+)?([a-zA-Z0-9_.]+)(?:\.\*)?;", line)
         if match:
@@ -172,7 +171,7 @@ class ImportResolver:
 
         return None
 
-    def _parse_ts_js_import(self, line: str, source_file: str, language: str) -> Optional[ImportStatement]:
+    def _parse_ts_js_import(self, line: str, source_file: str, language: str) -> ImportStatement | None:
         """Parse TypeScript/JavaScript import statement"""
         # Named imports: import { A, B as C } from "module"
         match = re.match(r"^import\s+{([^}]+)}\s+from\s+['\"]([^'\"]+)['\"]", line)
@@ -294,7 +293,7 @@ class ImportResolver:
 
         return False
 
-    def _resolve_module_to_file(self, module_path: str, language: str) -> Optional[Path]:
+    def _resolve_module_to_file(self, module_path: str, language: str) -> Path | None:
         """Resolve module path to actual file in project"""
         # Cache check
         cache_key = f"{language}:{module_path}"
@@ -317,7 +316,7 @@ class ImportResolver:
 
         return resolved
 
-    def _resolve_python_module(self, module_path: str) -> Optional[Path]:
+    def _resolve_python_module(self, module_path: str) -> Path | None:
         """Resolve Python module to file"""
         # Convert module path to file path
         # e.g., "src.utils.helpers" → "src/utils/helpers.py" or "src/utils/helpers/__init__.py"
@@ -336,7 +335,7 @@ class ImportResolver:
 
         return None
 
-    def _resolve_java_module(self, module_path: str) -> Optional[Path]:
+    def _resolve_java_module(self, module_path: str) -> Path | None:
         """Resolve Java module to file"""
         # Convert FQN to file path
         # e.g., "com.example.Utils" → "src/main/java/com/example/Utils.java"
@@ -351,7 +350,7 @@ class ImportResolver:
 
         return None
 
-    def _resolve_ts_js_module(self, module_path: str) -> Optional[Path]:
+    def _resolve_ts_js_module(self, module_path: str) -> Path | None:
         """Resolve TypeScript/JavaScript module to file"""
         # Handle relative imports
         if module_path.startswith("."):

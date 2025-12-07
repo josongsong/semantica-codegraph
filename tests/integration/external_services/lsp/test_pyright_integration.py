@@ -8,12 +8,12 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
-from src.contexts.code_foundation.infrastructure.ir.lsp.pyright import PyrightAdapter
 from src.foundation.generators.python_generator import PythonIRGenerator
 from src.foundation.ir.external_analyzers import PyrightExternalAnalyzer
 from src.foundation.parsing import SourceFile
 from src.foundation.semantic_ir.typing.models import TypeResolutionLevel
+
+from src.contexts.code_foundation.infrastructure.ir.lsp.pyright import PyrightAdapter
 
 
 @pytest.fixture

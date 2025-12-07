@@ -11,10 +11,9 @@ Performance:
 - With merging: Linear growth, controlled memory
 """
 
-from dataclasses import dataclass, field
-from typing import Set, List, Dict, Optional
-from collections import deque
 import logging
+from collections import deque
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
@@ -38,16 +37,16 @@ class TaintState:
             dangerous_execute(query)
     """
 
-    tainted_vars: Set[str] = field(default_factory=set)
+    tainted_vars: set[str] = field(default_factory=set)
     """Set of tainted variable names"""
 
-    path_condition: List[str] = field(default_factory=list)
+    path_condition: list[str] = field(default_factory=list)
     """Conditions on this execution path"""
 
     depth: int = 0
     """Path depth (for loop/recursion limiting)"""
 
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
     """Additional metadata"""
 
     def copy(self):
@@ -103,15 +102,15 @@ class PathSensitiveTaintAnalyzer:
         self.max_depth = max_depth
 
         # Analysis state
-        self.states: Dict[str, TaintState] = {}  # node_id → state
+        self.states: dict[str, TaintState] = {}  # node_id → state
         self.worklist: deque = deque()
 
     def analyze(
         self,
-        sources: Set[str],
-        sinks: Set[str],
-        sanitizers: Optional[Set[str]] = None,
-    ) -> List[dict]:
+        sources: set[str],
+        sinks: set[str],
+        sanitizers: set[str] | None = None,
+    ) -> list[dict]:
         """
         Run path-sensitive taint analysis
 
@@ -176,7 +175,7 @@ class PathSensitiveTaintAnalyzer:
         self,
         node_id: str,
         state: TaintState,
-        sanitizers: Set[str],
+        sanitizers: set[str],
     ) -> TaintState:
         """
         Transfer function: Apply node's effect on taint state
@@ -245,7 +244,7 @@ class PathSensitiveTaintAnalyzer:
         self,
         node,
         state: TaintState,
-        sanitizers: Set[str],
+        sanitizers: set[str],
     ) -> TaintState:
         """
         Transfer for function call: result = f(arg1, arg2)
@@ -386,7 +385,7 @@ class PathSensitiveTaintAnalyzer:
     def _sanitizes_condition(
         self,
         condition: str,
-        tainted_vars: Set[str],
+        tainted_vars: set[str],
     ) -> bool:
         """
         Check if condition sanitizes tainted variables
@@ -433,7 +432,7 @@ class PathSensitiveTaintAnalyzer:
 
         return False
 
-    def _check_sinks(self, sinks: Set[str]) -> List[dict]:
+    def _check_sinks(self, sinks: set[str]) -> list[dict]:
         """
         Check sinks for tainted variables
 
@@ -491,11 +490,11 @@ class PathSensitiveTaintAnalyzer:
         """Get CFG node by ID"""
         return getattr(self.cfg, "nodes", {}).get(node_id)
 
-    def _get_successors(self, node_id: str) -> List[str]:
+    def _get_successors(self, node_id: str) -> list[str]:
         """Get successor node IDs"""
         return getattr(self.cfg, "successors", {}).get(node_id, [])
 
-    def _get_predecessors(self, node_id: str) -> List[str]:
+    def _get_predecessors(self, node_id: str) -> list[str]:
         """Get predecessor node IDs"""
         return getattr(self.cfg, "predecessors", {}).get(node_id, [])
 
@@ -507,12 +506,12 @@ class PathSensitiveTaintAnalyzer:
                 return edge
         return None
 
-    def _get_vars_in_expr(self, expr) -> Set[str]:
+    def _get_vars_in_expr(self, expr) -> set[str]:
         """Extract variable names from expression"""
         # TODO: Implement actual expression analysis
         return set()
 
-    def _get_call_args(self, call_node) -> List[str]:
+    def _get_call_args(self, call_node) -> list[str]:
         """Extract argument variable names from call"""
         # TODO: Implement actual call analysis
         return []

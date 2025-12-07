@@ -61,7 +61,6 @@ async def example_1_basic_workflow():
     print("EXAMPLE 1: Basic Workflow Execution")
     print("=" * 70)
 
-    from src.agent import AgentFSM, AgentMode, AgentOrchestrator, Task
     from src.agent.modes import (
         ContextNavigationModeSimple,
         ImplementationModeSimple,
@@ -69,6 +68,8 @@ async def example_1_basic_workflow():
 
     # Helper: Simple TEST mode
     from src.agent.modes.base import BaseModeHandler
+
+    from src.agent import AgentFSM, AgentMode, AgentOrchestrator, Task
 
     class SimpleTestMode(BaseModeHandler):
         def __init__(self):
@@ -126,6 +127,11 @@ async def example_2_custom_approval():
     print("EXAMPLE 2: Custom Approval Logic")
     print("=" * 70)
 
+    from src.agent.modes import (
+        ContextNavigationModeSimple,
+        ImplementationModeSimple,
+    )
+
     from src.agent import (
         AgentFSM,
         AgentMode,
@@ -134,10 +140,6 @@ async def example_2_custom_approval():
         Change,
         ModeContext,
         Task,
-    )
-    from src.agent.modes import (
-        ContextNavigationModeSimple,
-        ImplementationModeSimple,
     )
 
     # Custom approval function
@@ -207,11 +209,12 @@ async def example_3_step_by_step():
     print("EXAMPLE 3: Step-by-Step Execution")
     print("=" * 70)
 
-    from src.agent import AgentFSM, AgentMode, AgentOrchestrator, Task
     from src.agent.modes import (
         ContextNavigationModeSimple,
         ImplementationModeSimple,
     )
+
+    from src.agent import AgentFSM, AgentMode, AgentOrchestrator, Task
 
     # Setup
     fsm = AgentFSM()
@@ -343,8 +346,9 @@ async def example_5_error_handling():
     print("EXAMPLE 5: Error Handling")
     print("=" * 70)
 
-    from src.agent import AgentFSM, AgentMode, AgentOrchestrator, Change, ModeContext, Task
     from src.agent.modes import ImplementationMode
+
+    from src.agent import AgentFSM, AgentMode, AgentOrchestrator, Change, ModeContext, Task
 
     # Failing LLM
     class FailingLLM:

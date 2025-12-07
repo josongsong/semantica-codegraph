@@ -4,8 +4,7 @@ Django Framework Taint Rules
 Django는 Python의 풀스택 웹 프레임워크
 """
 
-from ..base import SourceRule, SinkRule, SanitizerRule, Severity, VulnerabilityType, TaintKind
-
+from ..base import SanitizerRule, Severity, SinkRule, SourceRule, TaintKind, VulnerabilityType
 
 # ============================================================
 # Django Sources (HTTP Request Data)

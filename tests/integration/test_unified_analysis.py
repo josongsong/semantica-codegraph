@@ -4,13 +4,14 @@
 Dataflow + PDG + Taint + Slicing 통합 검증
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from src.contexts.code_foundation.infrastructure.ir.models.core import Edge, EdgeKind, Node, NodeKind, Span
 from src.contexts.code_foundation.infrastructure.ir.models.document import IRDocument
-from src.contexts.code_foundation.infrastructure.ir.unified_analyzer import enhance_ir_with_advanced_analysis
 from src.contexts.code_foundation.infrastructure.ir.retrieval_index import RetrievalOptimizedIndex
+from src.contexts.code_foundation.infrastructure.ir.unified_analyzer import enhance_ir_with_advanced_analysis
 
 
 @pytest.fixture

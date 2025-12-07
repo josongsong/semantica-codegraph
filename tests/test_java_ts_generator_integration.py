@@ -2,11 +2,13 @@
 Tests for Java/TypeScript Generator Integration with UnifiedSymbol
 """
 
-import pytest
 from pathlib import Path
-from src.contexts.code_foundation.infrastructure.parsing.source_file import SourceFile
+
+import pytest
+
 from src.contexts.code_foundation.infrastructure.generators.java_generator import JavaIRGenerator
 from src.contexts.code_foundation.infrastructure.generators.typescript_generator import TypeScriptIRGenerator
+from src.contexts.code_foundation.infrastructure.parsing.source_file import SourceFile
 
 
 class TestJavaGeneratorIntegration:

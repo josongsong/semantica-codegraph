@@ -1,15 +1,15 @@
 """Domain Models"""
 
-from .vulnerability import Vulnerability, Severity, CWE, Location, Evidence, ScanResult
 from .security_rule import (
-    SecurityRule,
-    TaintSource,
-    TaintSink,
-    TaintSanitizer,
     RuleRegistry,
-    register_rule,
+    SecurityRule,
+    TaintSanitizer,
+    TaintSink,
+    TaintSource,
     get_registry,
+    register_rule,
 )
+from .vulnerability import CWE, Evidence, Location, ScanResult, Severity, Vulnerability
 
 __all__ = [
     "Vulnerability",

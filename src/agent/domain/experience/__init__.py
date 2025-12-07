@@ -6,10 +6,10 @@ Agent Experience Domain
 
 from .models import (
     AgentExperience,
-    StrategyResult,
     ExperienceQuery,
     ExperienceStats,
     ProblemType,
+    StrategyResult,
 )
 
 __all__ = [

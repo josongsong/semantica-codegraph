@@ -9,15 +9,14 @@ import sys
 
 sys.path.insert(0, ".")
 
+from src.agent.adapters.reasoning import SimpleGraphAnalyzer
 from src.agent.domain.reasoning import (
-    SelfReflectionJudge,
+    ExecutionTrace,
+    GraphImpact,
     ReflectionInput,
     ReflectionVerdict,
-    GraphImpact,
-    ExecutionTrace,
-    StabilityLevel,
+    SelfReflectionJudge,
 )
-from src.agent.adapters.reasoning import SimpleGraphAnalyzer
 from src.container import Container
 
 
@@ -28,7 +27,7 @@ def test_reflection_judge():
     print("=" * 80)
 
     judge = SelfReflectionJudge()
-    print(f"\n✅ Judge initialized")
+    print("\n✅ Judge initialized")
     print(f"   Weights: {judge.weights}")
 
     # Test 1: High Quality → ACCEPT
@@ -175,7 +174,7 @@ def divide(a, b):
     # Graph Impact
     impact = analyzer.analyze_graph_impact({"test.py": code_after})
 
-    print(f"\n📊 Graph Impact Analysis:")
+    print("\n📊 Graph Impact Analysis:")
     print(f"  Nodes Before: {impact.cfg_nodes_before}")
     print(f"  Nodes After: {impact.cfg_nodes_after}")
     print(f"  Nodes Added: {impact.cfg_nodes_added}")
@@ -188,7 +187,7 @@ def divide(a, b):
     # Execution Trace
     trace = analyzer.analyze_execution_trace(code_before, code_after)
 
-    print(f"\n📊 Execution Trace:")
+    print("\n📊 Execution Trace:")
     print(f"  Coverage Before: {trace.coverage_before:.2f}")
     print(f"  Coverage After: {trace.coverage_after:.2f}")
     print(f"  Has Regressions: {trace.has_regressions()}")
@@ -232,7 +231,7 @@ def process_user(user):
 
     output = judge.judge(reflection_input)
 
-    print(f"\n🏆 Final Judgment:")
+    print("\n🏆 Final Judgment:")
     print(f"  Verdict: {output.verdict.value}")
     print(f"  Confidence: {output.confidence:.2f}")
     print(f"  Acceptable: {output.is_acceptable()}")

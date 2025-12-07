@@ -5,7 +5,6 @@ Mock Indexers의 기본 동작을 테스트합니다.
 """
 
 import pytest
-
 from src.indexing.domain import (
     FileIndexDocument,
     GraphEdgeRecord,

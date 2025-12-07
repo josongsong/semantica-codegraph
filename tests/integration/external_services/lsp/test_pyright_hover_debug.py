@@ -7,7 +7,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from src.foundation.ir.external_analyzers.pyright_lsp import PyrightLSPClient
 
 

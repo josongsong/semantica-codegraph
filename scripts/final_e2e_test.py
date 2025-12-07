@@ -10,14 +10,12 @@ import sys
 
 sys.path.insert(0, ".")
 
-from src.container import Container
 from src.agent.domain.reasoning import (
-    QueryFeatures,
-    ReflectionInput,
-    GraphImpact,
     ExecutionTrace,
-    StabilityLevel,
+    GraphImpact,
+    ReflectionInput,
 )
+from src.container import Container
 
 
 async def test_full_pipeline():
@@ -49,7 +47,7 @@ def process_payment(user, amount):
 """,
     )
 
-    print(f"\n📊 Decision:")
+    print("\n📊 Decision:")
     print(f"  Path: {decision.path.value}")
     print(f"  Complexity: {decision.complexity_score:.2f}")
     print(f"  Risk: {decision.risk_score:.2f}")
@@ -84,14 +82,14 @@ def login(user):
         top_k=2,
     )
 
-    print(f"\n📊 ToT Results:")
+    print("\n📊 ToT Results:")
     print(f"  Generated: {result.total_generated}")
     print(f"  Executed: {result.total_executed}")
     print(f"  Best Score: {result.best_score:.2f}")
     print(f"  Time: {result.total_time:.2f}s")
 
     if result.best_strategy_id:
-        print(f"\n🏆 Best Strategy:")
+        print("\n🏆 Best Strategy:")
         strategy = next((s for s in result.all_strategies if s.strategy_id == result.best_strategy_id), None)
         if strategy:
             print(f"  ID: {strategy.strategy_id}")
@@ -141,14 +139,14 @@ def login(user):
 
     output = reflection_judge.judge(reflection_input)
 
-    print(f"\n📊 Reflection Output:")
+    print("\n📊 Reflection Output:")
     print(f"  Verdict: {output.verdict.value}")
     print(f"  Confidence: {output.confidence:.2f}")
     if hasattr(output, "reasoning"):
         print(f"  Reason: {output.reasoning[:80]}...")
 
     # Input data 검증
-    print(f"\n📊 Reflection Input (분석):")
+    print("\n📊 Reflection Input (분석):")
     print(f"  Graph Stability: {reflection_input.graph_impact.determine_stability().value}")
     print(f"  Impact Score: {reflection_input.graph_impact.calculate_impact_score():.2f}")
     print(f"  Has Regressions: {reflection_input.execution_trace.has_regressions()}")
@@ -167,7 +165,6 @@ def login(user):
     from src.agent.domain.experience import (
         AgentExperience,
         ProblemType,
-        StrategyResult,
     )
 
     experience = AgentExperience(
@@ -180,7 +177,7 @@ def login(user):
         reflection_verdict="accept",
     )
 
-    print(f"\n📝 Experience:")
+    print("\n📝 Experience:")
     print(f"  Type: {experience.problem_type.value}")
     print(f"  Strategy: {experience.strategy_type}")
     print(f"  Verdict: {experience.reflection_verdict}")
@@ -204,10 +201,10 @@ def login(user):
     print("  ✅ Phase 3: Experience → Ready to save")
 
     print("\n📊 Pipeline Metrics:")
-    print(f"  Router Time: ~0.01s")
+    print("  Router Time: ~0.01s")
     print(f"  ToT Time: {result.total_time:.2f}s")
-    print(f"  Reflection Time: ~0.01s")
-    print(f"  Experience Time: ~0.01s")
+    print("  Reflection Time: ~0.01s")
+    print("  Experience Time: ~0.01s")
     print(f"  Total: ~{result.total_time + 0.03:.2f}s")
 
     print("\n🎯 Quality Metrics:")

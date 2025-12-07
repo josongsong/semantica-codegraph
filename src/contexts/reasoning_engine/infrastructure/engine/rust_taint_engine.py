@@ -21,7 +21,7 @@ Usage:
 import hashlib
 import logging
 from collections import OrderedDict
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.infra.graph.memgraph import MemgraphGraphStore

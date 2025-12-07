@@ -2,9 +2,10 @@
 Global test configuration and fixtures
 """
 
-import pytest
 import time
-from typing import Generator
+from collections.abc import Generator
+
+import pytest
 
 # 느린 테스트 임계값 (초)
 SLOW_TEST_THRESHOLD = 5.0
@@ -24,7 +25,7 @@ def track_test_duration(request):
     # 느린 테스트 경고
     if duration > SLOW_TEST_THRESHOLD:
         print(f"\n⚠️  SLOW TEST ({duration:.2f}s): {test_name}")
-        print(f"   Consider marking with @pytest.mark.slow or optimizing")
+        print("   Consider marking with @pytest.mark.slow or optimizing")
     elif duration > WARNING_TEST_THRESHOLD:
         print(f"\n⏱️  Slow ({duration:.2f}s): {test_name}")
 

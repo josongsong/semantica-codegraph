@@ -10,10 +10,10 @@ from pathlib import Path
 taint_rules_path = Path(__file__).parent / "src/contexts/code_foundation/infrastructure/analyzers/taint_rules"
 sys.path.insert(0, str(taint_rules_path))
 
-from base import VulnerabilityType, Severity, TaintKind, RuleSet
-from sources.python_core import PYTHON_CORE_SOURCES
-from sinks.python_core import PYTHON_CORE_SINKS
+from base import RuleSet, Severity, TaintKind, VulnerabilityType
 from sanitizers.python_core import PYTHON_CORE_SANITIZERS
+from sinks.python_core import PYTHON_CORE_SINKS
+from sources.python_core import PYTHON_CORE_SOURCES
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
     )
 
     stats = core_rules.get_stats()
-    print(f"\n[Rule Set]")
+    print("\n[Rule Set]")
     print(f"  Sources: {stats['sources']}")
     print(f"  Sinks: {stats['sinks']}")
     print(f"  Sanitizers: {stats['sanitizers']}")
@@ -47,7 +47,7 @@ def main():
     print(f"  Increase: +{new_total - old_total} (+{increase:.0f}%)")
 
     # Source 테스트
-    print(f"\n[Source Tests]")
+    print("\n[Source Tests]")
     tests = [
         ("input('cmd: ')", True),
         ("sys.argv[1]", True),
@@ -63,7 +63,7 @@ def main():
         print(f"  {status} '{code:30}' → {len(matches)} sources")
 
     # Sink 테스트
-    print(f"\n[Sink Tests]")
+    print("\n[Sink Tests]")
     tests = [
         ("eval(code)", True, True),  # code, should_match, dangerous
         ("os.system(cmd)", True, True),
@@ -79,7 +79,7 @@ def main():
         print(f"  {status} '{code:30}' → {len(matches)} sinks {danger}")
 
     # Sanitizer 효과성
-    print(f"\n[Sanitizer Tests]")
+    print("\n[Sanitizer Tests]")
     tests = [
         ("html.escape(x)", VulnerabilityType.XSS, "≥90%"),
         ("shlex.quote(x)", VulnerabilityType.COMMAND_INJECTION, "≥90%"),
@@ -95,7 +95,7 @@ def main():
             print(f"  {status} '{code:25}' → {vuln.value:20} {eff_pct:3}%")
 
     # Coverage
-    print(f"\n[Coverage by Vulnerability]")
+    print("\n[Coverage by Vulnerability]")
     for vuln in VulnerabilityType:
         sources = sum(1 for s in core_rules.sources if s.vuln_type == vuln)
         sinks = sum(1 for s in core_rules.sinks if s.vuln_type == vuln)

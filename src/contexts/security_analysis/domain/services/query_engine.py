@@ -4,14 +4,13 @@ Query Engine
 Orchestrates security rule execution with performance optimizations.
 """
 
-from dataclasses import dataclass, field
-from typing import List, Optional, Dict
-from pathlib import Path
 import logging
 import time
+from dataclasses import dataclass, field
+from pathlib import Path
 
-from ..models.security_rule import SecurityRule, RuleRegistry, get_registry
-from ..models.vulnerability import Vulnerability, ScanResult, Severity
+from ..models.security_rule import RuleRegistry, SecurityRule, get_registry
+from ..models.vulnerability import ScanResult, Severity, Vulnerability
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +23,10 @@ class QueryConfig:
     Controls which rules run and how.
     """
 
-    enabled_rules: Optional[List[str]] = None
+    enabled_rules: list[str] | None = None
     """Specific rules to run (None = all)"""
 
-    disabled_rules: List[str] = field(default_factory=list)
+    disabled_rules: list[str] = field(default_factory=list)
     """Rules to skip"""
 
     min_severity: Severity = Severity.INFO
@@ -68,8 +67,8 @@ class QueryEngine:
 
     def __init__(
         self,
-        config: Optional[QueryConfig] = None,
-        registry: Optional[RuleRegistry] = None,
+        config: QueryConfig | None = None,
+        registry: RuleRegistry | None = None,
     ):
         """
         Initialize query engine
@@ -176,7 +175,7 @@ class QueryEngine:
         logger.warning("scan_repository not fully implemented yet")
         return ScanResult()
 
-    def _get_active_rules(self) -> List[SecurityRule]:
+    def _get_active_rules(self) -> list[SecurityRule]:
         """
         Get active rules based on config
 
@@ -198,7 +197,7 @@ class QueryEngine:
         self,
         rule: SecurityRule,
         ir_document,
-    ) -> List[Vulnerability]:
+    ) -> list[Vulnerability]:
         """
         Run single rule on IR document
 
@@ -227,8 +226,8 @@ class QueryEngine:
 
     def _filter_by_severity(
         self,
-        vulnerabilities: List[Vulnerability],
-    ) -> List[Vulnerability]:
+        vulnerabilities: list[Vulnerability],
+    ) -> list[Vulnerability]:
         """
         Filter vulnerabilities by minimum severity
 
@@ -262,7 +261,7 @@ class QueryEngine:
 
 
 def create_query_engine(
-    enabled_rules: Optional[List[str]] = None,
+    enabled_rules: list[str] | None = None,
     min_severity: Severity = Severity.INFO,
 ) -> QueryEngine:
     """

@@ -146,8 +146,8 @@ def test_use_case():
         code_snippet="def login(user):\n    return user.name\n",
     )
 
-    print(f"Problem: Fix NPE in UserService.login()")
-    print(f"Files: 1")
+    print("Problem: Fix NPE in UserService.login()")
+    print("Files: 1")
     print(f"Decision: {decision.path.value}")
     print(f"Confidence: {decision.confidence:.2f}")
     print(f"Cost: ${decision.estimated_cost:.2f}")

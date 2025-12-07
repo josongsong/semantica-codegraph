@@ -775,9 +775,10 @@ class PythonIRGenerator(IRGenerator):
         Returns:
             UnifiedSymbol for cross-language resolution
         """
+        from pathlib import Path
+
         from src.contexts.code_foundation.domain.models import UnifiedSymbol
         from src.contexts.code_foundation.infrastructure.version_detector import VersionDetector
-        from pathlib import Path
 
         # Extract package from module FQN
         # e.g., "myproject.utils.helpers" → package="myproject"

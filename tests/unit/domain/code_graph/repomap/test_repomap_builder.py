@@ -3,7 +3,6 @@ Tests for RepoMap TreeBuilder and Builder orchestrator.
 """
 
 import pytest
-
 from src.foundation.chunk.models import Chunk
 from src.repomap import (
     InMemoryRepoMapStore,

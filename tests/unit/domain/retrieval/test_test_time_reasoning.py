@@ -3,7 +3,6 @@ Integration Tests for Test-Time Reasoning (Phase 3.2)
 """
 
 import pytest
-
 from src.retriever.reasoning.models import SearchTool
 from src.retriever.reasoning.test_time_compute import ReasoningRetriever
 

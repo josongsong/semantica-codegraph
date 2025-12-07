@@ -65,7 +65,6 @@ def check_integration():
     # 4. SOTA IR Builder 확인
     print("\n[4] SOTA IR Builder...")
     try:
-        from src.contexts.code_foundation.infrastructure.ir.sota_ir_builder import SOTAIRBuilder
 
         print("  ✅ SOTAIRBuilder import 가능")
     except Exception as e:

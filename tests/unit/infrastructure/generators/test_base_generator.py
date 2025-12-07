@@ -7,7 +7,6 @@ Tests for abstract base IR generator and utility methods.
 from unittest.mock import MagicMock
 
 import pytest
-
 from src.foundation.generators.base import IRGenerator
 
 

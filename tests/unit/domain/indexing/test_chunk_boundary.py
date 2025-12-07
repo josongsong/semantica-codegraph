@@ -3,7 +3,6 @@ Test Chunk Boundary Validator
 """
 
 import pytest
-
 from src.foundation.chunk import BoundaryValidationError, Chunk, ChunkBoundaryValidator
 
 

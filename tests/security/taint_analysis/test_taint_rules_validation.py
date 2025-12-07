@@ -12,13 +12,12 @@ from pathlib import Path
 # Import rules directly
 sys.path.insert(0, str(Path(__file__).parent / "src/contexts/code_foundation/infrastructure/analyzers/taint_rules"))
 
-from base import VulnerabilityType, Severity, RuleSet
-from sources.python_core import PYTHON_CORE_SOURCES
-from sinks.python_core import PYTHON_CORE_SINKS
+from base import RuleSet, Severity, VulnerabilityType
+from frameworks.django import DJANGO_SANITIZERS, DJANGO_SINKS, DJANGO_SOURCES
+from frameworks.flask import FLASK_SANITIZERS, FLASK_SINKS, FLASK_SOURCES
 from sanitizers.python_core import PYTHON_CORE_SANITIZERS
-from frameworks.flask import FLASK_SOURCES, FLASK_SINKS, FLASK_SANITIZERS
-from frameworks.django import DJANGO_SOURCES, DJANGO_SINKS, DJANGO_SANITIZERS
-
+from sinks.python_core import PYTHON_CORE_SINKS
+from sources.python_core import PYTHON_CORE_SOURCES
 
 # ============================================================
 # 실제 취약점 코드 샘플
@@ -105,7 +104,7 @@ def validate_rules():
     )
 
     stats = all_rules.get_stats()
-    print(f"\n[Total Rules]")
+    print("\n[Total Rules]")
     print(f"  Sources: {stats['sources']}")
     print(f"  Sinks: {stats['sinks']}")
     print(f"  Sanitizers: {stats['sanitizers']}")
@@ -247,19 +246,19 @@ def validate_rules():
     detection_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
     sanitizer_rate = (sanitizer_passed / sanitizer_tests * 100) if sanitizer_tests > 0 else 0
 
-    print(f"\n[Sink Detection]")
+    print("\n[Sink Detection]")
     print(f"  Passed: {passed_tests}/{total_tests} ({detection_rate:.1f}%)")
     print(f"  Failed: {len([f for f in failed_tests if 'vuln' in f])}")
 
-    print(f"\n[Sanitizer Effectiveness]")
+    print("\n[Sanitizer Effectiveness]")
     print(f"  Passed: {sanitizer_passed}/{sanitizer_tests} ({sanitizer_rate:.1f}%)")
 
-    print(f"\n[Pattern Quality]")
+    print("\n[Pattern Quality]")
     print(f"  Regex Errors: {len(regex_errors)}")
     print(f"  False Positives: {false_positives}")
 
     # Grade
-    print(f"\n[종합 평가]")
+    print("\n[종합 평가]")
     if detection_rate >= 90 and sanitizer_rate >= 80 and len(regex_errors) == 0:
         grade = "A+ (Excellent)"
     elif detection_rate >= 80 and sanitizer_rate >= 70:

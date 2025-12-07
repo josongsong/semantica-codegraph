@@ -10,20 +10,19 @@ Approach:
 4. Report unsanitized paths
 """
 
-from typing import List
 import logging
 
 from src.contexts.security_analysis.domain.models.security_rule import (
     SecurityRule,
-    TaintSource,
-    TaintSink,
     TaintSanitizer,
+    TaintSink,
+    TaintSource,
     register_rule,
 )
 from src.contexts.security_analysis.domain.models.vulnerability import (
-    Vulnerability,
     CWE,
     Severity,
+    Vulnerability,
 )
 
 logger = logging.getLogger(__name__)
@@ -176,7 +175,7 @@ class SQLInjectionQuery(SecurityRule):
         ),
     ]
 
-    def analyze(self, ir_document) -> List[Vulnerability]:
+    def analyze(self, ir_document) -> list[Vulnerability]:
         """
         Analyze IR document for SQL injection vulnerabilities
 
@@ -319,7 +318,7 @@ AVOID:
    ✗ Model.objects.raw(f"SELECT * FROM users WHERE id={user_id}")
         """.strip()
 
-    def _get_references(self) -> List[str]:
+    def _get_references(self) -> list[str]:
         """Get SQL injection references"""
         return [
             "https://cwe.mitre.org/data/definitions/89.html",

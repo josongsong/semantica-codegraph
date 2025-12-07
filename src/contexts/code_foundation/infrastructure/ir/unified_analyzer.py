@@ -10,7 +10,6 @@ from pathlib import Path
 
 from src.common.observability import get_logger
 from src.contexts.code_foundation.infrastructure.analyzers.taint_analyzer import TaintAnalyzer
-from src.contexts.code_foundation.infrastructure.generators.python.dataflow_analyzer import DataflowAnalyzer
 from src.contexts.code_foundation.infrastructure.ir.models.document import IRDocument
 from src.contexts.reasoning_engine.infrastructure.pdg.pdg_builder import PDGBuilder
 from src.contexts.reasoning_engine.infrastructure.slicer.slicer import ProgramSlicer, SliceConfig
@@ -105,7 +104,7 @@ class UnifiedAnalyzer:
         Returns:
             PDGBuilder instance
         """
-        from src.contexts.reasoning_engine.infrastructure.pdg.pdg_builder import PDGNode, DependencyType
+        from src.contexts.reasoning_engine.infrastructure.pdg.pdg_builder import DependencyType, PDGNode
 
         pdg = PDGBuilder()
 

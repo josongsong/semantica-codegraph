@@ -14,7 +14,6 @@ import hashlib
 import json
 from typing import Any
 
-from src.agent.adapters.llm.optimized_llm_adapter import OptimizedLLMAdapter
 from src.common.observability import get_logger
 from src.ports import ILLMProvider
 

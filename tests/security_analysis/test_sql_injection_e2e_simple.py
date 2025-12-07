@@ -4,18 +4,17 @@ SQL Injection Detection E2E Test (Simplified)
 Direct test without using outdated python_core rules.
 """
 
-from src.contexts.code_foundation.infrastructure.generators.python_generator import PythonIRGenerator
-from src.contexts.code_foundation.infrastructure.parsing import SourceFile
-from src.contexts.code_foundation.infrastructure.analyzers.taint_analyzer import TaintAnalyzer, TaintSource, TaintSink
-from src.contexts.security_analysis.infrastructure.adapters.taint_analyzer_adapter import TaintAnalyzerAdapter
+from src.contexts.code_foundation.infrastructure.analyzers.taint_analyzer import TaintAnalyzer, TaintSink, TaintSource
 from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.base import (
-    SourceRule,
-    SinkRule,
     SanitizerRule,
     Severity,
+    SinkRule,
+    SourceRule,
     VulnerabilityType,
 )
-
+from src.contexts.code_foundation.infrastructure.generators.python_generator import PythonIRGenerator
+from src.contexts.code_foundation.infrastructure.parsing import SourceFile
+from src.contexts.security_analysis.infrastructure.adapters.taint_analyzer_adapter import TaintAnalyzerAdapter
 
 # ============================================================
 # Simple Taint Rules for Testing
@@ -93,7 +92,7 @@ def test_sql_injection_simple():
     print(f"\n[IR] Generated IR with {len(ir_doc.nodes)} nodes, {len(ir_doc.edges)} edges")
 
     # Debug: Print nodes
-    print(f"\n[DEBUG] Nodes:")
+    print("\n[DEBUG] Nodes:")
     for i, node in enumerate(ir_doc.nodes[:10]):  # First 10
         print(
             f"  [{i}] {node.kind.value:15s} {node.name:30s} ({node.file_path}:{node.span.start_line if node.span else 0})"
@@ -107,7 +106,7 @@ def test_sql_injection_simple():
     )
 
     # Step 4: Analyze
-    print(f"\n[ADAPTER] Running taint analysis...")
+    print("\n[ADAPTER] Running taint analysis...")
     print(f"[ADAPTER] Source rules: {len(adapter.source_rules)}")
     print(f"[ADAPTER] Sink rules: {len(adapter.sink_rules)}")
     print(f"[ADAPTER] Converted sources: {list(adapter.taint_analyzer.sources.keys())}")
@@ -134,8 +133,8 @@ def test_sql_injection_simple():
         print(f"\n✅ SUCCESS: Detected {len(taint_paths)} SQL injection vulnerabilities!")
         return True
     else:
-        print(f"\n⚠️  WARNING: No vulnerabilities detected (expected at least 1)")
-        print(f"\n[DEBUG] Checking why...")
+        print("\n⚠️  WARNING: No vulnerabilities detected (expected at least 1)")
+        print("\n[DEBUG] Checking why...")
 
         # Check if sources/sinks were found
         call_graph, node_map = adapter._extract_graph_from_ir(ir_doc)
@@ -149,7 +148,7 @@ def test_sql_injection_simple():
         print(f"\n[DEBUG] Edge kinds: {dict(edge_kinds)}")
 
         # Print WRITES and READS edges
-        print(f"\n[DEBUG] WRITES edges:")
+        print("\n[DEBUG] WRITES edges:")
         for edge in ir_doc.edges:
             if edge.kind.value == "WRITES":
                 from_node = node_map.get(edge.source_id)
@@ -158,7 +157,7 @@ def test_sql_injection_simple():
                 to_name = to_node.name if to_node else edge.target_id
                 print(f"  {from_name} --WRITES--> {to_name}")
 
-        print(f"\n[DEBUG] READS edges:")
+        print("\n[DEBUG] READS edges:")
         for edge in ir_doc.edges:
             if edge.kind.value == "READS":
                 from_node = node_map.get(edge.source_id)
@@ -168,7 +167,7 @@ def test_sql_injection_simple():
                 print(f"  {from_name} --READS--> {to_name}")
 
         # Print call graph
-        print(f"\n[DEBUG] Call graph:")
+        print("\n[DEBUG] Call graph:")
         for from_id, to_ids in list(call_graph.items())[:15]:
             from_node = node_map.get(from_id)
             from_name = from_node.name if from_node and hasattr(from_node, "name") else from_id
@@ -179,7 +178,7 @@ def test_sql_injection_simple():
                 print(f"    → {to_name}")
 
         # Manually check for patterns
-        print(f"\n[DEBUG] Checking patterns manually:")
+        print("\n[DEBUG] Checking patterns manually:")
         source_nodes = []
         sink_nodes = []
         for node_id, node in node_map.items():
@@ -194,7 +193,7 @@ def test_sql_injection_simple():
                         sink_nodes.append((node_id, node.name))
 
         # Check if there's a path between any source and sink
-        print(f"\n[DEBUG] Checking paths manually:")
+        print("\n[DEBUG] Checking paths manually:")
         for src_id, src_name in source_nodes:
             for sink_id, sink_name in sink_nodes:
                 print(f"  Checking {src_name} → {sink_name}")
@@ -207,7 +206,7 @@ def test_sql_injection_simple():
                 while queue and len(visited) < 100:  # Max 100 nodes
                     current, path = queue.popleft()
                     if current == sink_id:
-                        print(f"    ✅ Found path!")
+                        print("    ✅ Found path!")
                         path_names = [
                             node_map.get(p).name if node_map.get(p) and hasattr(node_map.get(p), "name") else p
                             for p in path
@@ -221,7 +220,7 @@ def test_sql_injection_simple():
                     for next_id in call_graph.get(current, []):
                         queue.append((next_id, path + [next_id]))
                 if not found:
-                    print(f"    ❌ No path found")
+                    print("    ❌ No path found")
 
         return False
 

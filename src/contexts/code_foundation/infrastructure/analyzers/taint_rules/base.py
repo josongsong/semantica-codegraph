@@ -9,10 +9,9 @@ Design Goals:
 SOTA급 Rule Set을 위한 구조화된 Rule 시스템
 """
 
+import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Literal
-import re
 
 
 class VulnerabilityType(Enum):

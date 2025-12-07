@@ -3,7 +3,6 @@ Integration Tests for Observability & Explainability (Phase 3.3)
 """
 
 import pytest
-
 from src.retriever.observability.explainer import RetrievalExplainer
 from src.retriever.observability.models import Explanation, RetrievalTrace
 from src.retriever.observability.tracing import RetrievalTracer, TraceCollector

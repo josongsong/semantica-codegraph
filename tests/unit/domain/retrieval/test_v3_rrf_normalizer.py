@@ -3,7 +3,6 @@ Tests for RRF Normalizer V3.
 """
 
 import pytest
-
 from src.retriever.v3.config import RRFConfig, WeightProfile
 from src.retriever.v3.models import RankedHit
 from src.retriever.v3.rrf_normalizer import RRFNormalizer

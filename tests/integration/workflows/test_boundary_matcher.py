@@ -15,7 +15,6 @@ from src.contexts.reasoning_engine.infrastructure.cross_lang import (
     Confidence,
 )
 
-
 # Fixture provided by conftest.py
 
 

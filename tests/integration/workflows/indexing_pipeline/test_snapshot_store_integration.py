@@ -16,12 +16,12 @@ import os
 
 import pytest
 import pytest_asyncio
-
 from src.foundation.ir.external_analyzers import (
     PyrightSemanticSnapshot,
     SemanticSnapshotStore,
     Span,
 )
+
 from src.infra.storage.postgres import PostgresStore
 
 # Check if PostgreSQL is available

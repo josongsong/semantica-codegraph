@@ -14,7 +14,6 @@
 
 import os
 from enum import Enum
-from typing import Optional
 
 
 class Profile(str, Enum):
@@ -29,7 +28,7 @@ class Profile(str, Enum):
 class ProfileConfig:
     """프로파일별 설정"""
 
-    def __init__(self, profile: Optional[str] = None):
+    def __init__(self, profile: str | None = None):
         """
         Args:
             profile: 프로파일 이름 (None이면 환경변수에서 읽음)
@@ -81,12 +80,12 @@ class ProfileConfig:
         # 로깅 레벨
         self.log_level = "DEBUG"
 
-        print(f"  ✅ PostgreSQL: 필수")
-        print(f"  ✅ Qdrant: 필수")
+        print("  ✅ PostgreSQL: 필수")
+        print("  ✅ Qdrant: 필수")
         print(f"  {'✅' if self.use_redis else '⚠️ '} Redis: {'사용' if self.use_redis else '메모리 모드'}")
         print(f"  {'✅' if self.use_memgraph else '⚠️ '} Memgraph: {'사용' if self.use_memgraph else '경량 분석'}")
-        print(f"  🚫 Multi-Agent: 비활성화")
-        print(f"  🚫 Monitoring: 비활성화")
+        print("  🚫 Multi-Agent: 비활성화")
+        print("  🚫 Monitoring: 비활성화")
 
     def _apply_cloud(self):
         """클라우드/프로덕션 환경 설정"""
@@ -107,9 +106,9 @@ class ProfileConfig:
         # 로깅 레벨
         self.log_level = "INFO"
 
-        print(f"  ✅ 모든 서비스 활성화")
-        print(f"  ✅ Multi-Agent: 활성화")
-        print(f"  ✅ Monitoring: 활성화")
+        print("  ✅ 모든 서비스 활성화")
+        print("  ✅ Multi-Agent: 활성화")
+        print("  ✅ Monitoring: 활성화")
 
     def _apply_dev(self):
         """개발 서버 환경 설정"""
@@ -130,8 +129,8 @@ class ProfileConfig:
         # 로깅 레벨
         self.log_level = "DEBUG"
 
-        print(f"  ✅ 모든 DB 서비스 활성화")
-        print(f"  ✅ Multi-Agent: 활성화")
+        print("  ✅ 모든 DB 서비스 활성화")
+        print("  ✅ Multi-Agent: 활성화")
         print(
             f"  {'✅' if self.enable_monitoring else '⚠️ '} Monitoring: {'활성화' if self.enable_monitoring else '비활성화'}"
         )
@@ -155,9 +154,9 @@ class ProfileConfig:
         # 로깅 레벨
         self.log_level = "WARNING"
 
-        print(f"  ✅ 모든 서비스 필수")
-        print(f"  ✅ Multi-Agent: 활성화")
-        print(f"  ✅ Monitoring: 필수")
+        print("  ✅ 모든 서비스 필수")
+        print("  ✅ Multi-Agent: 활성화")
+        print("  ✅ Monitoring: 필수")
 
     def _check_service_available(self, service: str, optional: bool = True) -> bool:
         """
@@ -224,7 +223,7 @@ class ProfileConfig:
 
 
 # 전역 프로파일 인스턴스
-_profile_config: Optional[ProfileConfig] = None
+_profile_config: ProfileConfig | None = None
 
 
 def get_profile_config() -> ProfileConfig:

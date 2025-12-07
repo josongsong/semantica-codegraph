@@ -5,7 +5,6 @@ Tests tuple destructuring, attribute access, subscript, and comprehensions.
 """
 
 import pytest
-
 from src.foundation.generators import PythonIRGenerator
 from src.foundation.parsing import SourceFile
 from src.foundation.semantic_ir import DefaultSemanticIrBuilder

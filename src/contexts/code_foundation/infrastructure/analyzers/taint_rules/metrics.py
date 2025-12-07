@@ -4,11 +4,11 @@ Taint Rules Metrics & Logging
 Rule hit 추적 및 분석
 """
 
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-import json
 
 
 @dataclass

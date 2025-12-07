@@ -7,7 +7,7 @@ RFC-007 v1.2: Memgraph → Rust sync for 10-50x taint analysis speedup
 """
 
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.infra.graph.memgraph import MemgraphGraphStore

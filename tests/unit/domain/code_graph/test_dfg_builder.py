@@ -5,7 +5,6 @@ Tests variable entity tracking, read/write events, and data flow analysis.
 """
 
 import pytest
-
 from src.foundation.dfg import (
     AnalyzerRegistry,
     PythonStatementAnalyzer,

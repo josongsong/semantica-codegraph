@@ -5,7 +5,6 @@ Tests role-based node detection, framework edges, and extended indexes.
 """
 
 import pytest
-
 from src.foundation.generators import PythonIRGenerator
 from src.foundation.graph import GraphBuilder, GraphEdgeKind, GraphNodeKind
 from src.foundation.parsing import SourceFile

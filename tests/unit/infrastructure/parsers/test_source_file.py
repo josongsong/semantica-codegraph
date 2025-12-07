@@ -9,7 +9,6 @@ from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from src.foundation.parsing.source_file import SourceFile
 
 

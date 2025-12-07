@@ -3,6 +3,7 @@
 """
 
 import os
+
 import pytest
 
 from src.infra.config.profiles import Profile, ProfileConfig, reset_profile_config

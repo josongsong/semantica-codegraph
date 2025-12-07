@@ -17,43 +17,41 @@ Changes from v1:
 - ✅ 실제 실행 가능
 """
 
-from typing import List
 import logging
 
-from src.contexts.security_analysis.domain.models.security_rule import (
-    SecurityRule,
-    register_rule,
-)
-from src.contexts.security_analysis.domain.models.vulnerability import (
-    Vulnerability,
-    CWE,
-    Severity,
-    Location,
-    Evidence,
+# TaintPath from taint_analyzer
+from src.contexts.code_foundation.infrastructure.analyzers.taint_analyzer import (
+    TaintPath,
 )
 
 # 기존 taint_rules 시스템 (검증됨!)
 from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.base import (
     VulnerabilityType,
 )
-from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.sources.python_core import (
-    PYTHON_CORE_SOURCES,
+from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.sanitizers.python_core import (
+    PYTHON_CORE_SANITIZERS,
 )
 from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.sinks.python_core import (
     PYTHON_CORE_SINKS,
 )
-from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.sanitizers.python_core import (
-    PYTHON_CORE_SANITIZERS,
+from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.sources.python_core import (
+    PYTHON_CORE_SOURCES,
+)
+from src.contexts.security_analysis.domain.models.security_rule import (
+    SecurityRule,
+    register_rule,
+)
+from src.contexts.security_analysis.domain.models.vulnerability import (
+    CWE,
+    Evidence,
+    Location,
+    Severity,
+    Vulnerability,
 )
 
 # Adapter (새로 작성)
 from src.contexts.security_analysis.infrastructure.adapters.taint_analyzer_adapter import (
     TaintAnalyzerAdapter,
-)
-
-# TaintPath from taint_analyzer
-from src.contexts.code_foundation.infrastructure.analyzers.taint_analyzer import (
-    TaintPath,
 )
 
 logger = logging.getLogger(__name__)
@@ -113,7 +111,7 @@ class SQLInjectionQueryV2(SecurityRule):
             f"{len(self.sql_sanitizers)} sanitizers"
         )
 
-    def analyze(self, ir_document) -> List[Vulnerability]:
+    def analyze(self, ir_document) -> list[Vulnerability]:
         """
         Analyze SQL Injection vulnerabilities
 
@@ -357,7 +355,7 @@ AVOID:
    ✗ "SELECT * FROM users WHERE id=" + user_id
         """.strip()
 
-    def _get_references(self) -> List[str]:
+    def _get_references(self) -> list[str]:
         """Get reference URLs"""
         return [
             "https://cwe.mitre.org/data/definitions/89.html",

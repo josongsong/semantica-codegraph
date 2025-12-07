@@ -11,7 +11,6 @@ IR/CFG/DFG Scenario Tests
 """
 
 import pytest
-
 from src.foundation.generators import PythonIRGenerator
 from src.foundation.ir.models import EdgeKind, NodeKind
 from src.foundation.parsing import SourceFile

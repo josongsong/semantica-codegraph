@@ -8,11 +8,13 @@ Tests:
 4. Integration with analyzer
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
+
 from src.contexts.code_foundation.infrastructure.analyzers.function_summary import (
-    FunctionTaintSummary,
     FunctionSummaryCache,
+    FunctionTaintSummary,
     TaintAnalyzerWithCache,
     create_cached_analyzer,
 )

@@ -56,33 +56,33 @@ def main():
         ir_doc = ir_docs[str(test_file)]
 
         # PDG 확인
-        print(f"\n✅ PDG:")
+        print("\n✅ PDG:")
         print(f"   - Nodes: {len(ir_doc.pdg_nodes)}")
         print(f"   - Edges: {len(ir_doc.pdg_edges)}")
 
         # Taint 확인
-        print(f"\n✅ Taint Analysis:")
+        print("\n✅ Taint Analysis:")
         print(f"   - Findings: {len(ir_doc.taint_findings)}")
         if ir_doc.taint_findings:
             for finding in ir_doc.taint_findings[:3]:
                 print(f"   - {finding}")
 
         # Slicer 확인
-        print(f"\n✅ Program Slicer:")
+        print("\n✅ Program Slicer:")
         slicer = ir_doc.get_slicer()
         if slicer:
-            print(f"   - Slicer available: YES")
+            print("   - Slicer available: YES")
         else:
-            print(f"   - Slicer available: NO (PDG may be empty)")
+            print("   - Slicer available: NO (PDG may be empty)")
 
         # RetrievalIndex 확인
-        print(f"\n✅ RetrievalIndex:")
+        print("\n✅ RetrievalIndex:")
         print(f"   - PDG attached: {retrieval_index.pdg_builder is not None}")
         print(f"   - Slicer attached: {retrieval_index.slicer is not None}")
         print(f"   - IR document attached: {retrieval_index.ir_document is not None}")
 
         # 통계
-        print(f"\n✅ Stats:")
+        print("\n✅ Stats:")
         stats = ir_doc.get_stats()
         print(f"   - Schema version: {stats['schema_version']}")
         print(f"   - Nodes: {stats['nodes']}")

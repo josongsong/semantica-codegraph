@@ -16,7 +16,6 @@ Endpoints:
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-
 from src.foundation.chunk.store import PostgresChunkStore
 from src.index import (
     IndexingService,

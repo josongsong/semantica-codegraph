@@ -4,11 +4,12 @@ Taint Rules Configuration System
 프로젝트별로 Rule Set을 조합/토글하는 설정 시스템
 """
 
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
 import yaml
-import json
 
 
 @dataclass

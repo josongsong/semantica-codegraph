@@ -5,7 +5,6 @@ Integration tests with real Parser
 """
 
 import pytest
-
 from src.chunking import (
     ChunkingConfig,
     ChunkingInput,

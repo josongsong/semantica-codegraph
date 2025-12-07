@@ -10,7 +10,6 @@ Test scope:
 """
 
 import pytest
-
 from src.foundation.ir.external_analyzers import (
     PyrightSemanticSnapshot,
     SemanticSnapshotStore,

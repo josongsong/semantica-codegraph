@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from qdrant_client import AsyncQdrantClient
 
     from src.infra.cache.redis import RedisAdapter
-    from src.infra.graph.memgraph import MemgraphGraphStore
     from src.infra.llm.local_llm import LocalLLMAdapter
     from src.infra.search.zoekt import ZoektAdapter
     from src.infra.storage.postgres import PostgresStore

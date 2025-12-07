@@ -5,7 +5,6 @@ Tests FQN generation, import resolution, and synthetic ID creation.
 """
 
 import pytest
-
 from src.core.ports.parser_port import CodeNode
 from src.graph_construction.ports import NameResolutionError
 from src.infra.graph_construction import PythonNameResolver

@@ -7,11 +7,11 @@ Tests the complete flow:
 """
 
 import pytest
+
 from src.contexts.code_foundation.infrastructure.generators.python_generator import PythonIRGenerator
 from src.contexts.code_foundation.infrastructure.parsing import SourceFile
+from src.contexts.security_analysis.domain.models.vulnerability import CWE, Severity
 from src.contexts.security_analysis.infrastructure.queries.injection.sql_injection_v2 import SQLInjectionQueryV2
-from src.contexts.security_analysis.domain.models.vulnerability import Severity, CWE
-
 
 # ============================================================
 # Test Case 1: Simple SQL Injection (user_input → execute)

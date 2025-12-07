@@ -5,7 +5,6 @@ Tests complete chunking pipeline: IR → Graph → Chunks
 """
 
 import pytest
-
 from src.foundation.chunk import ChunkBuilder, ChunkIdGenerator
 from src.foundation.generators import PythonIRGenerator
 from src.foundation.graph import GraphBuilder

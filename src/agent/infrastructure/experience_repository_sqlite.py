@@ -7,13 +7,11 @@ Experience Repository - SQLite Backend (SOTA: Multi-Backend)
 import logging
 import sqlite3
 from pathlib import Path
-from typing import Any
 
 from src.agent.domain.experience import (
     AgentExperience,
-    ProblemType,
     ExperienceQuery,
-    StrategyResult,
+    ProblemType,
 )
 
 logger = logging.getLogger(__name__)

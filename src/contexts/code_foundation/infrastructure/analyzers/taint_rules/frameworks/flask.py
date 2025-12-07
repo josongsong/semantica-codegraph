@@ -4,8 +4,7 @@ Flask Framework Taint Rules
 Flask는 Python에서 가장 인기 있는 마이크로 웹 프레임워크
 """
 
-from ..base import SourceRule, SinkRule, SanitizerRule, Severity, VulnerabilityType, TaintKind
-
+from ..base import SanitizerRule, Severity, SinkRule, SourceRule, TaintKind, VulnerabilityType
 
 # ============================================================
 # Flask Sources (HTTP Request Data)

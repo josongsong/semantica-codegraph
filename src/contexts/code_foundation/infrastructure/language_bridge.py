@@ -5,7 +5,7 @@ Language Bridge - Cross-language Type Mapping
 Phase 1: Cross-Language Symbol Resolution
 """
 
-from typing import Optional
+
 from src.contexts.code_foundation.domain.models import UnifiedSymbol
 
 
@@ -114,7 +114,7 @@ class LanguageBridge:
         },
     }
 
-    def resolve_cross_language(self, source_symbol: UnifiedSymbol, target_language: str) -> Optional[UnifiedSymbol]:
+    def resolve_cross_language(self, source_symbol: UnifiedSymbol, target_language: str) -> UnifiedSymbol | None:
         """
         언어 간 symbol 매핑
 
@@ -183,7 +183,7 @@ class LanguageBridge:
         else:
             return type_fqn + "#"
 
-    def resolve_generic_type(self, type_fqn: str, source_lang: str, target_lang: str) -> Optional[str]:
+    def resolve_generic_type(self, type_fqn: str, source_lang: str, target_lang: str) -> str | None:
         """
         Generic type resolution with parameter extraction
 

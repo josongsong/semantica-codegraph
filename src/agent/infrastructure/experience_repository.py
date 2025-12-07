@@ -4,16 +4,14 @@ Experience Repository
 PostgreSQL 기반 경험 저장/검색
 """
 
-import json
 import logging
-from typing import Any
 
 from src.agent.domain.experience import (
     AgentExperience,
-    StrategyResult,
     ExperienceQuery,
     ExperienceStats,
     ProblemType,
+    StrategyResult,
 )
 
 logger = logging.getLogger(__name__)

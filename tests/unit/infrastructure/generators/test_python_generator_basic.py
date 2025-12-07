@@ -3,7 +3,6 @@ Basic test for Python IR Generator
 """
 
 import pytest
-
 from src.foundation.generators import PythonIRGenerator
 from src.foundation.ir.models import NodeKind
 from src.foundation.parsing import SourceFile

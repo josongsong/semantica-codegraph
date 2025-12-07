@@ -12,7 +12,6 @@ Simulates real-world retrieval pipeline.
 
 import numpy as np
 import pytest
-
 from src.retriever.context_builder.dependency_order import DependencyAwareOrdering
 from src.retriever.hybrid.late_interaction_cache import (
     InMemoryEmbeddingCache,

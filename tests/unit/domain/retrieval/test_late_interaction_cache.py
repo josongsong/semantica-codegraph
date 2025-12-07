@@ -13,7 +13,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-
 from src.retriever.hybrid.late_interaction import SimpleEmbeddingModel
 from src.retriever.hybrid.late_interaction_cache import (
     FileBasedEmbeddingCache,

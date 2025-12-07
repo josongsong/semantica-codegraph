@@ -5,7 +5,6 @@ Tests chunk mapping to IR nodes and graph nodes.
 """
 
 import pytest
-
 from src.foundation.chunk import (
     ChunkBuilder,
     ChunkIdGenerator,

@@ -5,7 +5,6 @@ Tests DiffParser, EditCalculator, and IncrementalParser components.
 """
 
 import pytest
-
 from src.foundation.parsing.incremental import (
     DiffHunk,
     DiffParser,

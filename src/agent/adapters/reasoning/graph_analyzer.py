@@ -9,9 +9,8 @@ import logging
 from pathlib import Path
 
 from src.agent.domain.reasoning.reflection_models import (
-    GraphImpact,
     ExecutionTrace,
-    StabilityLevel,
+    GraphImpact,
 )
 
 logger = logging.getLogger(__name__)

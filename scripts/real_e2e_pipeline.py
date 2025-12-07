@@ -12,7 +12,6 @@
 import asyncio
 import sys
 import tempfile
-import shutil
 from pathlib import Path
 
 sys.path.insert(0, ".")
@@ -85,7 +84,7 @@ def test_process_user():
             print("\n❌ 전략이 생성되지 않았습니다!")
             return 1
 
-        print(f"\n✅ 전략 생성 완료:")
+        print("\n✅ 전략 생성 완료:")
         print(f"  Strategy ID: {best_strategy.strategy_id}")
         print(f"  Title: {best_strategy.title}")
         print(f"  Score: {result.best_score:.2f}")
@@ -126,7 +125,7 @@ def test_process_user():
             timeout=5,
         )
 
-        print(f"\n실행 결과:")
+        print("\n실행 결과:")
         print(f"  Compile Success: {exec_result.compile_success}")
         print(f"  Tests Passed: {exec_result.tests_passed}")
         print(f"  Tests Failed: {exec_result.tests_failed}")
@@ -169,7 +168,7 @@ def test_process_user():
         repo = container.v8_experience_repository
         saved = repo.save(experience)
 
-        print(f"\n✅ DB 저장 완료:")
+        print("\n✅ DB 저장 완료:")
         print(f"  Repository: {type(repo).__name__}")
         print(f"  Experience ID: {saved.id}")
         print(f"  Success: {saved.success}")

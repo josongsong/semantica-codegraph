@@ -58,11 +58,12 @@ class V7AgentContainer:
 
         if e2b_api_key:
             # E2B Sandbox (실제 클라우드 샌드박스)
+            import logging
+
             from src.agent.adapters.sandbox.e2b_adapter import (
                 E2BSandboxAdapter,
                 E2BSandboxConfig,
             )
-            import logging
 
             logger = logging.getLogger(__name__)
             logger.info(f"Using E2B Sandbox (API key: {e2b_api_key[:8]}...)")
@@ -71,8 +72,9 @@ class V7AgentContainer:
             return E2BSandboxAdapter(config=config)
         else:
             # Local Sandbox (fallback)
-            from src.agent.adapters.sandbox.stub_sandbox import LocalSandboxAdapter
             import logging
+
+            from src.agent.adapters.sandbox.stub_sandbox import LocalSandboxAdapter
 
             logger = logging.getLogger(__name__)
             logger.warning("E2B_API_KEY not found, using LocalSandboxAdapter")

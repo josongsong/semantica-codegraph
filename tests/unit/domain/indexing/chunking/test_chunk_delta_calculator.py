@@ -3,7 +3,6 @@ Tests for DeltaCalculator
 """
 
 import pytest
-
 from src.chunking import (
     ChunkDelta,
     ChunkDeltaOperation,

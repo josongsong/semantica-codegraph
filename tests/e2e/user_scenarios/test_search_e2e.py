@@ -18,7 +18,6 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from src.foundation.chunk.models import Chunk
 from src.foundation.graph.models import (
     GraphDocument,

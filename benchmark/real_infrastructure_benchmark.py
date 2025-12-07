@@ -38,12 +38,12 @@ from real_retriever_benchmark import (
     FusionV2,
     calculate_ndcg,
 )
-
-from src.container import Container
 from src.foundation.chunk.builder import ChunkBuilder
 from src.foundation.graph.builder import GraphBuilder
 from src.foundation.parsing.parser_registry import ParserRegistry
 from src.index.service import IndexingService
+
+from src.container import Container
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)

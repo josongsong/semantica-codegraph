@@ -2,8 +2,10 @@
 Tests for Version Detector
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from src.contexts.code_foundation.infrastructure.version_detector import VersionDetector
 
 

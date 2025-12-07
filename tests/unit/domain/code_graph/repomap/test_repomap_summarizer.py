@@ -3,7 +3,6 @@ Tests for RepoMap LLM Summarizer.
 """
 
 import pytest
-
 from src.repomap.models import RepoMapMetrics, RepoMapNode
 from src.repomap.summarizer import (
     CostController,

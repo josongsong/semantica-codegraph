@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING
 from .tot_models import (
     CodeStrategy,
     ExecutionResult,
-    StrategyScore,
     ScoringWeights,
+    StrategyScore,
     ToTResult,
 )
 

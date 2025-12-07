@@ -3,7 +3,6 @@ Integration Tests for Code-Specific Reranking (Phase 3.4)
 """
 
 import pytest
-
 from src.retriever.code_reranking.callgraph_reranker import (
     CallGraphReranker,
     MockCallGraphAdapter,

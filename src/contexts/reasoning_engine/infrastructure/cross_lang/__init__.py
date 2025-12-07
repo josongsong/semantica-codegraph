@@ -18,7 +18,7 @@ from .boundary_analyzer import (
     ProtobufBoundaryExtractor,
 )
 from .boundary_matcher import BoundaryCodeMatcher, MatchCandidate
-from .type_system import BaseType, TypeCompatibilityChecker, TypeInfo, TypeInference
+from .type_system import BaseType, TypeCompatibilityChecker, TypeInference, TypeInfo
 from .value_flow_builder import ValueFlowBuilder
 from .value_flow_graph import (
     BoundarySpec,

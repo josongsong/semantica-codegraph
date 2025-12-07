@@ -5,7 +5,6 @@ Tests delta calculation between old and new graph states.
 """
 
 import pytest
-
 from src.graph_construction.domain import (
     EdgeType,
     GraphDeltaOp,

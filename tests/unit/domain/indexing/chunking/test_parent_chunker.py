@@ -3,7 +3,6 @@ Tests for ParentChunker
 """
 
 import pytest
-
 from src.chunking import ChunkingConfig, LeafChunk, ParentChunker
 from src.core.ports.parser_port import CodeNode
 

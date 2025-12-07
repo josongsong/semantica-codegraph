@@ -5,13 +5,12 @@ SOTA: Graph Stability + Execution Trace Analysis
 """
 
 import logging
-from typing import TYPE_CHECKING
 
 from .reflection_models import (
     ReflectionInput,
     ReflectionOutput,
-    ReflectionVerdict,
     ReflectionRules,
+    ReflectionVerdict,
     StabilityLevel,
 )
 
@@ -334,4 +333,4 @@ class SelfReflectionJudge:
             return f"🔄 RETRY (confidence={score:.2f})\n  - Current approach not optimal\n  - Try alternative strategy"
 
         else:  # ROLLBACK
-            return f"❌ ROLLBACK\n  - Critical issues detected\n  - Immediate rollback recommended"
+            return "❌ ROLLBACK\n  - Critical issues detected\n  - Immediate rollback recommended"

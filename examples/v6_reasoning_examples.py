@@ -11,12 +11,10 @@ RFC-06 Reasoning Engine Examples
 
 def example_impact_rebuild():
     """변경 영향도 분석 및 부분 재빌드"""
+    from src.contexts.code_foundation.infrastructure.graph.models import GraphDocument
     from src.contexts.reasoning_engine.infrastructure.impact import (
         ImpactAnalyzer,
-        SymbolHasher,
-        BloomFilter,
     )
-    from src.contexts.code_foundation.infrastructure.graph.models import GraphDocument
 
     print("=" * 80)
     print("Example 1: Impact-Based Partial Rebuild")
@@ -49,13 +47,13 @@ def example_impact_rebuild():
 
 def example_speculative_execution():
     """패치 시뮬레이션 및 위험도 분석"""
+    from src.contexts.reasoning_engine.domain.speculative_models import (
+        PatchType,
+        SpeculativePatch,
+    )
     from src.contexts.reasoning_engine.infrastructure.speculative import (
         GraphSimulator,
         RiskAnalyzer,
-    )
-    from src.contexts.reasoning_engine.domain.speculative_models import (
-        SpeculativePatch,
-        PatchType,
     )
 
     print("\n" + "=" * 80)
@@ -90,7 +88,7 @@ def example_speculative_execution():
     print(f"Safe to apply: {risk_report.safe_to_apply}")
 
     if not risk_report.safe_to_apply:
-        print(f"Breaking changes:")
+        print("Breaking changes:")
         for change in risk_report.breaking_changes:
             print(f"  - {change}")
 
@@ -162,7 +160,7 @@ def example_auto_rrf():
         symbol_results=symbol_results,
     )
 
-    print(f"Top results:")
+    print("Top results:")
     for i, result in enumerate(results[:5], 1):
         print(f"{i}. {result.item_id} (score: {result.final_score:.3f})")
 
@@ -182,11 +180,11 @@ def example_auto_rrf():
 def example_value_flow():
     """Frontend → Backend → Database 흐름 추적"""
     from src.contexts.reasoning_engine.infrastructure.cross_lang import (
+        BoundarySpec,
+        FlowEdgeKind,
+        ValueFlowEdge,
         ValueFlowGraph,
         ValueFlowNode,
-        ValueFlowEdge,
-        FlowEdgeKind,
-        BoundarySpec,
     )
 
     print("\n" + "=" * 80)
@@ -268,7 +266,7 @@ def example_value_flow():
 
     # Statistics
     stats = vfg.get_statistics()
-    print(f"\nGraph statistics:")
+    print("\nGraph statistics:")
     print(f"  Nodes: {stats['total_nodes']}")
     print(f"  Edges: {stats['total_edges']}")
     print(f"  Cross-service: {stats['cross_service_edges']}")
@@ -282,9 +280,9 @@ def example_value_flow():
 def example_semantic_patch():
     """Deprecated API 자동 변환"""
     from src.contexts.reasoning_engine.infrastructure.patch import (
-        SemanticPatchEngine,
         PatchTemplate,
         PatternSyntax,
+        SemanticPatchEngine,
         TransformKind,
     )
 
@@ -340,8 +338,8 @@ def example_semantic_patch():
 
 def example_program_slice():
     """디버깅: 이 값이 어떻게 계산되었나?"""
-    from src.contexts.reasoning_engine.infrastructure.slicer import ProgramSlicer
     from src.contexts.reasoning_engine.infrastructure.pdg import PDGBuilder
+    from src.contexts.reasoning_engine.infrastructure.slicer import ProgramSlicer
 
     print("\n" + "=" * 80)
     print("Example 7: Program Slice Engine")

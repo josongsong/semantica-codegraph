@@ -11,10 +11,10 @@ Version: 1.0.0
 """
 
 import hashlib
-from typing import Any
 from dataclasses import dataclass
+from typing import Any
 
-from src.contexts.code_foundation.infrastructure.ir.models.core import Node, Edge
+from src.contexts.code_foundation.infrastructure.ir.models.core import Edge, Node
 from src.contexts.code_foundation.infrastructure.ir.models.document import IRDocument
 
 

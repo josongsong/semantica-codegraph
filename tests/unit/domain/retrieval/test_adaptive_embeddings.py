@@ -3,7 +3,6 @@ Integration Tests for Repo-Adaptive Embeddings (Phase 3.5)
 """
 
 import pytest
-
 from src.retriever.adaptive_embeddings.adaptive_model import AdaptiveEmbeddingModel
 from src.retriever.adaptive_embeddings.collector import AdaptationCollector
 from src.retriever.adaptive_embeddings.lora_trainer import LoRATrainer

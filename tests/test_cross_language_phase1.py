@@ -5,16 +5,17 @@ UnifiedSymbol, LanguageBridge, CrossLanguageEdgeGenerator 테스트
 """
 
 import pytest
+
 from src.contexts.code_foundation.domain.models import (
-    UnifiedSymbol,
+    GraphEdge,
     IRDocument,
     Language,
-    GraphEdge,
+    UnifiedSymbol,
 )
-from src.contexts.code_foundation.infrastructure.language_bridge import LanguageBridge
 from src.contexts.code_foundation.infrastructure.cross_lang_edges import (
     CrossLanguageEdgeGenerator,
 )
+from src.contexts.code_foundation.infrastructure.language_bridge import LanguageBridge
 
 
 class TestUnifiedSymbol:

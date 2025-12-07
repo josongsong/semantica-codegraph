@@ -7,13 +7,11 @@ Subprocess Sandbox + LangGraph 연동
 
 import asyncio
 import sys
-import tempfile
-from pathlib import Path
 
 sys.path.insert(0, ".")
 
-from src.agent.adapters.reasoning import SubprocessSandbox, LangGraphToTExecutor
-from src.agent.domain.reasoning import ToTScoringEngine, CodeStrategy, StrategyType
+from src.agent.adapters.reasoning import LangGraphToTExecutor, SubprocessSandbox
+from src.agent.domain.reasoning import CodeStrategy, StrategyType, ToTScoringEngine
 from src.container import Container
 
 
@@ -86,7 +84,7 @@ async def test_langgraph_executor():
         use_langgraph=True,  # LangGraph 시도
     )
 
-    print(f"✅ LangGraph Executor initialized")
+    print("✅ LangGraph Executor initialized")
 
     # 전략 생성
     strategies = await executor.generate_strategies(
@@ -139,7 +137,7 @@ async def test_security_veto():
 
     print(f"  Correctness: {score.correctness_score:.2f}")
     print(f"  Security: {score.security_score:.2f} (Critical)")
-    print(f"  Total (Before Veto): would be ~0.7+")
+    print("  Total (Before Veto): would be ~0.7+")
     print(f"  Total (After Veto): {score.total_score:.2f}")
 
     assert score.total_score <= 0.4, "Veto should cap at 0.4"
@@ -166,7 +164,7 @@ async def test_full_integration():
         top_k=1,
     )
 
-    print(f"\n📊 ToT Results:")
+    print("\n📊 ToT Results:")
     print(f"  Generated: {result.total_generated}")
     print(f"  Executed: {result.total_executed}")
     print(f"  Best Score: {result.best_score:.2f}")
@@ -175,7 +173,7 @@ async def test_full_integration():
     # Top-1
     if result.best_strategy_id:
         top_score = result.scores[result.best_strategy_id]
-        print(f"\n🏆 Best Strategy:")
+        print("\n🏆 Best Strategy:")
         print(f"  ID: {result.best_strategy_id}")
         print(f"  Total: {top_score.total_score:.2f}")
         print(f"  {top_score.recommendation}")

@@ -7,7 +7,7 @@ SOTA: LangGraph State Machine for Strategy Generation
 import asyncio
 import logging
 import uuid
-from typing import Any, TypedDict
+from typing import TypedDict
 
 from src.agent.domain.reasoning.tot_models import (
     CodeStrategy,
@@ -86,7 +86,7 @@ class LangGraphToTExecutor:
         START → generate_strategy → check_count → [loop or END]
         """
         try:
-            from langgraph.graph import StateGraph, END
+            from langgraph.graph import END, StateGraph
 
             # Graph 생성
             workflow = StateGraph(ToTState)

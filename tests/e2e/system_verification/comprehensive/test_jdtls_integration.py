@@ -11,7 +11,6 @@ import pytest
 
 from src.contexts.code_foundation.infrastructure.ir.lsp.jdtls import JdtlsAdapter
 
-
 # Sample Java code for testing
 SAMPLE_JAVA = """
 package com.example;

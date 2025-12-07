@@ -4,12 +4,11 @@ SecurityRule base class
 Abstract base for all security query rules.
 """
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import List, Set, Optional
 import logging
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
-from .vulnerability import Vulnerability, CWE, Severity
+from .vulnerability import CWE, Severity, Vulnerability
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ class TaintSource:
     Identifies where untrusted data enters the system.
     """
 
-    patterns: List[str]
+    patterns: list[str]
     """Function/method patterns (e.g., "request.args.get", "os.environ.get")"""
 
     description: str
@@ -40,7 +39,7 @@ class TaintSink:
     Identifies dangerous operations that shouldn't receive tainted data.
     """
 
-    patterns: List[str]
+    patterns: list[str]
     """Function/method patterns (e.g., "cursor.execute", "os.system")"""
 
     description: str
@@ -58,7 +57,7 @@ class TaintSanitizer:
     Identifies functions that clean/validate untrusted data.
     """
 
-    patterns: List[str]
+    patterns: list[str]
     """Function/method patterns (e.g., "html.escape", "int()")"""
 
     description: str
@@ -105,13 +104,13 @@ class SecurityRule(ABC):
     SEVERITY: Severity
     """Default severity for vulnerabilities"""
 
-    SOURCES: List[TaintSource] = []
+    SOURCES: list[TaintSource] = []
     """Taint sources for this rule"""
 
-    SINKS: List[TaintSink] = []
+    SINKS: list[TaintSink] = []
     """Taint sinks for this rule"""
 
-    SANITIZERS: List[TaintSanitizer] = []
+    SANITIZERS: list[TaintSanitizer] = []
     """Sanitizers for this rule"""
 
     def __init__(self):
@@ -126,7 +125,7 @@ class SecurityRule(ABC):
         logger.info(f"Initialized {self.__class__.__name__} (CWE-{self.CWE_ID.value}, {self.SEVERITY.value})")
 
     @abstractmethod
-    def analyze(self, ir_document) -> List[Vulnerability]:
+    def analyze(self, ir_document) -> list[Vulnerability]:
         """
         Analyze IR document for vulnerabilities
 
@@ -153,7 +152,7 @@ class SecurityRule(ABC):
         """Get rule description"""
         return f"{self.CWE_ID.get_name()} ({self.CWE_ID.value})"
 
-    def _find_sources(self, ir_document) -> List:
+    def _find_sources(self, ir_document) -> list:
         """
         Find all taint sources in IR document
 
@@ -173,7 +172,7 @@ class SecurityRule(ABC):
         logger.debug(f"Found {len(sources)} sources for {self.get_name()}")
         return sources
 
-    def _find_sinks(self, ir_document) -> List:
+    def _find_sinks(self, ir_document) -> list:
         """
         Find all taint sinks in IR document
 
@@ -193,7 +192,7 @@ class SecurityRule(ABC):
         logger.debug(f"Found {len(sinks)} sinks for {self.get_name()}")
         return sinks
 
-    def _find_sanitizers(self, ir_document) -> List:
+    def _find_sanitizers(self, ir_document) -> list:
         """
         Find all sanitizers in IR document
 
@@ -213,7 +212,7 @@ class SecurityRule(ABC):
         logger.debug(f"Found {len(sanitizers)} sanitizers for {self.get_name()}")
         return sanitizers
 
-    def _find_pattern(self, ir_document, pattern: str) -> List:
+    def _find_pattern(self, ir_document, pattern: str) -> list:
         """
         Find pattern in IR document
 
@@ -239,7 +238,7 @@ class SecurityRule(ABC):
         self,
         source,
         sink,
-        taint_path: List,
+        taint_path: list,
         ir_document,
     ) -> Vulnerability:
         """
@@ -254,7 +253,7 @@ class SecurityRule(ABC):
         Returns:
             Vulnerability object
         """
-        from .vulnerability import Location, Evidence
+        from .vulnerability import Evidence, Location
 
         # Extract locations
         source_loc = Location(
@@ -312,11 +311,11 @@ class SecurityRule(ABC):
         """Get fix recommendation"""
         return "Sanitize or validate untrusted input before use."
 
-    def _get_references(self) -> List[str]:
+    def _get_references(self) -> list[str]:
         """Get reference URLs"""
         return [f"https://cwe.mitre.org/data/definitions/{self.CWE_ID.value.split('-')[1]}.html"]
 
-    def _calculate_confidence(self, source, sink, taint_path: List) -> float:
+    def _calculate_confidence(self, source, sink, taint_path: list) -> float:
         """
         Calculate confidence score
 
@@ -361,7 +360,7 @@ class RuleRegistry:
         self._rules[name] = rule_class
         logger.info(f"Registered security rule: {name}")
 
-    def get_rule(self, name: str) -> Optional[SecurityRule]:
+    def get_rule(self, name: str) -> SecurityRule | None:
         """
         Get rule instance by name
 
@@ -376,11 +375,11 @@ class RuleRegistry:
             return rule_class()
         return None
 
-    def get_all_rules(self) -> List[SecurityRule]:
+    def get_all_rules(self) -> list[SecurityRule]:
         """Get all registered rules"""
         return [rule_class() for rule_class in self._rules.values()]
 
-    def get_rules_by_cwe(self, cwe: CWE) -> List[SecurityRule]:
+    def get_rules_by_cwe(self, cwe: CWE) -> list[SecurityRule]:
         """Get rules for specific CWE"""
         return [rule for rule in self.get_all_rules() if rule.CWE_ID == cwe]
 

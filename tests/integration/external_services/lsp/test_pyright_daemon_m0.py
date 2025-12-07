@@ -14,7 +14,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from src.foundation.ir.external_analyzers.pyright_daemon import PyrightSemanticDaemon
 from src.foundation.ir.external_analyzers.snapshot import Span
 

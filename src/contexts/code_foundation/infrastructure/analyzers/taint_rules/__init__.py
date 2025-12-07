@@ -5,14 +5,14 @@ Taint Rules Module
 """
 
 from .base import (
-    VulnerabilityType,
+    RuleSet,
+    SanitizerRule,
     Severity,
+    SinkRule,
+    SourceRule,
     TaintKind,
     TaintRule,
-    SourceRule,
-    SinkRule,
-    SanitizerRule,
-    RuleSet,
+    VulnerabilityType,
 )
 
 __all__ = [

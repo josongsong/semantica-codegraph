@@ -34,7 +34,7 @@ def setup_db(connection_string: str | None = None):
 
         connection_string = os.getenv("DATABASE_URL", "postgresql://localhost/semantica")
 
-    print(f"📊 Connecting to PostgreSQL...")
+    print("📊 Connecting to PostgreSQL...")
     print(f"   {connection_string.split('@')[1] if '@' in connection_string else connection_string}")
 
     try:
@@ -52,7 +52,7 @@ def setup_db(connection_string: str | None = None):
 
         print(f"\n📄 Executing migration: {migration_path}")
 
-        with open(migration_path, "r") as f:
+        with open(migration_path) as f:
             sql = f.read()
 
         # Execute
@@ -71,7 +71,7 @@ def setup_db(connection_string: str | None = None):
         """)
 
         tables = cursor.fetchall()
-        print(f"\n📊 Tables created:")
+        print("\n📊 Tables created:")
         for table in tables:
             cursor.execute(f"SELECT COUNT(*) FROM {table[0]}")
             count = cursor.fetchone()[0]
@@ -102,8 +102,8 @@ def test_repository():
     print("=" * 80)
 
     try:
-        from src.agent.infrastructure.experience_repository import ExperienceRepository
         from src.agent.domain.experience import AgentExperience, ProblemType
+        from src.agent.infrastructure.experience_repository import ExperienceRepository
 
         # Repository 생성
         repo = ExperienceRepository()

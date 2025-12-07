@@ -11,8 +11,8 @@ import pytest
 from src.contexts.reasoning_engine.infrastructure.cross_lang import (
     BaseType,
     TypeCompatibilityChecker,
-    TypeInfo,
     TypeInference,
+    TypeInfo,
 )
 
 

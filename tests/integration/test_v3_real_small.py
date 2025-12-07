@@ -14,7 +14,6 @@ Phase 1 Scope:
 """
 
 import pytest
-
 from src.retriever.v3.models import FusedResultV3
 from src.retriever.v3.service import RetrieverV3Service
 

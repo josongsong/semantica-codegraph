@@ -8,9 +8,9 @@ import json
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from src.index.common.documents import SearchHit
 
 import server.mcp_server.main as mcp_main
-from src.index.common.documents import SearchHit
 
 
 @pytest.fixture

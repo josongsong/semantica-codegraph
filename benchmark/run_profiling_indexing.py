@@ -549,10 +549,10 @@ async def run_indexing_benchmark(
     # Validation: Check if files were found
     if len(files) == 0:
         print(f"\n  ⚠️  WARNING: No Python files found in {repo_path}")
-        print(f"     Please check if the path is correct.")
-        print(f"     Expected: actual repository path (e.g., benchmark/repo-test/small/typer)")
+        print("     Please check if the path is correct.")
+        print("     Expected: actual repository path (e.g., benchmark/repo-test/small/typer)")
         print(f"     Got: {repo_path}")
-        print(f"\n  Continuing anyway for profiling purposes...\n")
+        print("\n  Continuing anyway for profiling purposes...\n")
 
     profiler.end_phase("repo_scan")
 
@@ -599,7 +599,7 @@ async def run_indexing_benchmark(
                     phase_timings[key] += value
 
     # Add aggregated phase timings as child phases for waterfall display
-    print(f"\n세부 영역별 통합 시간:")
+    print("\n세부 영역별 통합 시간:")
     print(f"  Parse:         {phase_timings['parse']:.1f}ms")
     print(f"  IR Generation: {phase_timings['ir_generation']:.1f}ms")
     print(f"  Semantic IR:   {phase_timings['semantic_ir']:.1f}ms")
@@ -650,20 +650,20 @@ async def run_indexing_benchmark(
     edges_created = profiler.get_counter("edges_created") or 0
     symbols_created = profiler.get_counter("symbols_created") or 0
 
-    print(f"\n1. File Processing:")
+    print("\n1. File Processing:")
     print(f"   - Total files found:  {len(files)}")
     print(f"   - Successfully parsed: {files_parsed}")
     print(f"   - Failed:             {files_failed}")
     print(f"   - Success rate:       {files_parsed / max(len(files), 1) * 100:.1f}%")
 
-    print(f"\n2. In-Memory Build:")
+    print("\n2. In-Memory Build:")
     print(f"   - Nodes created:   {nodes_created}")
     print(f"   - Edges created:   {edges_created}")
     print(f"   - Chunks created:  {chunks_created}")
     print(f"   - Symbols created: {symbols_created}")
 
     if not skip_storage:
-        print(f"\n3. Storage Verification:")
+        print("\n3. Storage Verification:")
 
         # Check chunk store
         try:
@@ -672,7 +672,7 @@ async def run_indexing_benchmark(
             if chunk_store_success > 0:
                 print(f"   ✓ Chunk Store (PostgreSQL):  {chunk_store_success} files stored")
             else:
-                print(f"   ⚠️  Chunk Store: No successful stores")
+                print("   ⚠️  Chunk Store: No successful stores")
         except Exception as e:
             print(f"   ✗ Chunk Store failed: {e}")
 
@@ -683,7 +683,7 @@ async def run_indexing_benchmark(
             if graph_store_success > 0:
                 print(f"   ✓ Graph Store (Memgraph):    {graph_nodes_stored} nodes from {graph_store_success} files")
             else:
-                print(f"   ⚠️  Graph Store: No successful stores")
+                print("   ⚠️  Graph Store: No successful stores")
         except Exception as e:
             print(f"   ✗ Graph Store check failed: {e}")
 
@@ -698,12 +698,12 @@ async def run_indexing_benchmark(
                         f"   ✓ Vector Store (Qdrant):     {vectors_stored_actual} vectors from {vector_store_success} files"
                     )
                 else:
-                    print(f"   ⚠️  Vector Store: No successful stores")
+                    print("   ⚠️  Vector Store: No successful stores")
             except Exception as e:
                 print(f"   ✗ Vector Store check failed: {e}")
 
         # Storage phase statistics with error samples
-        print(f"\n4. Storage Success/Failure:")
+        print("\n4. Storage Success/Failure:")
         storage_phases = [
             ("Chunk Store", "chunk_store_success", "chunk_store_failed", "chunk_store"),
             ("Graph Store", "graph_store_success", "graph_store_failed", "graph_store"),
@@ -735,7 +735,7 @@ async def run_indexing_benchmark(
         symbols_stored_actual = profiler.get_counter("symbols_stored_actual") or 0
 
         if graph_nodes_stored > 0 or graph_edges_stored > 0:
-            print(f"\n   Detailed counts:")
+            print("\n   Detailed counts:")
             print(f"     - Graph nodes stored: {graph_nodes_stored}")
             print(f"     - Graph edges stored: {graph_edges_stored}")
         if not skip_embedding and vectors_stored_actual > 0:
@@ -744,7 +744,7 @@ async def run_indexing_benchmark(
             print(f"     - Symbols indexed:    {symbols_stored_actual}")
 
         if hasattr(profiler, "_store_timings"):
-            print(f"\n5. Storage Performance:")
+            print("\n5. Storage Performance:")
             for store_name, timings_list in profiler._store_timings.items():
                 if timings_list:
                     successes = sum(1 for t in timings_list if t > 0)
@@ -752,15 +752,15 @@ async def run_indexing_benchmark(
                     avg_time = sum(timings_list) / len(timings_list) if timings_list else 0
                     print(f"   {store_name:20s}: avg {avg_time:6.1f}ms per file")
 
-    print(f"\n6. Overall Status:")
+    print("\n6. Overall Status:")
     if len(files) == 0:
-        print(f"   ⚠️  No files to index (check repository path)")
+        print("   ⚠️  No files to index (check repository path)")
     elif files_parsed == 0:
-        print(f"   ✗ FAILED: No files successfully parsed")
+        print("   ✗ FAILED: No files successfully parsed")
     elif files_failed > 0:
         print(f"   ⚠️  PARTIAL: {files_failed} files failed")
     else:
-        print(f"   ✓ SUCCESS: All files indexed successfully")
+        print("   ✓ SUCCESS: All files indexed successfully")
 
     print("=" * 80)
     print()

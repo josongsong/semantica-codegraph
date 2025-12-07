@@ -8,7 +8,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from src.foundation.generators import PythonIRGenerator
 from src.foundation.graph import GraphBuilder
 from src.foundation.graph.models import GraphEdgeKind
@@ -18,7 +17,6 @@ from src.foundation.semantic_ir import DefaultSemanticIrBuilder
 # Try to import kuzu
 try:
     import kuzu
-
     from src.foundation.storage.kuzu import KuzuGraphStore, KuzuSchema
 
     KUZU_AVAILABLE = True

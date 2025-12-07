@@ -5,7 +5,6 @@ Tests the semantic IR builder that converts Structural IR → Semantic IR.
 """
 
 import pytest
-
 from src.foundation.generators import PythonIRGenerator
 from src.foundation.ir.models import NodeKind
 from src.foundation.parsing import SourceFile

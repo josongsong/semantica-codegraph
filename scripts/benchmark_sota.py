@@ -56,11 +56,11 @@ async def benchmark_typer():
     print(f"파일: {len(ir_docs)}개")
     print(f"속도: {len(ir_docs) / elapsed:.1f} files/sec")
 
-    print(f"\nIR:")
+    print("\nIR:")
     print(f"  Nodes: {total_nodes:,}개")
     print(f"  Edges: {total_edges:,}개")
 
-    print(f"\nPDG (고급 분석):")
+    print("\nPDG (고급 분석):")
     print(f"  Nodes: {total_pdg_nodes:,}개")
     print(f"  Edges: {total_pdg_edges:,}개")
 
@@ -78,12 +78,12 @@ async def benchmark_typer():
     print(f"\nSlicers: {slicers}/{len(ir_docs)}개 파일")
 
     # RetrievalIndex 체크
-    print(f"\nRetrievalIndex:")
+    print("\nRetrievalIndex:")
     print(f"  PDG attached: {retrieval_index.pdg_builder is not None}")
     print(f"  Slicer attached: {retrieval_index.slicer is not None}")
 
     # 파일별 상세
-    print(f"\n" + "-" * 80)
+    print("\n" + "-" * 80)
     print("파일별 PDG (상위 10개)")
     print("-" * 80)
 
@@ -104,7 +104,7 @@ async def benchmark_typer():
         print(f"{i:2}. {stat['file']:30} | PDG: {stat['pdg_nodes']:3} nodes, {stat['pdg_edges']:3} edges")
 
     # 에러 체크
-    print(f"\n" + "-" * 80)
+    print("\n" + "-" * 80)
     print("에러 체크")
     print("-" * 80)
 

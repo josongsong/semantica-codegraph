@@ -3,7 +3,6 @@ Tests for Intent Classifier V3.
 """
 
 import pytest
-
 from src.retriever.v3.intent_classifier import IntentClassifierV3
 from src.retriever.v3.models import IntentProbability
 

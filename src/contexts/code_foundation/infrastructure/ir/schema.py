@@ -11,8 +11,9 @@ Author: Semantica Team
 Version: 1.0.0
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass

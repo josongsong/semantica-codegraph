@@ -18,9 +18,9 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
+from src.index.service import IndexingService
 
 from src.container import Container
-from src.index.service import IndexingService
 
 logger = logging.getLogger(__name__)
 

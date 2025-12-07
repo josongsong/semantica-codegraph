@@ -2,8 +2,10 @@
 Tests for Import Resolution Engine
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from src.contexts.code_foundation.infrastructure.import_resolver import (
     ImportResolver,
     ImportStatement,

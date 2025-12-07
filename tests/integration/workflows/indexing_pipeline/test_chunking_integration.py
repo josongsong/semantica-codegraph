@@ -3,7 +3,6 @@ Integration tests for Chunking Layer
 """
 
 import pytest
-
 from src.chunking import (
     ChunkingConfig,
     ChunkingInput,

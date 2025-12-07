@@ -6,7 +6,6 @@ are properly converted to Chunks.
 """
 
 import pytest
-
 from src.foundation.chunk import ChunkBuilder
 from src.foundation.chunk.id_generator import ChunkIdGenerator
 from src.foundation.generators import PythonIRGenerator

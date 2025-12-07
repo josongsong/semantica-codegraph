@@ -11,9 +11,9 @@ sys.path.insert(0, ".")
 
 from src.agent.domain.experience import (
     AgentExperience,
-    StrategyResult,
     ExperienceQuery,
     ProblemType,
+    StrategyResult,
 )
 from src.agent.infrastructure.experience_repository import ExperienceRepository
 
@@ -39,7 +39,7 @@ def test_experience_models():
         graph_impact=0.15,
     )
 
-    print(f"\n✅ AgentExperience created")
+    print("\n✅ AgentExperience created")
     print(f"   Problem: {exp.problem_description[:50]}...")
     print(f"   Type: {exp.problem_type.value}")
     print(f"   Success: {exp.success}")
@@ -56,7 +56,7 @@ def test_experience_models():
         total_score=0.95,
     )
 
-    print(f"\n✅ StrategyResult created")
+    print("\n✅ StrategyResult created")
     print(f"   Rank: #{result.rank}")
     print(f"   Total: {result.total_score:.2f}")
 
@@ -77,7 +77,7 @@ def test_experience_query():
         limit=10,
     )
 
-    print(f"\n✅ ExperienceQuery created")
+    print("\n✅ ExperienceQuery created")
     print(f"   Type: {query.problem_type.value if query.problem_type else 'Any'}")
     print(f"   Success Only: {query.success_only}")
     print(f"   Min Score: {query.min_score}")
@@ -95,7 +95,7 @@ def test_repository_mock():
     # No DB session
     repo = ExperienceRepository(db_session=None)
 
-    print(f"\n✅ Repository created (No DB)")
+    print("\n✅ Repository created (No DB)")
 
     # Save (should skip)
     exp = AgentExperience(
@@ -105,7 +105,7 @@ def test_repository_mock():
     )
 
     saved = repo.save(exp)
-    print(f"   Save (No DB): Skipped")
+    print("   Save (No DB): Skipped")
 
     # Find (should return empty)
     query = ExperienceQuery(success_only=True)
@@ -148,18 +148,18 @@ def test_integration():
         tags=["npe", "defensive"],
     )
 
-    print(f"\n  4. Experience created:")
+    print("\n  4. Experience created:")
     print(f"     - Chunks: {experience.code_chunk_ids}")
     print(f"     - Success: {experience.success}")
     print(f"     - Score: {experience.tot_score}")
 
     # 4. 나중에 유사 문제 발생
-    print(f"\n📝 Future: Similar Problem Occurs")
-    print(f"  1. User asks: 'Fix NPE in login'")
-    print(f"  2. Retrieval v3 finds similar code (Qdrant)")
-    print(f"  3. Experience repo finds past solutions")
-    print(f"  4. Router sees: 'direct_fix worked 95% in past'")
-    print(f"  5. ToT generates direct_fix first")
+    print("\n📝 Future: Similar Problem Occurs")
+    print("  1. User asks: 'Fix NPE in login'")
+    print("  2. Retrieval v3 finds similar code (Qdrant)")
+    print("  3. Experience repo finds past solutions")
+    print("  4. Router sees: 'direct_fix worked 95% in past'")
+    print("  5. ToT generates direct_fix first")
 
     print("\n✅ PASS (Integration flow)")
 

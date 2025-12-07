@@ -5,7 +5,6 @@ Delta Indexing Tests
 """
 
 import pytest
-
 from src.chunking.domain import (
     ChunkDelta,
     ChunkDeltaOperation,

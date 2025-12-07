@@ -9,7 +9,6 @@ Real-world performance measurements:
 """
 
 import time
-from typing import Any
 
 
 # Mock for testing without actual Memgraph
@@ -153,7 +152,7 @@ def benchmark_taint_analysis():
     print(f"\nGraph: {size} nodes, {size * 3} edges")
     print(f"  Sources: {len(sources)}, Sinks: {len(sinks)}")
     print(f"  Paths found: {len(paths_cold)}")
-    print(f"\nPerformance:")
+    print("\nPerformance:")
     print(f"  Cold analysis: {cold_time:.3f}ms")
     print(f"  Cache hit: {cache_time:.3f}ms")
     print(f"  Speedup: {cold_time / cache_time:.0f}x")
@@ -199,7 +198,7 @@ def benchmark_vs_memgraph():
     print(f"  Speedup: {speedup:.1f}x ⚡")
 
     # Extrapolate
-    print(f"\nExtrapolation:")
+    print("\nExtrapolation:")
     for scale in [10, 100]:
         scaled_size = size * scale
         scaled_memgraph = memgraph_time * scale
@@ -254,7 +253,7 @@ def benchmark_cache_strategies():
     stats = engine.get_stats()
 
     print(f"\nQueries: {len(queries)}")
-    print(f"  Cache size: 10")
+    print("  Cache size: 10")
     print(f"  Cache hits: {stats['cache_hits']}")
     print(f"  Cache misses: {stats['cache_misses']}")
     print(f"  Hit rate: {stats['cache_hit_rate']}")
@@ -262,10 +261,10 @@ def benchmark_cache_strategies():
     print(f"  Avg per query: {total_time / len(queries):.3f}ms")
 
     # LRU benefit explanation
-    print(f"\nLRU Benefit:")
-    print(f"  LRU keeps recently used queries (better for real-world)")
-    print(f"  FIFO would evict based on insertion order (worse)")
-    print(f"  Hit rate improvement: ~10-20%p in practice")
+    print("\nLRU Benefit:")
+    print("  LRU keeps recently used queries (better for real-world)")
+    print("  FIFO would evict based on insertion order (worse)")
+    print("  Hit rate improvement: ~10-20%p in practice")
 
 
 def benchmark_summary():

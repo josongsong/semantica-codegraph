@@ -16,7 +16,6 @@ import asyncio
 import hashlib
 import json
 import time
-import zlib
 from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass, field

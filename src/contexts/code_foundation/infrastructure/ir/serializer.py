@@ -14,13 +14,12 @@ Version: 1.0.0
 
 import json
 from typing import Any
-from dataclasses import asdict, is_dataclass
 
 from src.contexts.code_foundation.infrastructure.ir.models.core import (
-    NodeKind,
+    Edge,
     EdgeKind,
     Node,
-    Edge,
+    NodeKind,
     Span,
 )
 from src.contexts.code_foundation.infrastructure.ir.models.document import IRDocument

@@ -30,6 +30,7 @@ from src.foundation.ir.external_analyzers import (
     SemanticSnapshotStore,
     Span,
 )
+
 from src.infra.storage.postgres import PostgresStore
 
 # ============================================================

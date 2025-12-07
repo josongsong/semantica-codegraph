@@ -20,9 +20,10 @@ import asyncio
 import sys
 from pathlib import Path
 
-from src.container import Container
 from src.foundation.chunk.git_loader import GitFileLoader
 from src.foundation.chunk.models import Chunk
+
+from src.container import Container
 
 
 async def index_repository(

@@ -11,7 +11,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from src.foundation.ir.models import Span
 from src.foundation.symbol_graph.models import (
     Relation,

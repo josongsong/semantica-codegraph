@@ -3,7 +3,6 @@ Integration Tests for Query Decomposition & Multi-hop Retrieval (Phase 3.1)
 """
 
 import pytest
-
 from src.retriever.query.decomposer import QueryDecomposer
 from src.retriever.query.models import DecomposedQuery, QueryType
 

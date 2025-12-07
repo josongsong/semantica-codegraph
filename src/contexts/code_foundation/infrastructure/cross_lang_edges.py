@@ -6,10 +6,10 @@ Phase 1: Cross-Language Symbol Resolution
 """
 
 from pathlib import Path
-from typing import Optional
+
 from src.contexts.code_foundation.domain.models import (
-    IRDocument,
     GraphEdge,
+    IRDocument,
     Language,
 )
 from src.contexts.code_foundation.infrastructure.language_bridge import LanguageBridge
@@ -137,7 +137,7 @@ class CrossLanguageEdgeGenerator:
 
         return edges
 
-    def _detect_import_language(self, import_stmt: str) -> Optional[str]:
+    def _detect_import_language(self, import_stmt: str) -> str | None:
         """
         Import statement에서 target language 감지
 
@@ -164,7 +164,7 @@ class CrossLanguageEdgeGenerator:
 
         return None
 
-    def _detect_ffi_language(self, import_stmt: str) -> Optional[str]:
+    def _detect_ffi_language(self, import_stmt: str) -> str | None:
         """
         FFI library에서 target language 감지
 

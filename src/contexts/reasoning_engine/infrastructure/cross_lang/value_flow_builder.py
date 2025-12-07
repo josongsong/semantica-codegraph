@@ -11,13 +11,12 @@ from typing import Any
 
 from src.contexts.code_foundation.infrastructure.graph.models import (
     GraphDocument,
-    GraphNode,
 )
 from src.contexts.code_foundation.infrastructure.ir.models import IRDocument
 
 from .boundary_analyzer import BoundaryAnalyzer
 from .boundary_matcher import BoundaryCodeMatcher, MatchCandidate
-from .type_system import TypeInference, TypeInfo
+from .type_system import TypeInference
 from .value_flow_graph import (
     BoundarySpec,
     Confidence,

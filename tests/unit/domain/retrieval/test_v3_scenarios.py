@@ -5,7 +5,6 @@ Tests real-world retrieval scenarios from _command_doc/A-00.첫문서/98.리트�
 """
 
 import pytest
-
 from src.index.common.documents import SearchHit
 from src.retriever.v3 import RetrieverV3Config, RetrieverV3Service
 

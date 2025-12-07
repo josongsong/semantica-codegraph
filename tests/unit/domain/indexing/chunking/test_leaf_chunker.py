@@ -3,7 +3,6 @@ Tests for LeafChunker
 """
 
 import pytest
-
 from src.chunking import ChunkingConfig, LeafChunker
 from src.core.ports.parser_port import CodeNode
 

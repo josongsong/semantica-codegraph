@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
+from src.index.symbol.adapter_kuzu import KuzuSymbolIndex
 
 from src.container import Container
-from src.index.symbol.adapter_kuzu import KuzuSymbolIndex
 
 router = APIRouter()
 

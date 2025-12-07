@@ -18,18 +18,19 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src/contexts/code_foundation/infrastructure/analyzers/taint_rules"))
 
 from base import (
-    TaintRule,
-    SourceRule,
-    SinkRule,
+    VULN_CWE_MATRIX,
+    MatchKind,
     SanitizerRule,
     Severity,
-    VulnerabilityType,
+    SinkRule,
+    SourceRule,
     TaintKind,
-    MatchKind,
-    VULN_CWE_MATRIX,
+    TaintRule,
+    VulnerabilityType,
 )
-from config import TaintConfig, RuleSetConfig, load_profile
 from metrics import MetricsCollector, RuleHit
+
+from config import RuleSetConfig, TaintConfig, load_profile
 
 
 def test_rule_id_and_version():
@@ -64,7 +65,7 @@ def test_rule_id_and_version():
                 severity=Severity.LOW,
                 vuln_type=VulnerabilityType.XSS,
             )
-            print(f"⚠️  Bad ID format accepted (should warn)")
+            print("⚠️  Bad ID format accepted (should warn)")
         except Exception as e:
             print(f"✅ Bad ID rejected: {e}")
 
@@ -155,10 +156,10 @@ def test_enabled_flag():
         matched2 = rule.matches(code2)
 
         if matched2:
-            print(f"❌ Disabled rule still matched!")
+            print("❌ Disabled rule still matched!")
             return False
         else:
-            print(f"✅ Disabled rule correctly ignored")
+            print("✅ Disabled rule correctly ignored")
             print(f"   Hit count unchanged: {rule.hit_count}")
 
         return True
@@ -194,16 +195,16 @@ def test_config_system():
             },
         )
 
-        print(f"✅ Config created")
+        print("✅ Config created")
         print(f"   Enabled: {config.enabled}")
         print(f"   RuleSets: {len(config.rule_sets)}")
 
         # Test checks
         assert config.is_rule_set_enabled("python_core") == True
-        print(f"✅ python_core enabled: True")
+        print("✅ python_core enabled: True")
 
         assert config.is_rule_set_enabled("flask") == False
-        print(f"✅ flask enabled: False")
+        print("✅ flask enabled: False")
 
         # Test to_dict
         data = config.to_dict()
@@ -235,10 +236,10 @@ def test_profiles():
         # Test invalid profile
         try:
             bad = load_profile("invalid")
-            print(f"❌ Invalid profile should raise error")
+            print("❌ Invalid profile should raise error")
             return False
         except ValueError as e:
-            print(f"✅ Invalid profile correctly rejected")
+            print("✅ Invalid profile correctly rejected")
 
         return True
 
@@ -264,7 +265,7 @@ def test_metrics_collector():
         collector.record_hit("PY_CORE_SINK_001", "app.py", 50, "myapp")
         collector.record_hit("PY_CORE_SINK_002", "util.py", 10, "myapp")
 
-        print(f"✅ Recorded 3 hits")
+        print("✅ Recorded 3 hits")
 
         # Get metrics
         metrics = collector.get_metrics("PY_CORE_SINK_001")
@@ -340,10 +341,10 @@ def test_match_kind():
         matched = rule.matches_ir_node(node1)
 
         if not matched:
-            print(f"❌ Should match by call_name")
+            print("❌ Should match by call_name")
             return False
 
-        print(f"✅ IR-based match (CALL_NAME) works")
+        print("✅ IR-based match (CALL_NAME) works")
         print(f"   Hit count: {rule.hit_count}")
 
         # Should not match
@@ -351,13 +352,13 @@ def test_match_kind():
         matched2 = rule.matches_ir_node(node2)
 
         if matched2:
-            print(f"❌ Should not match 'print'")
+            print("❌ Should not match 'print'")
             return False
 
-        print(f"✅ IR-based non-match works")
+        print("✅ IR-based non-match works")
 
         # Test MatchKind enum
-        print(f"\n[Available Match Kinds]")
+        print("\n[Available Match Kinds]")
         for kind in MatchKind:
             print(f"  - {kind.value}")
 
@@ -408,7 +409,7 @@ def run_all_tests():
     passed = sum(1 for _, r in results if r)
     total = len(results)
 
-    print(f"\n[Results]")
+    print("\n[Results]")
     for name, result in results:
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"  {status:10} {name}")

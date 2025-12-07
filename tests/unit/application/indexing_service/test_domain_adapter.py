@@ -12,9 +12,9 @@ Tests PostgreSQL full-text search for documentation:
 import os
 
 import pytest
-
 from src.index.common.documents import IndexDocument, SearchHit
 from src.index.domain_meta.adapter_meta import DomainMetaIndex
+
 from src.infra.storage.postgres import PostgresStore
 
 # ============================================================

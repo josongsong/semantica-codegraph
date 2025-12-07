@@ -11,11 +11,11 @@ import sys
 sys.path.insert(0, ".")
 
 from src.agent.domain.reasoning import (
-    ToTScoringEngine,
     CodeStrategy,
     ExecutionResult,
-    StrategyType,
     ScoringWeights,
+    StrategyType,
+    ToTScoringEngine,
 )
 from src.container import Container
 
@@ -28,7 +28,7 @@ async def test_tot_scorer_direct():
 
     # Scorer 생성
     scorer = ToTScoringEngine()
-    print(f"\n✅ ToT Scorer initialized")
+    print("\n✅ ToT Scorer initialized")
     print(f"   Weights: {scorer.weights}")
 
     # Test Strategy
@@ -63,7 +63,7 @@ async def test_tot_scorer_direct():
     # Score
     score = scorer.score_strategy(strategy, result_good)
 
-    print(f"\n[Test 1] High Quality Strategy")
+    print("\n[Test 1] High Quality Strategy")
     print(f"  Correctness: {score.correctness_score:.2f}")
     print(f"  Quality: {score.quality_score:.2f}")
     print(f"  Security: {score.security_score:.2f}")
@@ -100,7 +100,7 @@ async def test_tot_scorer_direct():
 
     score2 = scorer.score_strategy(strategy2, result_bad)
 
-    print(f"\n[Test 2] Low Quality Strategy")
+    print("\n[Test 2] Low Quality Strategy")
     print(f"  Total: {score2.total_score:.2f}")
     print(f"  Security: {score2.security_score:.2f} (High severity)")
     print(f"  Recommendation: {score2.recommendation}")
@@ -120,7 +120,7 @@ async def test_tot_full_pipeline():
     container = Container()
     use_case = container.v8_execute_tot
 
-    print(f"✅ ExecuteToTUseCase from Container")
+    print("✅ ExecuteToTUseCase from Container")
 
     # Execute
     result = await use_case.execute(
@@ -133,7 +133,7 @@ async def test_tot_full_pipeline():
         top_k=2,
     )
 
-    print(f"\n📊 ToT Results:")
+    print("\n📊 ToT Results:")
     print(f"  Generated: {result.total_generated}")
     print(f"  Executed: {result.total_executed}")
     print(f"  Passed: {result.total_passed}")

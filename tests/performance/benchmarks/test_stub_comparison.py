@@ -122,7 +122,7 @@ class RealVsStubVerifier:
                     self.real_count += 1
                 except Exception as e:
                     print(f"  ❌ STUB: Redis 연결 실패 → {e}")
-                    print(f"     → 메모리 모드 fallback (개인용 OK)")
+                    print("     → 메모리 모드 fallback (개인용 OK)")
                     self.results["cache"] = "MEMORY"
                     self.stub_count += 1
             else:
@@ -174,7 +174,7 @@ class RealVsStubVerifier:
                     else:
                         print(f"     ⚠️  Lock 이상: r1={r1.success}, r2={r2.success}")
                         if r2.success:
-                            print(f"        → Agent 2도 락 획득 (충돌 감지 실패!)")
+                            print("        → Agent 2도 락 획득 (충돌 감지 실패!)")
 
                     await mgr1.release_lock("test-1", test_file)
 
@@ -182,7 +182,7 @@ class RealVsStubVerifier:
                     self.real_count += 1
                 except Exception as e:
                     print(f"  ❌ STUB: Redis 연결 실패 → {e}")
-                    print(f"     → 메모리 모드 fallback (개인용 OK)")
+                    print("     → 메모리 모드 fallback (개인용 OK)")
                     self.results["lock"] = "MEMORY"
                     self.stub_count += 1
             else:
@@ -230,7 +230,7 @@ class RealVsStubVerifier:
             result = await postgres.execute("SELECT version()")
             version = result if isinstance(result, str) else str(result)[:100]
 
-            print(f"  ✅ REAL: PostgreSQL 연결 성공")
+            print("  ✅ REAL: PostgreSQL 연결 성공")
             print(f"     결과: {version[:50]}...")
 
             self.results["postgres"] = "REAL"
@@ -254,14 +254,14 @@ class RealVsStubVerifier:
             if hasattr(qdrant, "healthcheck"):
                 health = await qdrant.healthcheck()
 
-                print(f"  ✅ REAL: Qdrant 연결 성공")
+                print("  ✅ REAL: Qdrant 연결 성공")
                 print(f"     Health: {health}")
 
                 self.results["qdrant"] = "REAL"
                 self.real_count += 1
             else:
                 print(f"  ⚠️  클래스: {type(qdrant).__name__}")
-                print(f"  ⚠️  healthcheck 메서드 없음")
+                print("  ⚠️  healthcheck 메서드 없음")
                 self.results["qdrant"] = "UNKNOWN"
                 self.stub_count += 1
 
@@ -283,18 +283,18 @@ class RealVsStubVerifier:
 
             # CachedGraphStore는 _store 속성을 통해 실제 Memgraph에 접근
             if hasattr(graph, "_store") and graph._store:
-                print(f"  ✅ REAL: Memgraph 통합 (CachedGraphStore)")
+                print("  ✅ REAL: Memgraph 통합 (CachedGraphStore)")
                 print(f"     - Base Store: {type(graph.store).__name__}")
-                print(f"     - 3-tier 캐싱 활성화")
+                print("     - 3-tier 캐싱 활성화")
                 self.results["memgraph"] = "REAL"
                 self.real_count += 1
             elif hasattr(graph, "store"):
-                print(f"  ✅ REAL: Memgraph 통합")
+                print("  ✅ REAL: Memgraph 통합")
                 print(f"     - Store: {type(graph.store).__name__}")
                 self.results["memgraph"] = "REAL"
                 self.real_count += 1
             else:
-                print(f"  ⚠️  구조 확인 불가")
+                print("  ⚠️  구조 확인 불가")
                 self.results["memgraph"] = "UNKNOWN"
                 self.stub_count += 1
 
@@ -329,7 +329,7 @@ class RealVsStubVerifier:
                 "incremental_workflow": hasattr(orch, "incremental_workflow"),
             }
 
-            print(f"\n  구성 요소:")
+            print("\n  구성 요소:")
             for comp, exists in components.items():
                 symbol = "✅" if exists else "❌"
                 print(f"     {symbol} {comp}")
@@ -352,11 +352,11 @@ class RealVsStubVerifier:
 
             all_exist = all(components.values())
             if all_exist:
-                print(f"\n  ✅ INTEGRATED: 모든 구성 요소 존재")
+                print("\n  ✅ INTEGRATED: 모든 구성 요소 존재")
                 self.results["orchestrator"] = "INTEGRATED"
                 self.real_count += 1
             else:
-                print(f"\n  ⚠️  PARTIAL: 일부 구성 요소 누락")
+                print("\n  ⚠️  PARTIAL: 일부 구성 요소 누락")
                 self.results["orchestrator"] = "PARTIAL"
                 self.stub_count += 1
 

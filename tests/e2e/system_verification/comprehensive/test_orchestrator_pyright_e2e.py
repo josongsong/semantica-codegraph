@@ -27,15 +27,15 @@ from pathlib import Path
 
 import pytest
 import pytest_asyncio
-
-from src.config import settings
-from src.container import Container
 from src.foundation.chunk import ChunkBuilder, ChunkIdGenerator
 from src.foundation.graph import GraphBuilder
 from src.foundation.ir.external_analyzers import SemanticSnapshotStore
 from src.foundation.parsing import ASTBuilder
 from src.foundation.semantic_ir import DefaultSemanticIrBuilder
 from src.indexing.orchestrator import IndexingOrchestrator
+
+from src.config import settings
+from src.container import Container
 from src.infra.storage.postgres import PostgresStore
 
 # Skip if pyright or PostgreSQL not available

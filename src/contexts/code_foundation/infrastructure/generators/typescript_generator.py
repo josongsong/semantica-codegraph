@@ -74,9 +74,10 @@ class TypeScriptIRGenerator(IRGenerator):
         Returns:
             UnifiedSymbol with full SCIP descriptor
         """
+        from pathlib import Path
+
         from src.contexts.code_foundation.domain.models import UnifiedSymbol
         from src.contexts.code_foundation.infrastructure.version_detector import VersionDetector
-        from pathlib import Path
 
         # Extract FQN
         fqn = node.attrs.get("fqn", node.name)

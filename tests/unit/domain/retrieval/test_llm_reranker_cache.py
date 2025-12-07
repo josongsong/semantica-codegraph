@@ -15,7 +15,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from src.retriever.hybrid.llm_reranker import LLMScore
 from src.retriever.hybrid.llm_reranker_cache import (
     CachedLLMReranker,

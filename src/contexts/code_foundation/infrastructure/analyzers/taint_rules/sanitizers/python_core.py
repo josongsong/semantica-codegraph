@@ -6,7 +6,6 @@ Context-aware sanitization effectiveness
 
 from ..base import SanitizerRule, VulnerabilityType
 
-
 PYTHON_CORE_SANITIZERS = [
     # ============================================================
     # HTML/XSS Protection

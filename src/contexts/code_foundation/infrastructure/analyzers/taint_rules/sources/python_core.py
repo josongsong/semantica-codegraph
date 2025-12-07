@@ -4,8 +4,7 @@ Python 핵심 Taint Sources
 Framework 무관한 기본 Python sources
 """
 
-from ..base import SourceRule, Severity, VulnerabilityType, TaintKind
-
+from ..base import Severity, SourceRule, TaintKind, VulnerabilityType
 
 PYTHON_CORE_SOURCES = [
     # ============================================================

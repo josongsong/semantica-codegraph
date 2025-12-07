@@ -14,19 +14,19 @@ import time
 
 import pytest
 
+from src.agent.adapters.guardrail.pydantic_validator import PydanticValidatorAdapter
 from src.agent.adapters.llm.cached_llm_adapter import CachedLLMAdapter
 from src.agent.adapters.llm.litellm_adapter import LiteLLMProviderAdapter
 from src.agent.adapters.llm.optimized_llm_adapter import OptimizedLLMAdapter
 from src.agent.adapters.sandbox.stub_sandbox import LocalSandboxAdapter
 from src.agent.adapters.vcs.gitpython_adapter import GitPythonVCSAdapter
-from src.agent.adapters.guardrail.pydantic_validator import PydanticValidatorAdapter
 from src.agent.adapters.workflow.langgraph_adapter import LangGraphWorkflowAdapter
+from src.agent.domain.models import AgentTask
 from src.agent.orchestrator.parallel_orchestrator import (
     ParallelAgentOrchestrator,
     ParallelAgentRequest,
 )
 from src.agent.orchestrator.v7_orchestrator import AgentOrchestrator, AgentRequest
-from src.agent.domain.models import AgentTask
 
 
 class StubLLMProvider:
@@ -125,7 +125,7 @@ async def test_parallel_vs_sequential_performance(parallel_orchestrator, sequent
         sequential_time = 999999
 
     # 3. 결과 비교
-    print(f"\n=== Performance Benchmark ===")
+    print("\n=== Performance Benchmark ===")
     print(f"Parallel:   {parallel_time:.2f} ms")
     print(f"Sequential: {sequential_time:.2f} ms")
     print(f"Speedup:    {sequential_time / parallel_time:.2f}x")
@@ -158,7 +158,7 @@ async def test_llm_cache_effectiveness(cached_llm):
     time2 = (time.perf_counter() - start2) * 1000
 
     # 3. 결과 확인
-    print(f"\n=== Cache Effectiveness ===")
+    print("\n=== Cache Effectiveness ===")
     print(f"First call (MISS):  {time1:.2f} ms")
     print(f"Second call (HIT):  {time2:.2f} ms")
     print(f"Speedup:            {time1 / time2:.2f}x")
@@ -199,7 +199,7 @@ async def test_batch_llm_calls(cached_llm):
     sequential_time = (time.perf_counter() - sequential_start) * 1000
 
     # 3. 결과 비교
-    print(f"\n=== Batch Processing ===")
+    print("\n=== Batch Processing ===")
     print(f"Parallel (5 calls):   {parallel_time:.2f} ms")
     print(f"Sequential (5 calls): {sequential_time:.2f} ms")
     print(f"Speedup:              {sequential_time / parallel_time:.2f}x")

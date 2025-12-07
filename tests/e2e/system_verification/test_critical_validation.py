@@ -9,8 +9,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from src.contexts.code_foundation.infrastructure.ir.sota_ir_builder import SOTAIRBuilder
 from src.contexts.code_foundation.infrastructure.ir.retrieval_index import RetrievalOptimizedIndex
+from src.contexts.code_foundation.infrastructure.ir.sota_ir_builder import SOTAIRBuilder
 
 
 def validate_pipeline():
@@ -65,7 +65,7 @@ def process_data(x):
         builder = SOTAIRBuilder(project_root=Path.cwd())
         result = builder.build_full([test_file])
 
-        print(f"✅ IR 빌드 완료")
+        print("✅ IR 빌드 완료")
         print(f"   Files: {len(result.structural_irs)}")
 
         # 2. Check IRDocument
@@ -77,7 +77,7 @@ def process_data(x):
         print(f"   Edges: {len(ir_doc.edges)}")
 
         # ⭐ Critical: PDG 데이터 확인
-        print(f"\n   [PDG 데이터]")
+        print("\n   [PDG 데이터]")
         print(f"   - PDG Nodes: {len(ir_doc.pdg_nodes)}")
         print(f"   - PDG Edges: {len(ir_doc.pdg_edges)}")
 
@@ -92,7 +92,7 @@ def process_data(x):
             print(f"     Used: {node.used_vars}")
 
         # ⭐ Critical: Taint 데이터 확인
-        print(f"\n   [Taint 데이터]")
+        print("\n   [Taint 데이터]")
         print(f"   - Taint Findings: {len(ir_doc.taint_findings)}")
 
         if len(ir_doc.taint_findings) > 0:
@@ -105,10 +105,10 @@ def process_data(x):
             print("   ⚠️  WARNING: Taint findings가 0개 (Source/Sink 매칭 실패?)")
 
         # ⭐ Critical: Slicer 확인
-        print(f"\n   [Slicer]")
+        print("\n   [Slicer]")
         slicer = ir_doc.get_slicer()
         if slicer:
-            print(f"   ✅ Slicer 생성됨")
+            print("   ✅ Slicer 생성됨")
             # Test backward slice
             function_nodes = [n for n in ir_doc.nodes if n.kind.value == "Function"]
             if function_nodes:
@@ -119,7 +119,7 @@ def process_data(x):
                     if result:
                         print(f"   ✅ Backward slice 작동: {len(result.slice_nodes)} nodes")
                     else:
-                        print(f"   ⚠️  Backward slice 결과 없음")
+                        print("   ⚠️  Backward slice 결과 없음")
                 except Exception as e:
                     print(f"   ❌ Backward slice 실패: {e}")
         else:

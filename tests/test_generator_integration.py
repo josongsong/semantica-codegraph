@@ -4,12 +4,14 @@ Generator Integration Tests
 P0-3: Generator Integration with UnifiedSymbol
 """
 
-import pytest
 from pathlib import Path
-from src.contexts.code_foundation.infrastructure.parsing.source_file import SourceFile
+
+import pytest
+
 from src.contexts.code_foundation.infrastructure.generators.python_generator import (
     PythonIRGenerator,
 )
+from src.contexts.code_foundation.infrastructure.parsing.source_file import SourceFile
 
 
 class TestPythonGeneratorIntegration:

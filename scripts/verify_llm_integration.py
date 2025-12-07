@@ -11,8 +11,8 @@ import sys
 sys.path.insert(0, ".")
 
 from src.agent.adapters.llm.strategy_generator import (
-    StrategyGeneratorLLM,
     StrategyGeneratorFactory,
+    StrategyGeneratorLLM,
 )
 from src.agent.domain.reasoning import StrategyType
 from src.container import Container
@@ -27,7 +27,7 @@ async def test_strategy_generator():
     # Generator 생성
     generator = StrategyGeneratorFactory.create(use_llm=True)
 
-    print(f"\n✅ Generator created")
+    print("\n✅ Generator created")
     print(f"   Model: {generator.model}")
     print(f"   Has API Key: {bool(generator.api_key)}")
     print(f"   Has Client: {bool(generator.client)}")
@@ -46,7 +46,7 @@ def login(user):
     print(f"   Code: {context['code'][:50]}...")
 
     # Direct Fix Strategy
-    print(f"\n🤖 Generating strategy (direct_fix)...")
+    print("\n🤖 Generating strategy (direct_fix)...")
 
     strategy = await generator.generate_strategy(
         problem=problem,
@@ -55,7 +55,7 @@ def login(user):
         index=0,
     )
 
-    print(f"\n✅ Strategy generated:")
+    print("\n✅ Strategy generated:")
     print(f"   ID: {strategy.strategy_id}")
     print(f"   Type: {strategy.strategy_type.value}")
     print(f"   Title: {strategy.title}")
@@ -77,7 +77,7 @@ async def test_tot_with_llm():
     container = Container()
     use_case = container.v8_execute_tot
 
-    print(f"\n✅ ExecuteToT UseCase from Container")
+    print("\n✅ ExecuteToT UseCase from Container")
 
     # LLM으로 전략 생성
     result = await use_case.execute(
@@ -90,7 +90,7 @@ async def test_tot_with_llm():
         top_k=1,
     )
 
-    print(f"\n📊 ToT Results (with LLM):")
+    print("\n📊 ToT Results (with LLM):")
     print(f"  Generated: {result.total_generated}")
     print(f"  Executed: {result.total_executed}")
     print(f"  Best Score: {result.best_score:.2f}")
@@ -101,7 +101,7 @@ async def test_tot_with_llm():
         strategy = next((s for s in result.all_strategies if s.strategy_id == result.best_strategy_id), None)
 
         if strategy:
-            print(f"\n🏆 Best Strategy (LLM-generated):")
+            print("\n🏆 Best Strategy (LLM-generated):")
             print(f"  Title: {strategy.title}")
             print(f"  Type: {strategy.strategy_type.value}")
             print(f"  Confidence: {strategy.llm_confidence:.2f}")
@@ -119,7 +119,7 @@ async def test_fallback_mode():
     # No API Key
     generator = StrategyGeneratorLLM(api_key=None)
 
-    print(f"\n✅ Generator (Fallback mode)")
+    print("\n✅ Generator (Fallback mode)")
     print(f"   Has Client: {bool(generator.client)}")
 
     strategy = await generator.generate_strategy(
@@ -129,7 +129,7 @@ async def test_fallback_mode():
         index=0,
     )
 
-    print(f"\n✅ Fallback strategy:")
+    print("\n✅ Fallback strategy:")
     print(f"   ID: {strategy.strategy_id}")
     print(f"   Type: {strategy.strategy_type.value}")
 

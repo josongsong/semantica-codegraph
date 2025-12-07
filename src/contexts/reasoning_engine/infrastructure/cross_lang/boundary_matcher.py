@@ -19,7 +19,6 @@ import logging
 import re
 from dataclasses import dataclass
 from difflib import SequenceMatcher
-from typing import Any
 
 from src.contexts.code_foundation.infrastructure.ir.models import IRDocument
 

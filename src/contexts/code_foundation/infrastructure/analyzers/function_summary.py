@@ -8,10 +8,10 @@ Performance improvement:
 Key insight: Most functions are called multiple times but analyzed once.
 """
 
+import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Set, Dict, Optional, Callable
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -59,16 +59,16 @@ class FunctionTaintSummary:
     Example: "app/utils.py:42:escape_html:(str)->str"
     """
 
-    tainted_params: Set[int] = field(default_factory=set)
+    tainted_params: set[int] = field(default_factory=set)
     """Parameter indices that propagate taint (0-based)"""
 
     tainted_return: bool = False
     """Whether return value can be tainted"""
 
-    tainted_globals: Set[str] = field(default_factory=set)
+    tainted_globals: set[str] = field(default_factory=set)
     """Global variables that can be tainted"""
 
-    tainted_attributes: Set[str] = field(default_factory=set)
+    tainted_attributes: set[str] = field(default_factory=set)
     """Object attributes that can be tainted (for methods)"""
 
     sanitizes: bool = False
@@ -80,7 +80,7 @@ class FunctionTaintSummary:
     confidence: float = 1.0
     """Confidence score (0.0-1.0)"""
 
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
     """Additional metadata (e.g., analysis time, complexity)"""
 
     def __repr__(self):
@@ -92,7 +92,7 @@ class FunctionTaintSummary:
             f"sanitizes={self.sanitizes})"
         )
 
-    def is_tainted_call(self, tainted_args: Set[int]) -> bool:
+    def is_tainted_call(self, tainted_args: set[int]) -> bool:
         """
         Check if call with given tainted arguments produces tainted output
 
@@ -149,7 +149,7 @@ class FunctionSummaryCache:
         Args:
             max_size: Maximum number of summaries to cache
         """
-        self._summaries: Dict[str, FunctionTaintSummary] = {}
+        self._summaries: dict[str, FunctionTaintSummary] = {}
         self._access_order: list[str] = []  # LRU tracking (most recent at end)
         self._max_size = max_size
 
@@ -160,7 +160,7 @@ class FunctionSummaryCache:
 
         logger.info(f"FunctionSummaryCache initialized (max_size={max_size})")
 
-    def get(self, function_id: str) -> Optional[FunctionTaintSummary]:
+    def get(self, function_id: str) -> FunctionTaintSummary | None:
         """
         Get cached summary
 
@@ -284,7 +284,7 @@ class TaintAnalyzerWithCache:
     def __init__(
         self,
         base_analyzer,
-        summary_cache: Optional[FunctionSummaryCache] = None,
+        summary_cache: FunctionSummaryCache | None = None,
     ):
         """
         Initialize cached analyzer
@@ -300,7 +300,7 @@ class TaintAnalyzerWithCache:
         self,
         call_node,
         ir_doc,
-        tainted_args: Set[int],
+        tainted_args: set[int],
     ) -> bool:
         """
         Analyze function call with caching

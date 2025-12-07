@@ -19,13 +19,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.ports import (
-        IGuardrailValidator,
-        ILLMProvider,
-        ISandboxExecutor,
-        IVCSApplier,
-        IWorkflowEngine,
-    )
+    pass
 
 
 class PerformanceAgentContainer:

@@ -4,12 +4,11 @@ Security Report Generator
 Generates human-readable security scan reports.
 """
 
-from typing import List, Optional
-from pathlib import Path
 import json
 from datetime import datetime
+from pathlib import Path
 
-from ..domain.models.vulnerability import Vulnerability, ScanResult, Severity
+from ..domain.models.vulnerability import ScanResult, Severity, Vulnerability
 
 
 class SecurityReportGenerator:
@@ -168,7 +167,7 @@ class SecurityReportGenerator:
 
         output_path.write_text(content)
 
-    def _format_vulnerability(self, index: int, vuln: Vulnerability) -> List[str]:
+    def _format_vulnerability(self, index: int, vuln: Vulnerability) -> list[str]:
         """Format single vulnerability for text report"""
         lines = []
 
@@ -197,7 +196,7 @@ class SecurityReportGenerator:
         self,
         index: int,
         vuln: Vulnerability,
-    ) -> List[str]:
+    ) -> list[str]:
         """Format single vulnerability for markdown report"""
         lines = []
 

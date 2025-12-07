@@ -20,9 +20,10 @@ Reference:
 import logging
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -480,7 +481,7 @@ class SemanticPatchEngine:
         for file_path in files:
             try:
                 # Read file
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     source_code = f.read()
             except Exception as e:
                 results["errors"].append(f"Failed to read {file_path}: {e}")

@@ -37,7 +37,7 @@ async def main():
     ]
 
     print(f"\n{'=' * 80}")
-    print(f" 인덱싱 벤치마크")
+    print(" 인덱싱 벤치마크")
     print(f"{'=' * 80}")
 
     results = []
@@ -91,7 +91,7 @@ async def main():
     # 요약
     if results:
         print(f"\n{'=' * 80}")
-        print(f" 요약")
+        print(" 요약")
         print(f"{'=' * 80}")
         print(f"\n{'레포지토리':20} {'파일':>8} {'시간(s)':>10} {'속도(f/s)':>12}")
         print(f"{'-' * 80}")
@@ -99,7 +99,7 @@ async def main():
         for r in results:
             print(f"{r['name']:20} {r['files']:8} {r['time']:10.1f} {r['fps']:12.1f}")
 
-        print(f"\n✅ 벤치마크 완료!")
+        print("\n✅ 벤치마크 완료!")
 
 
 if __name__ == "__main__":

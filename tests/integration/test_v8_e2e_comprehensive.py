@@ -4,10 +4,11 @@ v8.1 Comprehensive E2E Tests (SOTA급)
 전체 파이프라인 통합 테스트
 """
 
-import pytest
 import asyncio
 import sys
 from pathlib import Path
+
+import pytest
 
 # Project root
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -19,8 +20,8 @@ class TestV8E2EComprehensive:
     @pytest.mark.asyncio
     async def test_router_system1_fast_path(self):
         """Router: System 1 (Fast) 경로 테스트"""
-        from src.container import Container
         from src.agent.domain.reasoning import QueryFeatures
+        from src.container import Container
 
         container = Container()
         router = container.v8_reasoning_router
@@ -44,8 +45,8 @@ class TestV8E2EComprehensive:
     @pytest.mark.asyncio
     async def test_router_system2_complex_path(self):
         """Router: System 2 (Deep) 경로 테스트"""
-        from src.container import Container
         from src.agent.domain.reasoning import QueryFeatures
+        from src.container import Container
 
         container = Container()
         router = container.v8_reasoning_router
@@ -161,8 +162,8 @@ def test_add():
     @pytest.mark.asyncio
     async def test_experience_store_save_and_query(self):
         """Experience Store: 저장 및 검색 테스트"""
+        from src.agent.domain.experience import AgentExperience, ExperienceQuery, ProblemType
         from src.container import Container
-        from src.agent.domain.experience import AgentExperience, ProblemType, ExperienceQuery
 
         container = Container()
         repo = container.v8_experience_repository
@@ -198,9 +199,9 @@ def test_add():
     @pytest.mark.slow
     async def test_full_pipeline_end_to_end(self):
         """Full Pipeline: 전체 파이프라인 E2E 테스트"""
-        from src.container import Container
-        from src.agent.domain.reasoning import QueryFeatures, evaluate_success
         from src.agent.domain.experience import AgentExperience, ProblemType
+        from src.agent.domain.reasoning import QueryFeatures, evaluate_success
+        from src.container import Container
 
         container = Container()
 

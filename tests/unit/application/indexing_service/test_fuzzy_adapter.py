@@ -12,9 +12,9 @@ Tests PostgreSQL pg_trgm-based fuzzy search:
 import os
 
 import pytest
-
 from src.index.common.documents import IndexDocument, SearchHit
 from src.index.fuzzy.adapter_pgtrgm import PostgresFuzzyIndex
+
 from src.infra.storage.postgres import PostgresStore
 
 # ============================================================

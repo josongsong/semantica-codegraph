@@ -9,14 +9,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from src.contexts.code_foundation.infrastructure.analyzers.taint_rules import (
-    VulnerabilityType,
+    RuleSet,
     Severity,
     TaintKind,
-    RuleSet,
+    VulnerabilityType,
 )
-from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.sources import PYTHON_CORE_SOURCES
-from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.sinks import PYTHON_CORE_SINKS
 from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.sanitizers import PYTHON_CORE_SANITIZERS
+from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.sinks import PYTHON_CORE_SINKS
+from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.sources import PYTHON_CORE_SOURCES
 
 
 def test_basic_rules():
@@ -35,7 +35,7 @@ def test_basic_rules():
     )
 
     stats = core_rules.get_stats()
-    print(f"\n[Rule Set Stats]")
+    print("\n[Rule Set Stats]")
     print(f"  Name: {stats['name']}")
     print(f"  Sources: {stats['sources']}")
     print(f"  Sinks: {stats['sinks']}")
@@ -43,7 +43,7 @@ def test_basic_rules():
     print(f"  Total: {stats['total']}")
 
     # 2. Source 매칭 테스트
-    print(f"\n[Source Matching]")
+    print("\n[Source Matching]")
     test_sources = [
         "user_input = input('Enter command: ')",
         "db_host = os.environ['DB_HOST']",
@@ -61,7 +61,7 @@ def test_basic_rules():
             print(f"  ✗ '{code[:50]}...' (no match)")
 
     # 3. Sink 매칭 테스트
-    print(f"\n[Sink Matching]")
+    print("\n[Sink Matching]")
     test_sinks = [
         "os.system(f'rm -rf {path}')",
         "eval(user_code)",
@@ -81,7 +81,7 @@ def test_basic_rules():
             print(f"  ✗ '{code[:50]}...' (no match)")
 
     # 4. Sanitizer 효과성 테스트
-    print(f"\n[Sanitizer Effectiveness]")
+    print("\n[Sanitizer Effectiveness]")
     test_sanitizers = [
         ("html.escape(user_input)", VulnerabilityType.XSS),
         ("html.escape(user_input)", VulnerabilityType.SQL_INJECTION),
@@ -106,7 +106,7 @@ def test_basic_rules():
                 print(f"  {code[:40]:40} → {vuln.value:20} {eff_pct:3}% {level}")
 
     # 5. 취약점 타입별 통계
-    print(f"\n[Coverage by Vulnerability Type]")
+    print("\n[Coverage by Vulnerability Type]")
     vuln_coverage = {}
     for vuln in VulnerabilityType:
         sources = [s for s in core_rules.sources if s.vuln_type == vuln]

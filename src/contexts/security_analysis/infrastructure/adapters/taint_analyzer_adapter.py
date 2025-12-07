@@ -9,23 +9,21 @@ SOTA급 설계:
 - TaintPath → 새로운 Vulnerability 모델로 변환
 """
 
-from typing import List, Dict, Set, Any
 import logging
 
 from src.contexts.code_foundation.infrastructure.analyzers.taint_analyzer import (
     TaintAnalyzer,
-    TaintSource,
-    TaintSink,
     TaintPath,
+    TaintSink,
+    TaintSource,
 )
 from src.contexts.code_foundation.infrastructure.analyzers.taint_rules.base import (
-    SourceRule,
-    SinkRule,
     SanitizerRule,
-    VulnerabilityType,
+    SinkRule,
+    SourceRule,
 )
-from src.contexts.code_foundation.infrastructure.ir.models.document import IRDocument
 from src.contexts.code_foundation.infrastructure.ir.models.core import Node
+from src.contexts.code_foundation.infrastructure.ir.models.document import IRDocument
 from src.contexts.security_analysis.infrastructure.adapters.variable_data_flow_tracker import VariableDataFlowTracker
 
 logger = logging.getLogger(__name__)
@@ -46,9 +44,9 @@ class TaintAnalyzerAdapter:
 
     def __init__(
         self,
-        source_rules: List[SourceRule],
-        sink_rules: List[SinkRule],
-        sanitizer_rules: List[SanitizerRule],
+        source_rules: list[SourceRule],
+        sink_rules: list[SinkRule],
+        sanitizer_rules: list[SanitizerRule],
     ):
         """
         Args:
@@ -82,7 +80,7 @@ class TaintAnalyzerAdapter:
             f"{len(sanitizers)} sanitizers"
         )
 
-    def analyze(self, ir_document: IRDocument) -> List[TaintPath]:
+    def analyze(self, ir_document: IRDocument) -> list[TaintPath]:
         """
         Analyze taint flow in IRDocument
 
@@ -122,7 +120,7 @@ class TaintAnalyzerAdapter:
 
             # ⭐ SOTA: If no function-level paths, try variable data flow for all source-sink pairs
             if not taint_paths and source_nodes and sink_nodes:
-                print(f"[ADAPTER ANALYZE] No function-level paths, trying variable data flow...")
+                print("[ADAPTER ANALYZE] No function-level paths, trying variable data flow...")
                 print(f"[ADAPTER ANALYZE] source_nodes: {source_nodes}")
                 print(f"[ADAPTER ANALYZE] sink_nodes: {sink_nodes}")
                 logger.info("No function-level paths found, trying variable data flow...")
@@ -170,7 +168,7 @@ class TaintAnalyzerAdapter:
             logger.error(f"Taint analysis failed: {e}", exc_info=True)
             return []
 
-    def _find_node_id_by_name(self, name: str, node_map: Dict[str, Node]) -> str | None:
+    def _find_node_id_by_name(self, name: str, node_map: dict[str, Node]) -> str | None:
         """Find node ID by function/variable name"""
         import re
 
@@ -185,14 +183,14 @@ class TaintAnalyzerAdapter:
                         return node_id
         return None
 
-    def _get_node_name(self, node_id: str, node_map: Dict[str, Node]) -> str:
+    def _get_node_name(self, node_id: str, node_map: dict[str, Node]) -> str:
         """Get node name from ID"""
         node = node_map.get(node_id)
         if node and hasattr(node, "name") and node.name:
             return node.name
         return node_id.split(":")[-1] if ":" in node_id else node_id
 
-    def _convert_sources(self) -> Dict[str, TaintSource]:
+    def _convert_sources(self) -> dict[str, TaintSource]:
         """
         Convert SourceRule to TaintSource
 
@@ -209,7 +207,7 @@ class TaintAnalyzerAdapter:
 
         return sources
 
-    def _convert_sinks(self) -> Dict[str, TaintSink]:
+    def _convert_sinks(self) -> dict[str, TaintSink]:
         """
         Convert SinkRule to TaintSink
 
@@ -227,7 +225,7 @@ class TaintAnalyzerAdapter:
 
         return sinks
 
-    def _convert_sanitizers(self) -> Set[str]:
+    def _convert_sanitizers(self) -> set[str]:
         """
         Convert SanitizerRule to pattern set
 
@@ -244,7 +242,7 @@ class TaintAnalyzerAdapter:
     def _extract_graph_from_ir(
         self,
         ir_document: IRDocument,
-    ) -> tuple[Dict[str, List[str]], Dict[str, Node]]:
+    ) -> tuple[dict[str, list[str]], dict[str, Node]]:
         """
         Extract call graph and node map from IRDocument
 
@@ -256,8 +254,8 @@ class TaintAnalyzerAdapter:
             - call_graph: {caller_id: [callee_id, ...]}
             - node_map: {node_id: Node}
         """
-        call_graph: Dict[str, List[str]] = {}
-        node_map: Dict[str, Node] = {}
+        call_graph: dict[str, list[str]] = {}
+        node_map: dict[str, Node] = {}
 
         # Build node map
         for node in ir_document.nodes:

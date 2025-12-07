@@ -6,7 +6,6 @@ Run with: PYTHONPATH=. pytest tests/foundation/test_symbol_graph_adapter.py
 """
 
 import pytest
-
 from src.foundation.ir.models import Span
 from src.foundation.symbol_graph import (
     PostgreSQLSymbolGraphAdapter,

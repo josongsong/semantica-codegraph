@@ -4,8 +4,7 @@ Python 핵심 Taint Sinks
 Framework 무관한 기본 Python sinks
 """
 
-from ..base import SinkRule, Severity, VulnerabilityType
-
+from ..base import Severity, SinkRule, VulnerabilityType
 
 PYTHON_CORE_SINKS = [
     # ============================================================

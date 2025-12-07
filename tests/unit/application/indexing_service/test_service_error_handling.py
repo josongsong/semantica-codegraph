@@ -11,7 +11,6 @@ Tests error handling and partial failure resilience:
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from src.foundation.chunk.models import Chunk
 from src.foundation.graph.models import GraphDocument, GraphIndex
 from src.index.common.documents import SearchHit

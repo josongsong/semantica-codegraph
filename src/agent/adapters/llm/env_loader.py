@@ -4,8 +4,8 @@
 .env 파일 권한 문제 해결
 """
 
-import os
 import logging
+import os
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ class SafeEnvLoader:
         try:
             env_path = Path.cwd() / ".env"
             if env_path.exists():
-                with open(env_path, "r") as f:
+                with open(env_path) as f:
                     for line in f:
                         line = line.strip()
                         if line.startswith("SEMANTICA_OPENAI_API_KEY="):
@@ -87,7 +87,7 @@ class SafeEnvLoader:
         try:
             env_path = Path.cwd() / ".env"
             if env_path.exists():
-                with open(env_path, "r") as f:
+                with open(env_path) as f:
                     for line in f:
                         line = line.strip()
                         if line.startswith("SEMANTICA_LITELLM_MODEL="):

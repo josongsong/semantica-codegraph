@@ -8,10 +8,10 @@ Extracts version information from:
 """
 
 import re
-import tomllib
-from pathlib import Path
-from typing import Optional
 import xml.etree.ElementTree as ET
+from pathlib import Path
+
+import tomllib
 
 
 class VersionDetector:
@@ -107,7 +107,7 @@ class VersionDetector:
 
         return "unknown"
 
-    def _parse_pyproject_toml(self, path: Path) -> Optional[str]:
+    def _parse_pyproject_toml(self, path: Path) -> str | None:
         """Parse pyproject.toml for version"""
         try:
             with open(path, "rb") as f:
@@ -126,7 +126,7 @@ class VersionDetector:
 
         return None
 
-    def _parse_setup_py(self, path: Path) -> Optional[str]:
+    def _parse_setup_py(self, path: Path) -> str | None:
         """Parse setup.py for version"""
         try:
             content = path.read_text()
@@ -146,7 +146,7 @@ class VersionDetector:
 
         return None
 
-    def _parse_setup_cfg(self, path: Path) -> Optional[str]:
+    def _parse_setup_cfg(self, path: Path) -> str | None:
         """Parse setup.cfg for version"""
         try:
             content = path.read_text()
@@ -161,7 +161,7 @@ class VersionDetector:
 
         return None
 
-    def _parse_init_py(self, path: Path) -> Optional[str]:
+    def _parse_init_py(self, path: Path) -> str | None:
         """Parse __init__.py for __version__"""
         try:
             content = path.read_text()
@@ -175,7 +175,7 @@ class VersionDetector:
 
         return None
 
-    def _parse_pom_xml(self, path: Path) -> Optional[str]:
+    def _parse_pom_xml(self, path: Path) -> str | None:
         """Parse pom.xml for version"""
         try:
             tree = ET.parse(path)
@@ -199,7 +199,7 @@ class VersionDetector:
 
         return None
 
-    def _parse_gradle(self, path: Path) -> Optional[str]:
+    def _parse_gradle(self, path: Path) -> str | None:
         """Parse build.gradle for version"""
         try:
             content = path.read_text()
@@ -219,7 +219,7 @@ class VersionDetector:
 
         return None
 
-    def _parse_gradle_kts(self, path: Path) -> Optional[str]:
+    def _parse_gradle_kts(self, path: Path) -> str | None:
         """Parse build.gradle.kts for version"""
         try:
             content = path.read_text()
@@ -234,7 +234,7 @@ class VersionDetector:
 
         return None
 
-    def _parse_package_json(self, path: Path) -> Optional[str]:
+    def _parse_package_json(self, path: Path) -> str | None:
         """Parse package.json for version"""
         try:
             import json
