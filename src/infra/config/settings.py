@@ -176,6 +176,25 @@ class Settings(BaseSettings):
             consensus_max_factor=self.retriever_consensus_max_factor,
             consensus_quality_q0=self.retriever_consensus_quality_q0,
             enable_query_expansion=self.retriever_enable_query_expansion,
+            # SOTA Features
+            enable_hyde=self.retriever_enable_hyde,
+            hyde_num_hypotheses=self.retriever_hyde_num_hypotheses,
+            hyde_temperature=self.retriever_hyde_temperature,
+            hyde_confidence_threshold=self.retriever_hyde_confidence_threshold,
+            enable_self_rag=self.retriever_enable_self_rag,
+            self_rag_skip_threshold=self.retriever_self_rag_skip_threshold,
+            self_rag_relevance_threshold=self.retriever_self_rag_relevance_threshold,
+            enable_rag_fusion=self.retriever_enable_rag_fusion,
+            rag_fusion_num_queries=self.retriever_rag_fusion_num_queries,
+            rag_fusion_method=self.retriever_rag_fusion_method,
+            rag_fusion_rrf_k=self.retriever_rag_fusion_rrf_k,
+            enable_compression=self.retriever_enable_compression,
+            compression_method=self.retriever_compression_method,
+            compression_ratio=self.retriever_compression_ratio,
+            compression_token_budget=self.retriever_compression_token_budget,
+            enable_position_reordering=self.retriever_enable_position_reordering,
+            position_strategy=self.retriever_position_strategy,
+            position_min_chunks=self.retriever_position_min_chunks,
         )
 
     @cached_property
@@ -388,6 +407,26 @@ class Settings(BaseSettings):
 
     # Query expansion
     retriever_enable_query_expansion: bool = True
+
+    # SOTA Features (2024)
+    retriever_enable_hyde: bool = True
+    retriever_hyde_num_hypotheses: int = 1
+    retriever_hyde_temperature: float = 0.0
+    retriever_hyde_confidence_threshold: float = 0.7
+    retriever_enable_self_rag: bool = True
+    retriever_self_rag_skip_threshold: float = 0.7
+    retriever_self_rag_relevance_threshold: float = 0.6
+    retriever_enable_rag_fusion: bool = True
+    retriever_rag_fusion_num_queries: int = 3
+    retriever_rag_fusion_method: str = "rrf"
+    retriever_rag_fusion_rrf_k: int = 60
+    retriever_enable_compression: bool = True
+    retriever_compression_method: str = "llm"
+    retriever_compression_ratio: float = 0.4
+    retriever_compression_token_budget: int = 8000
+    retriever_enable_position_reordering: bool = True
+    retriever_position_strategy: str = "alternating"
+    retriever_position_min_chunks: int = 5
 
     # ========================================================================
     # Application

@@ -4,9 +4,9 @@ AutoRRF - Query Fusion Auto Weighting
 Automatically adjusts fusion weights based on query intent.
 """
 
-from .models import QueryIntent, WeightProfile, QueryResult
-from .classifier import QueryClassifier
 from .auto_rrf import AutoRRF
+from .classifier import QueryClassifier
+from .models import QueryIntent, QueryResult, WeightProfile
 
 __all__ = [
     "QueryIntent",
@@ -15,4 +15,3 @@ __all__ = [
     "QueryClassifier",
     "AutoRRF",
 ]
-

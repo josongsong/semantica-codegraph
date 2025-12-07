@@ -175,7 +175,7 @@ class CachedIRGenerator:
         import asyncio
 
         # SourceFile로 변환 및 content 읽기
-        if isinstance(source, (str, Path)):
+        if isinstance(source, str | Path):
             file_path_obj = Path(source)
             if not file_path_obj.exists():
                 logger.error("ir_file_not_found", file_path=str(source))
@@ -225,7 +225,7 @@ class CachedIRGenerator:
             IRDocument
         """
         # SourceFile로 변환 및 content 읽기
-        if isinstance(source, (str, Path)):
+        if isinstance(source, str | Path):
             file_path_obj = Path(source)
             content = file_path_obj.read_text()
 

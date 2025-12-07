@@ -193,7 +193,8 @@ def show_pyright_data_flow():
     print("📊 Pyright Data Flow in Our Architecture")
     print("=" * 60)
 
-    print("""
+    print(
+        """
     ┌─────────────────┐
     │   Source Code   │
     └────────┬────────┘
@@ -238,7 +239,8 @@ def show_pyright_data_flow():
 
     3. References (향후)
        textDocument/references → ReferenceSite[]
-    """)
+    """
+    )
 
 
 # ============================================================
@@ -269,7 +271,8 @@ def main():
     print("=" * 60)
     print("🎯 Summary")
     print("=" * 60)
-    print("""
+    print(
+        """
     Pyright에서 활용할 정보:
 
     1. ✅ Type Information (이미 활용 중)
@@ -294,7 +297,8 @@ def main():
     Pyright는 "선택적 강화제"!
     - 없으면: 기본 resolution (빠름)
     - 있으면: 정확도 향상 (cross-file, alias, MRO)
-    """)
+    """
+    )
 
 
 if __name__ == "__main__":

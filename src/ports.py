@@ -1,12 +1,44 @@
 """
-Semantica Code Engine Ports
+Foundation Layer Ports
 
-Defines interfaces for both server layer and foundation layer components.
+Foundation 계층의 인덱스 포트 인터페이스
+각 인덱스 타입(Lexical, Vector, Symbol 등)의 추상 인터페이스 정의
+
+Note:
+- API Layer 포트는 src/api/ports.py 참조
+- 도메인별 포트는 각 context의 domain/ports.py 참조
 """
 
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+
+from src.api.ports import (  # noqa: F401
+    ContextPort,
+    EnginePort,
+    GraphPort,
+    IndexingPort,
+    LLMPort,
+    SearchPort,
+)
+
+if TYPE_CHECKING:
+    from src.agent.domain.models import (
+        AgentTask,
+        CodeChange,
+        CommitResult,
+        ConflictResolution,
+        ExecutionResult,
+        MergeConflict,
+        PRResult,
+        Screenshot,
+        ValidationResult,
+        VisualDiff,
+        WorkflowResult,
+        WorkflowState,
+        WorkflowStep,
+    )
+    from src.execution.sandbox.models import SandboxHandle
 
 # ============================================================
 # Common Types (shared across layers)
@@ -434,95 +466,618 @@ class RepoMapPort(Protocol):
 
 
 # ============================================================
-# Server Layer Ports (API/MCP Server)
+# Agent Execution Layer Ports (v7 SOTA Agent)
 # ============================================================
+# Agent 실행을 위한 핵심 포트
+# Port/Adapter 패턴으로 OSS vendor lock-in 방지
 
 
-class IndexingPort(Protocol):
-    """인덱싱 포트"""
-
-    @abstractmethod
-    def index_repository(self, repo_path: str, **options) -> dict[str, Any]:
-        """저장소 인덱싱"""
-        ...
-
-    @abstractmethod
-    def get_indexing_status(self, repo_id: str) -> dict[str, Any]:
-        """인덱싱 상태 조회"""
-        ...
-
-
-class SearchPort(Protocol):
-    """검색 포트"""
-
-    @abstractmethod
-    async def search(self, query: str, **options) -> list[dict[str, Any]]:
-        """코드 검색"""
-        ...
-
-    @abstractmethod
-    def search_symbols(self, symbol_name: str, **options) -> list[dict[str, Any]]:
-        """심볼 검색"""
-        ...
-
-    @abstractmethod
-    def search_chunks(self, query: str, **options) -> list[dict[str, Any]]:
-        """청크 검색"""
-        ...
-
-
-class GraphPort(Protocol):
-    """그래프 포트"""
-
-    @abstractmethod
-    def get_callers(self, symbol_id: str) -> list[dict[str, Any]]:
-        """호출자 조회"""
-        ...
-
-    @abstractmethod
-    def get_callees(self, symbol_id: str) -> list[dict[str, Any]]:
-        """피호출자 조회"""
-        ...
-
-    @abstractmethod
-    def get_dependencies(self, node_id: str) -> list[dict[str, Any]]:
-        """의존성 조회"""
-        ...
-
-
-class ContextPort(Protocol):
-    """컨텍스트 포트"""
-
-    @abstractmethod
-    def build_context(self, query: str, **options) -> str:
-        """컨텍스트 생성"""
-        ...
-
-    @abstractmethod
-    def get_repomap(self, repo_id: str, **options) -> str:
-        """레포맵 조회"""
-        ...
-
-
-class LLMPort(Protocol):
-    """LLM 포트"""
-
-    @abstractmethod
-    async def generate(self, prompt: str, max_tokens: int = 500, temperature: float = 0.3) -> str:
-        """텍스트 생성"""
-        ...
-
-    @abstractmethod
-    async def embed(self, text: str) -> list[float]:
-        """임베딩 생성"""
-        ...
-
-
-class EnginePort(IndexingPort, SearchPort, GraphPort, ContextPort, Protocol):
+@runtime_checkable
+class IWorkflowEngine(Protocol):
     """
-    통합 엔진 포트
+    Workflow Orchestration Port.
 
-    server 계층이 사용할 전체 인터페이스
+    LangGraph, Temporal, Prefect 등 workflow engine 추상화.
+    Business logic은 WorkflowStep에 있고, Engine은 orchestration만 담당.
     """
 
-    pass
+    @abstractmethod
+    async def execute(
+        self,
+        steps: list["WorkflowStep"],  # forward reference
+        initial_state: "WorkflowState",
+        config: dict[str, Any] | None = None,
+    ) -> "WorkflowResult":
+        """
+        Workflow 실행.
+
+        Args:
+            steps: WorkflowStep 리스트 (Analyze→Plan→Generate→Critic→Test→Heal)
+            initial_state: 초기 상태
+            config: Engine별 설정 (max_iterations, early_exit 조건 등)
+
+        Returns:
+            WorkflowResult (최종 상태 + 메타데이터)
+        """
+        ...
+
+    @abstractmethod
+    def add_step(self, step: "WorkflowStep", name: str) -> None:
+        """
+        WorkflowStep 등록.
+
+        Args:
+            step: WorkflowStep 인스턴스
+            name: Step 이름 (node ID로 사용)
+        """
+        ...
+
+
+@runtime_checkable
+class ISandboxExecutor(Protocol):
+    """
+    Sandbox 실행 Port.
+
+    E2B, Firecracker, Docker, K8s 등 sandbox 실행 환경 추상화.
+    보안 격리 + 리소스 제한.
+    """
+
+    @abstractmethod
+    async def create_sandbox(self, config: dict[str, Any]) -> "SandboxHandle":
+        """
+        Sandbox 생성.
+
+        Args:
+            config: Sandbox 설정
+                - template: "python" | "node" | "base"
+                - timeout: 초 단위 타임아웃
+                - env_vars: 환경 변수 (secret 포함)
+                - resource_limits: CPU/Memory/Disk 제한
+
+        Returns:
+            SandboxHandle (sandbox ID + 메타데이터)
+        """
+        ...
+
+    @abstractmethod
+    async def execute_code(self, handle: "SandboxHandle", code: str, language: str = "python") -> "ExecutionResult":
+        """
+        코드 실행.
+
+        Args:
+            handle: create_sandbox로 생성한 핸들
+            code: 실행할 코드
+            language: 언어 ("python" | "node" | "bash")
+
+        Returns:
+            ExecutionResult (stdout, stderr, exit_code, execution_time)
+        """
+        ...
+
+    @abstractmethod
+    async def destroy_sandbox(self, handle: "SandboxHandle") -> None:
+        """Sandbox 정리 (리소스 해제)"""
+        ...
+
+
+@runtime_checkable
+class ILLMProvider(Protocol):
+    """
+    LLM 호출 Port.
+
+    LiteLLM, LangChain, 자체 구현 등 LLM provider 추상화.
+    Multi-model routing + fallback + cost tracking.
+    """
+
+    @abstractmethod
+    async def complete(self, messages: list[dict[str, str]], model_tier: str = "medium", **kwargs: Any) -> str:
+        """
+        텍스트 완성.
+
+        Args:
+            messages: OpenAI format 메시지 리스트
+            model_tier: "fast" | "medium" | "strong"
+                - fast: Haiku, GPT-3.5 등 (latency 우선)
+                - medium: Sonnet, GPT-4o 등 (균형)
+                - strong: Opus, o1 등 (품질 우선)
+            **kwargs: temperature, max_tokens 등
+
+        Returns:
+            완성된 텍스트
+        """
+        ...
+
+    @abstractmethod
+    async def complete_with_schema(
+        self,
+        messages: list[dict[str, str]],
+        schema: type,  # Pydantic BaseModel
+        model_tier: str = "medium",
+        **kwargs: Any,
+    ) -> Any:
+        """
+        구조화된 출력 (Pydantic schema 기반).
+
+        Args:
+            messages: 메시지 리스트
+            schema: Pydantic BaseModel 클래스
+            model_tier: 모델 등급
+
+        Returns:
+            schema 인스턴스 (파싱 보장)
+        """
+        ...
+
+    @abstractmethod
+    async def get_embedding(self, text: str, model: str = "text-embedding-3-small") -> list[float]:
+        """
+        텍스트 임베딩 생성.
+
+        Args:
+            text: 임베딩할 텍스트
+            model: 임베딩 모델
+
+        Returns:
+            임베딩 벡터
+        """
+        ...
+
+
+@runtime_checkable
+class IGuardrailValidator(Protocol):
+    """
+    Guardrail 검증 Port.
+
+    Guardrails AI, Pydantic Validator, 자체 규칙 등 검증 엔진 추상화.
+    정책 계층: global → org → repo → local
+    """
+
+    @abstractmethod
+    async def validate(
+        self,
+        data: Any,  # CodeChange, CodeChanges 등
+        policies: list[dict[str, Any]],
+        level: str = "repo",  # "global" | "org" | "repo" | "local"
+    ) -> "ValidationResult":
+        """
+        데이터 검증.
+
+        Args:
+            data: 검증할 데이터 (CodeChange, 생성된 코드 등)
+            policies: 적용할 정책 리스트
+                - DetectSecrets: API key, token 유출 방지
+                - CheckLOCLimit: LOC 제한
+                - CheckFileLimit: 파일 개수 제한
+                - DetectPII: PII 유출 방지
+            level: 정책 적용 레벨
+
+        Returns:
+            ValidationResult (valid, errors, warnings)
+        """
+        ...
+
+
+@runtime_checkable
+class IVCSApplier(Protocol):
+    """
+    VCS 적용 Port.
+
+    GitPython, libgit2, go-git 등 VCS 라이브러리 추상화.
+    Branch 생성 + Commit + PR + Conflict resolution.
+    """
+
+    @abstractmethod
+    async def apply_changes(
+        self,
+        changes: list[Any],
+        branch_name: str,
+        commit_message: str | None = None,  # CodeChange 리스트
+    ) -> "CommitResult":
+        """
+        변경사항 적용 (branch 생성 + commit).
+
+        Args:
+            changes: CodeChange 리스트
+            branch_name: 생성할 브랜치 이름
+            commit_message: 커밋 메시지 (None이면 자동 생성)
+
+        Returns:
+            CommitResult (commit_sha, branch_name, changed_files)
+        """
+        ...
+
+    @abstractmethod
+    async def create_pr(self, branch_name: str, title: str, body: str, base_branch: str = "main") -> "PRResult":
+        """
+        PR 생성.
+
+        Args:
+            branch_name: PR 소스 브랜치
+            title: PR 제목
+            body: PR 본문
+            base_branch: PR 타겟 브랜치
+
+        Returns:
+            PRResult (pr_number, pr_url)
+        """
+        ...
+
+    @abstractmethod
+    async def resolve_conflict(
+        self,
+        conflict: "MergeConflict",
+        strategy: str = "llm",  # "llm" | "ours" | "theirs"
+    ) -> "ConflictResolution":
+        """
+        Merge conflict 해결.
+
+        Args:
+            conflict: MergeConflict 정보
+            strategy: 해결 전략
+
+        Returns:
+            ConflictResolution (resolved, resolution_code)
+        """
+        ...
+
+
+@runtime_checkable
+class IMetricsCollector(Protocol):
+    """
+    메트릭 수집 Port.
+
+    Prometheus, DataDog, CloudWatch 등 메트릭 백엔드 추상화.
+    Counter, Gauge, Histogram 지원.
+    """
+
+    @abstractmethod
+    def record_counter(
+        self,
+        name: str,
+        value: float = 1.0,
+        labels: dict[str, str] | None = None,
+    ) -> None:
+        """
+        Counter 메트릭 기록 (단조 증가).
+
+        Args:
+            name: 메트릭 이름 (예: "requests_total")
+            value: 증가값 (기본 1.0)
+            labels: 라벨 (예: {"status": "200"})
+        """
+        ...
+
+    @abstractmethod
+    def record_gauge(
+        self,
+        name: str,
+        value: float,
+        labels: dict[str, str] | None = None,
+    ) -> None:
+        """
+        Gauge 메트릭 기록 (현재 값).
+
+        Args:
+            name: 메트릭 이름 (예: "active_agents")
+            value: 현재 값
+            labels: 라벨
+        """
+        ...
+
+    @abstractmethod
+    def record_histogram(
+        self,
+        name: str,
+        value: float,
+    ) -> None:
+        """
+        Histogram 메트릭 기록 (분포).
+
+        Args:
+            name: 메트릭 이름 (예: "latency_ms")
+            value: 관측값
+        """
+        ...
+
+    @abstractmethod
+    def get_all_metrics(self) -> dict[str, Any]:
+        """모든 메트릭 반환 (디버깅/익스포트용)"""
+        ...
+
+
+@runtime_checkable
+class IHealthChecker(Protocol):
+    """
+    Health Check Port.
+
+    시스템 컴포넌트 상태 확인 추상화.
+    DB, Redis, LLM API 등 헬스 체크.
+    """
+
+    @abstractmethod
+    async def check_health(self) -> dict[str, bool]:
+        """
+        전체 시스템 헬스 체크.
+
+        Returns:
+            {"postgres": True, "redis": True, "llm_api": False}
+        """
+        ...
+
+    @abstractmethod
+    async def check_component(self, component: str) -> bool:
+        """
+        특정 컴포넌트 헬스 체크.
+
+        Args:
+            component: "postgres" | "redis" | "qdrant" | "memgraph" | "llm_api"
+
+        Returns:
+            True if healthy
+        """
+        ...
+
+
+@runtime_checkable
+class IVisualValidator(Protocol):
+    """
+    Visual 검증 Port.
+
+    Playwright, Selenium, Puppeteer 등 브라우저 자동화 추상화.
+    Screenshot + Vision Model 기반 UI 검증.
+    """
+
+    @abstractmethod
+    async def capture_screenshot(
+        self, url: str, selector: str | None = None, viewport: dict[str, int] | None = None
+    ) -> "Screenshot":
+        """
+        스크린샷 캡처.
+
+        Args:
+            url: 캡처할 URL
+            selector: CSS selector (특정 요소만 캡처)
+            viewport: {"width": 1920, "height": 1080}
+
+        Returns:
+            Screenshot (bytes, metadata)
+        """
+        ...
+
+    @abstractmethod
+    async def compare_screenshots(
+        self, before: "Screenshot", after: "Screenshot", use_vision_model: bool = True
+    ) -> "VisualDiff":
+        """
+        스크린샷 비교.
+
+        Args:
+            before: 변경 전 스크린샷
+            after: 변경 후 스크린샷
+            use_vision_model: Vision Model (GPT-4o) 사용 여부
+
+        Returns:
+            VisualDiff (has_difference, diff_description, diff_score)
+        """
+        ...
+
+
+# ============================================================
+# API/Server Layer Ports (Backward Compatibility)
+# ============================================================
+# Note: 이 포트들은 src/api/ports.py로 이동되었습니다.
+# 기존 코드 호환성을 위해 여기서 re-export합니다.
+# 새로운 코드는 src/api/ports.py를 직접 import하세요.
+# (Import는 파일 상단으로 이동됨)
+
+# ============================================================================
+# Agent Service Protocols (v7)
+# ============================================================================
+
+
+@runtime_checkable
+class IAnalyzeService(Protocol):
+    """
+    Task 분석 서비스 인터페이스.
+
+    Task의 복잡도, 영향 범위 등을 분석합니다.
+    """
+
+    @abstractmethod
+    async def analyze_task(self, task: "AgentTask") -> dict[str, Any]:
+        """
+        Task를 분석합니다.
+
+        Args:
+            task: 분석할 Task
+
+        Returns:
+            분석 결과 (summary, impacted_files, complexity_score 등)
+        """
+        ...
+
+
+@runtime_checkable
+class IPlanService(Protocol):
+    """
+    수정 계획 생성 서비스 인터페이스.
+
+    Task와 분석 결과를 바탕으로 수정 계획을 생성합니다.
+    """
+
+    @abstractmethod
+    async def plan_changes(self, task: "AgentTask", analysis: dict[str, Any]) -> dict[str, Any]:
+        """
+        수정 계획을 생성합니다.
+
+        Args:
+            task: 대상 Task
+            analysis: 분석 결과
+
+        Returns:
+            수정 계획 (steps, files, approach 등)
+        """
+        ...
+
+
+@runtime_checkable
+class IGenerateService(Protocol):
+    """
+    코드 생성 서비스 인터페이스.
+
+    계획에 따라 실제 코드 변경을 생성합니다.
+    """
+
+    @abstractmethod
+    async def generate_code(self, task: "AgentTask", plan: dict[str, Any] | None) -> list["CodeChange"]:
+        """
+        코드 변경을 생성합니다.
+
+        Args:
+            task: 대상 Task
+            plan: 수정 계획
+
+        Returns:
+            CodeChange 리스트
+        """
+        ...
+
+
+@runtime_checkable
+class ICriticService(Protocol):
+    """
+    코드 검토 서비스 인터페이스.
+
+    생성된 코드를 검토하여 문제점을 찾습니다.
+    """
+
+    @abstractmethod
+    async def review_code(self, changes: list["CodeChange"]) -> list[str]:
+        """
+        코드를 검토합니다.
+
+        Args:
+            changes: 검토할 코드 변경
+
+        Returns:
+            발견된 문제 리스트 (빈 리스트면 승인)
+        """
+        ...
+
+
+@runtime_checkable
+class ITestService(Protocol):
+    """
+    테스트 실행 서비스 인터페이스.
+
+    코드 변경에 대한 테스트를 실행합니다.
+    """
+
+    @abstractmethod
+    async def run_tests(self, changes: list["CodeChange"]) -> list["ExecutionResult"]:
+        """
+        테스트를 실행합니다.
+
+        Args:
+            changes: 테스트할 코드 변경
+
+        Returns:
+            ExecutionResult 리스트
+        """
+        ...
+
+
+@runtime_checkable
+class IHealService(Protocol):
+    """
+    자동 수정 서비스 인터페이스.
+
+    테스트 실패나 문제점을 자동으로 수정합니다.
+    """
+
+    @abstractmethod
+    async def suggest_fix(self, errors: list[str], changes: list["CodeChange"]) -> list["CodeChange"]:
+        """
+        수정 제안을 생성합니다.
+
+        Args:
+            errors: 발견된 에러
+            changes: 원본 코드 변경
+
+        Returns:
+            수정된 CodeChange 리스트
+        """
+        ...
+
+
+# ============================================================================
+# Router & Retrieval Ports
+# ============================================================================
+
+
+@runtime_checkable
+class IQueryAnalyzer(Protocol):
+    """
+    Query 복잡도 분석 인터페이스.
+
+    Query의 특성을 분석하여 적절한 검색 전략 결정을 지원합니다.
+    """
+
+    @abstractmethod
+    def analyze(self, query: str) -> Any:
+        """
+        Query를 분석합니다.
+
+        Args:
+            query: 검색 쿼리
+
+        Returns:
+            QueryComplexity 객체 (complexity_level, specificity_score 등)
+        """
+        ...
+
+
+@runtime_checkable
+class ITopKSelector(Protocol):
+    """
+    동적 Top-K 선택 인터페이스.
+
+    Query 복잡도와 intent에 따라 최적의 k 값을 선택합니다.
+    """
+
+    @abstractmethod
+    def select_k(self, query: str, intent: str | None = None) -> int:
+        """
+        Query에 대한 최적 k 값을 선택합니다.
+
+        Args:
+            query: 검색 쿼리
+            intent: Query intent (symbol/flow/concept/code 등)
+
+        Returns:
+            적절한 k 값
+        """
+        ...
+
+
+@runtime_checkable
+class IBudgetSelector(Protocol):
+    """
+    Budget-aware Top-K 선택 인터페이스.
+
+    Latency budget을 고려한 k 값 선택을 지원합니다.
+    """
+
+    @abstractmethod
+    def select_with_budget(self, query: str, intent: str | None = None) -> int:
+        """
+        Budget을 고려하여 k 값을 선택합니다.
+
+        Args:
+            query: 검색 쿼리
+            intent: Query intent
+
+        Returns:
+            Budget 내에서 최적의 k 값
+        """
+        ...

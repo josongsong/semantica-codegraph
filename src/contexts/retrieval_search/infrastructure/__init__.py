@@ -14,9 +14,6 @@ Usage:
     # Get default retriever (V3)
     retriever = factory.create()
 
-    # Get specific type
-    retriever = factory.create(RetrieverType.OPTIMIZED)
-
     # With custom config
     config = RetrieverConfig(token_budget=8000, enable_cache=True)
     retriever = factory.create(RetrieverType.V3, config)

@@ -5,8 +5,6 @@ Incremental Update - Change Tracker
 """
 
 import hashlib
-from pathlib import Path
-from typing import Dict, Set, Optional
 from dataclasses import dataclass, field
 
 
@@ -17,8 +15,8 @@ class FileState:
     path: str
     hash: str
     last_modified: float
-    dependencies: Set[str] = field(default_factory=set)  # 이 파일이 의존하는 파일들
-    dependents: Set[str] = field(default_factory=set)  # 이 파일에 의존하는 파일들
+    dependencies: set[str] = field(default_factory=set)  # 이 파일이 의존하는 파일들
+    dependents: set[str] = field(default_factory=set)  # 이 파일에 의존하는 파일들
 
 
 class ChangeTracker:
@@ -32,7 +30,7 @@ class ChangeTracker:
     """
 
     def __init__(self):
-        self._file_states: Dict[str, FileState] = {}
+        self._file_states: dict[str, FileState] = {}
 
     def compute_file_hash(self, content: str) -> str:
         """파일 컨텐츠 hash 계산"""
@@ -43,7 +41,7 @@ class ChangeTracker:
         file_path: str,
         content: str,
         last_modified: float,
-        dependencies: Set[str] = None,
+        dependencies: set[str] = None,
     ) -> bool:
         """
         파일 등록 및 변경 감지
@@ -76,7 +74,7 @@ class ChangeTracker:
 
         return False
 
-    def update_dependencies(self, file_path: str, dependencies: Set[str]):
+    def update_dependencies(self, file_path: str, dependencies: set[str]):
         """의존성 업데이트"""
         if file_path not in self._file_states:
             return
@@ -102,7 +100,7 @@ class ChangeTracker:
 
         self._file_states[file_path].dependencies = new_deps
 
-    def get_affected_files(self, changed_files: Set[str]) -> Set[str]:
+    def get_affected_files(self, changed_files: set[str]) -> set[str]:
         """
         변경된 파일로 인해 영향받는 모든 파일 계산
 
@@ -130,10 +128,10 @@ class ChangeTracker:
         """모든 상태 초기화"""
         self._file_states.clear()
 
-    def get_state(self, file_path: str) -> Optional[FileState]:
+    def get_state(self, file_path: str) -> FileState | None:
         """파일 상태 조회"""
         return self._file_states.get(file_path)
 
-    def get_all_files(self) -> Set[str]:
+    def get_all_files(self) -> set[str]:
         """모든 추적 중인 파일 목록"""
         return set(self._file_states.keys())

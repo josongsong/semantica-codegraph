@@ -5,16 +5,16 @@ Builds IR from uncommitted files and computes delta against base.
 """
 
 import hashlib
-from typing import Dict, Set, Optional
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 from src.common.observability import get_logger
 from src.contexts.code_foundation.infrastructure.ir.sota_ir_builder import SOTAIRBuilder
+
 from .models import (
+    OverlayConfig,
     OverlaySnapshot,
     UncommittedFile,
-    OverlayConfig,
 )
 
 logger = get_logger(__name__)
@@ -30,9 +30,9 @@ class OverlayIRBuilder:
 
     def __init__(
         self,
-        ir_builder: Optional[SOTAIRBuilder] = None,  # SOTA IR Builder
-        config: Optional[OverlayConfig] = None,
-        project_root: Optional[Path] = None,
+        ir_builder: SOTAIRBuilder | None = None,  # SOTA IR Builder
+        config: OverlayConfig | None = None,
+        project_root: Path | None = None,
     ):
         self.project_root = project_root or Path.cwd()
         self.ir_builder = ir_builder or SOTAIRBuilder(project_root=self.project_root)
@@ -42,8 +42,8 @@ class OverlayIRBuilder:
         self,
         base_snapshot_id: str,
         repo_id: str,
-        uncommitted_files: Dict[str, str],  # path -> content
-        base_ir_docs: Optional[Dict[str, dict]] = None,
+        uncommitted_files: dict[str, str],  # path -> content
+        base_ir_docs: dict[str, dict] | None = None,
     ) -> OverlaySnapshot:
         """
         Build overlay snapshot from uncommitted files
@@ -98,7 +98,7 @@ class OverlayIRBuilder:
         return overlay
 
     async def _process_uncommitted_file(
-        self, overlay: OverlaySnapshot, file_path: str, content: str, base_ir_docs: Optional[Dict[str, dict]]
+        self, overlay: OverlaySnapshot, file_path: str, content: str, base_ir_docs: dict[str, dict] | None
     ):
         """Process single uncommitted file"""
 
@@ -122,7 +122,7 @@ class OverlayIRBuilder:
             # For now, use simplified approach - just build structural IR
             file_path_obj = Path(file_path)
             ir_docs, _, _ = await self.ir_builder.build_full(files=[file_path_obj])
-            
+
             if file_path in ir_docs:
                 ir_doc_obj = ir_docs[file_path]
                 # Convert IRDocument to dict
@@ -149,7 +149,7 @@ class OverlayIRBuilder:
             logger.error("ir_build_failed", file_path=file_path, error=str(e))
             raise
 
-    def _compute_affected_symbols(self, base_ir: dict, overlay_ir: dict) -> Set[str]:
+    def _compute_affected_symbols(self, base_ir: dict, overlay_ir: dict) -> set[str]:
         """
         Compute affected symbols by comparing base vs overlay IR
 
@@ -199,28 +199,28 @@ class OverlayIRBuilder:
         # Method 1: Semantic hash comparison (faster than full AST)
         base_hash = self._compute_semantic_hash(base_sym)
         overlay_hash = self._compute_semantic_hash(overlay_sym)
-        
+
         if base_hash != overlay_hash:
             return True
-        
+
         # Method 2: Range comparison as fallback
         base_range = base_sym.get("range", {})
         overlay_range = overlay_sym.get("range", {})
-        
+
         return base_range != overlay_range
-    
+
     def _compute_semantic_hash(self, symbol: dict) -> str:
         """Compute semantic hash ignoring whitespace and comments"""
         import re
-        
+
         # Get signature + body representation
         signature = symbol.get("signature", "")
         body_repr = symbol.get("body", "")
-        
+
         # Normalize: remove whitespace, comments
-        normalized = re.sub(r'\s+', '', signature + body_repr)
-        normalized = re.sub(r'#.*$', '', normalized, flags=re.MULTILINE)
-        
+        normalized = re.sub(r"\s+", "", signature + body_repr)
+        normalized = re.sub(r"#.*$", "", normalized, flags=re.MULTILINE)
+
         # Hash
         return hashlib.sha256(normalized.encode()).hexdigest()[:16]
 
@@ -230,13 +230,13 @@ class OverlayIRBuilder:
             # If it's already a dict, return it
             if isinstance(ir_doc, dict):
                 return ir_doc
-            
+
             # Convert IRDocument to dict
             result = {
                 "file": getattr(ir_doc, "file", ""),
                 "symbols": [],
             }
-            
+
             # Extract symbols if available
             if hasattr(ir_doc, "symbols"):
                 symbols = ir_doc.symbols
@@ -247,18 +247,18 @@ class OverlayIRBuilder:
                         "signature": getattr(symbol, "signature", ""),
                     }
                     result["symbols"].append(sym_dict)
-            
+
             return result
-            
+
         except Exception as e:
             logger.warning("ir_document_conversion_failed", error=str(e))
             return {"file": "", "symbols": []}
-    
+
     def _compute_hash(self, content: str) -> str:
         """Compute SHA256 hash of content"""
         return hashlib.sha256(content.encode()).hexdigest()
 
-    def _generate_overlay_id(self, base_snapshot_id: str, uncommitted_files: Dict[str, str]) -> str:
+    def _generate_overlay_id(self, base_snapshot_id: str, uncommitted_files: dict[str, str]) -> str:
         """Generate unique overlay snapshot ID"""
         # Hash of base + all file paths + content hashes
         hasher = hashlib.sha256()
@@ -284,7 +284,7 @@ class InvalidationComputer:
         """
         self.graph_store = graph_store
 
-    async def compute_invalidated_files(self, overlay: OverlaySnapshot, repo_id: str) -> Set[str]:
+    async def compute_invalidated_files(self, overlay: OverlaySnapshot, repo_id: str) -> set[str]:
         """
         Compute which base files are invalidated by overlay
 
@@ -324,7 +324,7 @@ class InvalidationComputer:
 
         return invalidated
 
-    async def _find_callers(self, symbol_id: str, repo_id: str) -> Set[str]:
+    async def _find_callers(self, symbol_id: str, repo_id: str) -> set[str]:
         """Find symbols that call this symbol"""
         # Parameterized query to prevent SQL injection
         query = """
@@ -341,7 +341,7 @@ class InvalidationComputer:
             logger.error("failed_to_find_callers", symbol_id=symbol_id, error=str(e))
             return set()
 
-    async def _find_importers(self, symbol_id: str, repo_id: str) -> Set[str]:
+    async def _find_importers(self, symbol_id: str, repo_id: str) -> set[str]:
         """Find files that import this symbol"""
         query = """
         MATCH (file:File)-[:IMPORTS]->(symbol:Symbol {id: $symbol_id})
@@ -357,7 +357,7 @@ class InvalidationComputer:
             logger.error("failed_to_find_importers", symbol_id=symbol_id, error=str(e))
             return set()
 
-    async def _get_symbol_file(self, symbol_id: str, repo_id: str) -> Optional[str]:
+    async def _get_symbol_file(self, symbol_id: str, repo_id: str) -> str | None:
         """Get file path for symbol"""
         query = """
         MATCH (symbol:Symbol {id: $symbol_id, repo_id: $repo_id})

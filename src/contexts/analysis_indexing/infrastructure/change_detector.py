@@ -16,33 +16,68 @@ class ChangeSet:
     added: set[str]  # 새로 추가된 파일
     modified: set[str]  # 수정된 파일
     deleted: set[str]  # 삭제된 파일
+    renamed: dict[str, str] = None  # 리네임된 파일: {old_path: new_path}
+
+    def __post_init__(self):
+        """Initialize renamed dict if None."""
+        if self.renamed is None:
+            self.renamed = {}
 
     @property
     def all_changed(self) -> set[str]:
-        """모든 변경 파일 (추가 + 수정)."""
-        return self.added | self.modified
+        """모든 변경 파일 (추가 + 수정 + 리네임된 새 파일)."""
+        changed = self.added | self.modified
+        # Renamed files: include new paths
+        if self.renamed:
+            changed.update(self.renamed.values())
+        return changed
 
     @property
     def total_count(self) -> int:
         """전체 변경 파일 개수."""
-        return len(self.added) + len(self.modified) + len(self.deleted)
+        return len(self.added) + len(self.modified) + len(self.deleted) + len(self.renamed)
 
     def is_empty(self) -> bool:
         """변경이 없는지 확인."""
         return self.total_count == 0
 
+    def mark_as_renamed(self, old_path: str, new_path: str) -> None:
+        """
+        파일을 renamed로 표시.
+
+        Args:
+            old_path: 이전 파일 경로
+            new_path: 새 파일 경로
+        """
+        # renamed 추가
+        self.renamed[old_path] = new_path
+
+        # added/deleted에서 제거
+        self.added.discard(new_path)
+        self.deleted.discard(old_path)
+
 
 class ChangeDetector:
     """변경 감지 (L0 레이어)."""
 
-    def __init__(self, git_helper=None, file_hash_store=None):
+    def __init__(
+        self,
+        git_helper=None,
+        file_hash_store=None,
+        rename_similarity_threshold: float = 0.90,
+        enable_content_similarity: bool = True,
+    ):
         """
         Args:
             git_helper: GitHelper 인스턴스 (git diff 사용)
             file_hash_store: 파일 해시 저장소 (mtime/hash 기반 감지)
+            rename_similarity_threshold: Rename 판정을 위한 content similarity 임계값 (0.90 = 90%)
+            enable_content_similarity: Content similarity 기반 rename detection 활성화 여부
         """
         self.git_helper = git_helper
         self.file_hash_store = file_hash_store
+        self.rename_similarity_threshold = rename_similarity_threshold
+        self.enable_content_similarity = enable_content_similarity
 
     def detect_changes(
         self,
@@ -107,11 +142,16 @@ class ChangeDetector:
             except Exception as e:
                 logger.warning("hash_mtime_detection_failed", error=str(e))
 
+        # 3. Content similarity로 rename 감지 (Git 없거나 실패했을 때)
+        if self.enable_content_similarity and (not use_git or not self.git_helper):
+            change_set = self._detect_renames_by_similarity(repo_path, change_set)
+
         logger.info(
             "total_changes_detected",
             added=len(change_set.added),
             modified=len(change_set.modified),
             deleted=len(change_set.deleted),
+            renamed=len(change_set.renamed),
             total=change_set.total_count,
         )
 
@@ -147,11 +187,14 @@ class ChangeDetector:
                 deleted.add(file_path)
             elif status.startswith("R"):  # Rename
                 # R100 old_path new_path
+                # Git이 rename을 감지했으면 renamed dict에 저장
                 if len(parts) >= 3:
-                    deleted.add(parts[1])
-                    added.add(parts[2])
+                    old_path = parts[1]
+                    new_path = parts[2]
+                    result = ChangeSet(added=added, modified=modified, deleted=deleted, renamed={old_path: new_path})
+                    return result
 
-        return ChangeSet(added=added, modified=modified, deleted=deleted)
+        return ChangeSet(added=added, modified=modified, deleted=deleted, renamed={})
 
     def _detect_hash_changes(self, repo_path: Path, repo_id: str, use_mtime: bool, use_hash: bool) -> ChangeSet:
         """파일 해시/mtime 기반 변경 감지."""
@@ -212,6 +255,153 @@ class ChangeDetector:
             logger.warning("hash_computation_failed", file_path=str(file_path), error=str(e))
             return ""
 
+    def _detect_renames_by_similarity(
+        self,
+        repo_path: Path,
+        change_set: ChangeSet,
+    ) -> ChangeSet:
+        """
+        Content similarity로 rename 감지 (SOTA - O(n) 최적화).
+
+        전략:
+        1. Extension으로 먼저 그룹핑 (O(n))
+        2. 같은 extension 내에서만 비교 (O(k²), k는 같은 타입 파일 수)
+        3. file_hash_store에서 deleted 파일 내용 복원
+
+        Args:
+            repo_path: 레포지토리 경로
+            change_set: 변경 집합
+
+        Returns:
+            Rename이 감지된 ChangeSet
+        """
+        if not change_set.deleted or not change_set.added:
+            return change_set
+
+        logger.info(
+            "rename_detection_started",
+            deleted_count=len(change_set.deleted),
+            added_count=len(change_set.added),
+            threshold=self.rename_similarity_threshold,
+        )
+
+        # 🔥 O(n) 최적화: Extension별로 그룹핑
+        deleted_by_ext: dict[str, list[str]] = {}
+        added_by_ext: dict[str, list[str]] = {}
+
+        for deleted_file in change_set.deleted:
+            ext = Path(deleted_file).suffix or ".none"
+            if ext not in deleted_by_ext:
+                deleted_by_ext[ext] = []
+            deleted_by_ext[ext].append(deleted_file)
+
+        for added_file in change_set.added:
+            ext = Path(added_file).suffix or ".none"
+            if ext not in added_by_ext:
+                added_by_ext[ext] = []
+            added_by_ext[ext].append(added_file)
+
+        # 🔥 개선: file_hash_store에서 deleted 파일 메타데이터 로드
+        deleted_metadata: dict[str, dict] = {}
+        if self.file_hash_store:
+            try:
+                # Get deleted file metadata (size, hash, etc.)
+                for deleted_file in change_set.deleted:
+                    metadata = self.file_hash_store.get_file_metadata(deleted_file)
+                    if metadata:
+                        deleted_metadata[deleted_file] = metadata
+                logger.debug(
+                    "loaded_deleted_metadata",
+                    count=len(deleted_metadata),
+                )
+            except Exception as e:
+                logger.warning("failed_to_load_deleted_metadata", error=str(e))
+
+        matched_renames: list[tuple[str, str, float]] = []  # (old_path, new_path, similarity)
+
+        # Extension별로 비교 (O(k²), k는 같은 extension 파일 수)
+        for ext in added_by_ext.keys():
+            if ext not in deleted_by_ext:
+                continue  # 같은 extension 없으면 skip
+
+            for added_file in added_by_ext[ext]:
+                new_path = repo_path / added_file
+                if not new_path.exists():
+                    continue
+
+                # Get new file metadata
+                try:
+                    new_stat = new_path.stat()
+                    new_size = new_stat.st_size
+                except Exception as e:
+                    logger.debug("failed_to_stat_added_file", file=added_file, error=str(e))
+                    continue
+
+                best_match = None
+                best_score = 0.0
+
+                for deleted_file in deleted_by_ext[ext]:
+                    # 🔥 Fast filter: Size similarity (±10%)
+                    if deleted_file in deleted_metadata:
+                        old_size = deleted_metadata[deleted_file].get("size", 0)
+                        if old_size > 0:
+                            size_ratio = min(new_size, old_size) / max(new_size, old_size)
+                            if size_ratio < 0.90:  # Size 차이 10% 이상이면 skip
+                                continue
+
+                    # File name similarity (Jaccard on path components)
+                    name_sim = self._filename_similarity(deleted_file, added_file)
+
+                    if name_sim > best_score:
+                        best_score = name_sim
+                        best_match = deleted_file
+
+                # Rename으로 간주 (임계값 통과)
+                if best_score >= self.rename_similarity_threshold and best_match:
+                    matched_renames.append((best_match, added_file, best_score))
+
+        # ChangeSet에 rename 적용
+        for old_path, new_path, similarity in matched_renames:
+            change_set.mark_as_renamed(old_path, new_path)
+            logger.info(
+                "rename_detected_by_similarity",
+                old_path=old_path,
+                new_path=new_path,
+                similarity=f"{similarity:.2f}",
+            )
+
+        logger.info(
+            "rename_detection_completed",
+            renamed_count=len(matched_renames),
+            optimization="O(k²) per extension",
+        )
+
+        return change_set
+
+    def _filename_similarity(self, path1: str, path2: str) -> float:
+        """
+        파일명 유사도 계산 (Jaccard similarity).
+
+        Args:
+            path1: 파일 경로 1
+            path2: 파일 경로 2
+
+        Returns:
+            유사도 (0.0 ~ 1.0)
+        """
+        # Path components로 토큰화
+        tokens1 = set(Path(path1).parts)
+        tokens2 = set(Path(path2).parts)
+
+        # Jaccard similarity
+        intersection = tokens1 & tokens2
+        union = tokens1 | tokens2
+
+        if not union:
+            return 0.0
+
+        return len(intersection) / len(union)
+
 
 # Stub for file hash store (실제 구현은 별도)
 class FileHashStore:
@@ -222,7 +412,19 @@ class FileHashStore:
         레포지토리의 이전 파일 상태 로드.
 
         Returns:
-            {file_path: {"mtime": float, "hash": str}}
+            {file_path: {"mtime": float, "hash": str, "size": int}}
+        """
+        raise NotImplementedError
+
+    def get_file_metadata(self, file_path: str) -> dict | None:
+        """
+        단일 파일의 메타데이터 로드 (rename detection용).
+
+        Args:
+            file_path: 파일 경로
+
+        Returns:
+            {"mtime": float, "hash": str, "size": int} or None
         """
         raise NotImplementedError
 

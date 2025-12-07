@@ -51,7 +51,7 @@ def benchmark_file(file_path: str, repo_id: str = "test-repo"):
     print("\n[1/5] Parsing AST...")
     start = time.time()
     source_file = SourceFile.from_content(file_path=file_path, content=source_code, language="python")
-    ast_tree = AstTree.parse(source_file)
+    AstTree.parse(source_file)
     parse_time = time.time() - start
     print(f"  ✓ Parse time: {parse_time * 1000:.2f}ms")
 
@@ -130,21 +130,21 @@ def benchmark_file(file_path: str, repo_id: str = "test-repo"):
         # Test get_symbol (dict lookup)
         start = time.perf_counter()
         for _ in range(1000):
-            symbol = symbol_graph.get_symbol(test_symbol_id)
+            symbol_graph.get_symbol(test_symbol_id)
         get_symbol_time = (time.perf_counter() - start) / 1000
         print(f"  get_symbol() avg: {get_symbol_time * 1_000_000:.2f}μs (1000 iterations)")
 
         # Test get_children (index lookup)
         start = time.perf_counter()
         for _ in range(1000):
-            children = symbol_graph.indexes.get_children(test_symbol_id)
+            symbol_graph.indexes.get_children(test_symbol_id)
         get_children_time = (time.perf_counter() - start) / 1000
         print(f"  get_children() avg: {get_children_time * 1_000_000:.2f}μs (1000 iterations)")
 
         # Test get_callers (index lookup)
         start = time.perf_counter()
         for _ in range(1000):
-            callers = symbol_graph.indexes.get_callers(test_symbol_id)
+            symbol_graph.indexes.get_callers(test_symbol_id)
         get_callers_time = (time.perf_counter() - start) / 1000
         print(f"  get_callers() avg: {get_callers_time * 1_000_000:.2f}μs (1000 iterations)")
 

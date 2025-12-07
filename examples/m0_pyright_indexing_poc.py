@@ -30,11 +30,11 @@ from typing import List, Dict, Optional
 
 class User:
     \"\"\"User model.\"\"\"
-    
+
     def __init__(self, name: str, age: int):
         self.name = name
         self.age = age
-    
+
     def greet(self) -> str:
         return f"Hello, I'm {self.name}!"
 

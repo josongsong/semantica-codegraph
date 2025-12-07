@@ -47,6 +47,134 @@ class Symbol:
 
 
 @dataclass
+class UnifiedSymbol:
+    """
+    언어 중립적 symbol 표현 (SCIP 완전 호환)
+
+    SCIP Format:
+    scip-typescript npm package 1.0.0 src/`foo.ts`/`bar`().
+    │    │          │   │       │     │   │       │    │ │
+    │    │          │   │       │     │   │       │    │╰── Suffix
+    │    │          │   │       │     │   │       │    ╰──── Signature
+    │    │          │   │       │     │   │       ╰─────────  Symbol
+    │    │          │   │       │     │   ╰─────────────────  File
+    │    │          │   │       │     ╰─────────────────────  Root
+    │    │          │   │       ╰───────────────────────────  Version
+    │    │          │   ╰───────────────────────────────────  Name
+    │    │          ╰───────────────────────────────────────  Manager
+    │    ╰──────────────────────────────────────────────────  Scheme
+    """
+
+    # Core Identity (SCIP required)
+    scheme: str  # "python", "java", "typescript"
+    manager: str  # "pypi", "maven", "npm"
+    package: str  # Package name
+    version: str  # Package version
+
+    # Path (SCIP required)
+    root: str  # Project root or package root
+    file_path: str  # Relative file path
+
+    # Symbol (SCIP required)
+    descriptor: str  # Symbol descriptor (class#, method()., etc.)
+
+    # Language-specific (backward compat)
+    language_fqn: str  # 원본 FQN
+    language_kind: str  # 원본 kind
+
+    # Resolved Info
+    signature: str | None = None  # Canonical signature
+    type_info: str | None = None  # Type information
+    generic_params: list[str] | None = None  # Generic parameters
+
+    # Location
+    start_line: int | None = None
+    end_line: int | None = None
+    start_column: int | None = None
+    end_column: int | None = None
+
+    def to_scip_descriptor(self) -> str:
+        """
+        완전한 SCIP descriptor 생성
+
+        Examples:
+            scip-python pypi requests 2.31.0 /`__init__.py`/`get`().
+            scip-java maven com.example 1.0.0 src/`Main.java`/`MyClass#`
+            scip-typescript npm @types/node 18.0.0 /`fs.d.ts`/`readFile`().
+        """
+        parts = [
+            f"scip-{self.scheme}",
+            self.manager,
+            self.package,
+            self.version,
+            self.root,
+            f"`{self.file_path}`",
+            f"`{self.descriptor}`",
+        ]
+        return " ".join(parts)
+
+    def matches(self, other: "UnifiedSymbol") -> bool:
+        """
+        Cross-language matching
+
+        Same descriptor + compatible types
+        """
+        if self.descriptor != other.descriptor:
+            return False
+
+        # Generic-aware matching
+        if self.generic_params and other.generic_params:
+            return self._match_generics(other)
+
+        return True
+
+    def _match_generics(self, other: "UnifiedSymbol") -> bool:
+        """Generic parameter matching"""
+        if not self.generic_params or not other.generic_params:
+            return False
+
+        # Same number of parameters
+        if len(self.generic_params) != len(other.generic_params):
+            return False
+
+        # TODO: Type compatibility check
+        return True
+
+    @classmethod
+    def from_simple(
+        cls,
+        scheme: str,
+        package: str,
+        descriptor: str,
+        language_fqn: str,
+        language_kind: str,
+        version: str = "unknown",
+        file_path: str = "",
+    ) -> "UnifiedSymbol":
+        """
+        Simplified constructor (backward compat)
+        """
+        manager_map = {
+            "python": "pypi",
+            "java": "maven",
+            "typescript": "npm",
+            "javascript": "npm",
+        }
+
+        return cls(
+            scheme=scheme,
+            manager=manager_map.get(scheme, "unknown"),
+            package=package,
+            version=version,
+            root="/",
+            file_path=file_path,
+            descriptor=descriptor,
+            language_fqn=language_fqn,
+            language_kind=language_kind,
+        )
+
+
+@dataclass
 class Reference:
     """참조"""
 

@@ -9,10 +9,12 @@ Performance Optimization:
 - Single network round-trip per batch instead of per-item
 - CREATE mode for fresh data (faster than MERGE)
 - Concurrent edge batch execution by relationship type
+- 🔥 SOTA: Real database transaction support
 """
 
 import json
 from collections import defaultdict
+from contextlib import contextmanager
 from dataclasses import asdict, is_dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -33,6 +35,243 @@ DEFAULT_DELETE_BATCH_SIZE = 3000  # Proportionally increased
 
 # Mode types
 InsertMode = Literal["create", "merge", "upsert"]
+
+
+# ============================================================
+# 🔥 SOTA: Real Memgraph Transaction Implementation
+# ============================================================
+
+
+class MemgraphTransaction:
+    """
+    Real Memgraph transaction implementation (NOT a mock).
+
+    Uses neo4j driver's Transaction API for atomic operations.
+    Ensures ACID guarantees for graph updates.
+    """
+
+    def __init__(self, tx: "Transaction"):
+        """
+        Initialize with a neo4j Transaction.
+
+        Args:
+            tx: neo4j Transaction object from session.begin_transaction()
+        """
+        self._tx = tx
+        self._committed = False
+        self._rolled_back = False
+
+    def commit(self) -> None:
+        """Commit the transaction."""
+        if self._rolled_back:
+            raise RuntimeError("Cannot commit after rollback")
+        if not self._committed:
+            self._tx.commit()
+            self._committed = True
+            logger.debug("memgraph_transaction_committed")
+
+    def rollback(self) -> None:
+        """Rollback the transaction."""
+        if self._committed:
+            raise RuntimeError("Cannot rollback after commit")
+        if not self._rolled_back:
+            self._tx.rollback()
+            self._rolled_back = True
+            logger.warning("memgraph_transaction_rolled_back")
+
+    def delete_outbound_edges_by_file_paths(self, repo_id: str, file_paths: list[str]) -> int:
+        """
+        Delete outbound edges from nodes in specified files.
+
+        Args:
+            repo_id: Repository ID
+            file_paths: List of file paths
+
+        Returns:
+            Number of edges deleted
+        """
+        if not file_paths:
+            return 0
+
+        query = """
+        UNWIND $file_paths AS file_path
+        MATCH (n:GraphNode {repo_id: $repo_id})
+        WHERE n.path = file_path
+        MATCH (n)-[r]->()
+        DELETE r
+        RETURN count(r) as deleted_count
+        """
+
+        result = self._tx.run(query, repo_id=repo_id, file_paths=file_paths)
+        record = result.single()
+        deleted_count = record["deleted_count"] if record else 0
+
+        logger.info(
+            "memgraph_tx_deleted_outbound_edges",
+            repo_id=repo_id,
+            file_count=len(file_paths),
+            deleted_edges=deleted_count,
+        )
+
+        return deleted_count
+
+    def upsert_nodes(self, repo_id: str, nodes: list[Any]) -> int:
+        """
+        Upsert nodes (MERGE + SET).
+
+        Args:
+            repo_id: Repository ID
+            nodes: List of GraphNode objects
+
+        Returns:
+            Number of nodes upserted
+        """
+        if not nodes:
+            return 0
+
+        batch_data = []
+        for node in nodes:
+            attrs_json = _serialize_to_json(node.attrs) if node.attrs else "{}"
+            batch_data.append(
+                {
+                    "node_id": node.id,
+                    "repo_id": node.repo_id,
+                    "lang": node.attrs.get("language", "") if node.attrs else "",
+                    "kind": node.kind.value if hasattr(node.kind, "value") else str(node.kind),
+                    "fqn": node.fqn,
+                    "name": node.name,
+                    "path": node.path or "",
+                    "snapshot_id": node.snapshot_id,
+                    "span_start_line": node.span.start_line if node.span else None,
+                    "span_end_line": node.span.end_line if node.span else None,
+                    "attrs": attrs_json,
+                }
+            )
+
+        query = """
+        UNWIND $batch AS item
+        MERGE (n:GraphNode {node_id: item.node_id})
+        SET n.repo_id = item.repo_id,
+            n.lang = item.lang,
+            n.kind = item.kind,
+            n.fqn = item.fqn,
+            n.name = item.name,
+            n.path = item.path,
+            n.snapshot_id = item.snapshot_id,
+            n.span_start_line = item.span_start_line,
+            n.span_end_line = item.span_end_line,
+            n.attrs = item.attrs
+        """
+
+        self._tx.run(query, batch=batch_data)
+
+        logger.info(
+            "memgraph_tx_upserted_nodes",
+            repo_id=repo_id,
+            node_count=len(nodes),
+        )
+
+        return len(nodes)
+
+    def upsert_edges(self, repo_id: str, edges: list[Any]) -> int:
+        """
+        🔥 NEW: Upsert edges (MERGE + SET).
+
+        Args:
+            repo_id: Repository ID
+            edges: List of GraphEdge objects
+
+        Returns:
+            Number of edges upserted
+        """
+        if not edges:
+            return 0
+
+        # Group edges by relationship type for optimized queries
+        edges_by_type: dict[str, list[Any]] = {}
+        for edge in edges:
+            rel_type = edge.relationship_type or "UNKNOWN"
+            if rel_type not in edges_by_type:
+                edges_by_type[rel_type] = []
+            edges_by_type[rel_type].append(edge)
+
+        total_upserted = 0
+
+        # Process each relationship type
+        for rel_type, edge_list in edges_by_type.items():
+            batch_data = []
+            for edge in edge_list:
+                attrs_json = _serialize_to_json(edge.attrs) if edge.attrs else "{}"
+                batch_data.append(
+                    {
+                        "source_id": edge.source_id,
+                        "target_id": edge.target_id,
+                        "attrs": attrs_json,
+                    }
+                )
+
+            # MERGE creates edge if not exists, else updates attrs
+            query = f"""
+            UNWIND $batch AS item
+            MATCH (source:GraphNode {{node_id: item.source_id}})
+            MATCH (target:GraphNode {{node_id: item.target_id}})
+            MERGE (source)-[r:{rel_type}]->(target)
+            SET r.attrs = item.attrs
+            """
+
+            self._tx.run(query, batch=batch_data)
+            total_upserted += len(edge_list)
+
+            logger.debug(
+                "memgraph_tx_upserted_edges_by_type",
+                repo_id=repo_id,
+                rel_type=rel_type,
+                edge_count=len(edge_list),
+            )
+
+        logger.info(
+            "memgraph_tx_upserted_edges",
+            repo_id=repo_id,
+            edge_count=total_upserted,
+            relationship_types=len(edges_by_type),
+        )
+
+        return total_upserted
+
+    def delete_nodes_for_deleted_files(self, repo_id: str, file_paths: list[str]) -> int:
+        """
+        Delete nodes for deleted files.
+
+        Args:
+            repo_id: Repository ID
+            file_paths: List of deleted file paths
+
+        Returns:
+            Number of nodes deleted
+        """
+        if not file_paths:
+            return 0
+
+        query = """
+        UNWIND $file_paths AS file_path
+        MATCH (n:GraphNode {repo_id: $repo_id})
+        WHERE n.path = file_path
+        DETACH DELETE n
+        RETURN count(n) as deleted_count
+        """
+
+        result = self._tx.run(query, repo_id=repo_id, file_paths=file_paths)
+        record = result.single()
+        deleted_count = record["deleted_count"] if record else 0
+
+        logger.info(
+            "memgraph_tx_deleted_nodes",
+            repo_id=repo_id,
+            file_count=len(file_paths),
+            deleted_nodes=deleted_count,
+        )
+
+        return deleted_count
 
 
 def _serialize_to_json(obj: Any) -> str:
@@ -58,11 +297,18 @@ class MemgraphGraphStore:
     - UNWIND-based batch insertions (10-100x faster)
     - Configurable batch sizes
     - Edge grouping by relationship type for optimal Cypher queries
+    - 🔥 SOTA: Real transaction support for atomic operations
 
     Usage:
         store = MemgraphGraphStore("bolt://localhost:7687")
         store.save_graph(graph_doc)
         nodes = store.query_called_by("function_id")
+
+        # 🔥 SOTA: Transaction usage
+        async with store.transaction() as tx:
+            await tx.delete_outbound_edges_by_file_paths(repo_id, files)
+            await tx.upsert_nodes(repo_id, nodes)
+            await tx.commit()
     """
 
     def __init__(
@@ -96,6 +342,47 @@ class MemgraphGraphStore:
         self.delete_batch_size = delete_batch_size
         self._driver = GraphDatabase.driver(uri, auth=(username, password))
         MemgraphSchema.initialize(self._driver)
+
+    # ============================================================
+    # 🔥 SOTA: Transaction Support
+    # ============================================================
+
+    @contextmanager
+    def transaction(self) -> "MemgraphTransaction":
+        """
+        Create a real database transaction (NOT a mock).
+
+        Provides ACID guarantees for graph operations.
+
+        Usage:
+            with store.transaction() as tx:
+                tx.delete_outbound_edges_by_file_paths(repo_id, files)
+                tx.upsert_nodes(repo_id, nodes)
+                tx.commit()
+
+        Yields:
+            MemgraphTransaction with real DB transaction
+        """
+        session = self._driver.session()
+        tx = session.begin_transaction()
+        memgraph_tx = MemgraphTransaction(tx)
+
+        try:
+            yield memgraph_tx
+            # Auto-commit if not explicitly committed/rolled back
+            if not memgraph_tx._committed and not memgraph_tx._rolled_back:
+                tx.commit()
+                memgraph_tx._committed = True
+                logger.debug("memgraph_transaction_auto_committed")
+        except Exception as e:
+            # Auto-rollback on exception
+            if not memgraph_tx._rolled_back:
+                tx.rollback()
+                memgraph_tx._rolled_back = True
+                logger.error(f"memgraph_transaction_auto_rolled_back: {e}")
+            raise
+        finally:
+            session.close()
 
     def save_graph(
         self,

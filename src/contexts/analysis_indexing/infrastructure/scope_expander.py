@@ -31,6 +31,7 @@ class ScopeExpander:
         mode: IndexingMode,
         repo_id: str,
         total_files: int | None = None,
+        impact_result: "ImpactResult | None" = None,
     ) -> set[str]:
         """
         모드별 처리 범위 확장.
@@ -40,10 +41,26 @@ class ScopeExpander:
             mode: 인덱싱 모드
             repo_id: 레포지토리 ID
             total_files: 전체 파일 개수 (Deep subset 계산용)
+            impact_result: 영향도 분석 결과 (SIGNATURE_CHANGED 자동 escalation용)
 
         Returns:
             처리할 파일 경로 집합
         """
+        # 🔥 SOTA: SIGNATURE_CHANGED 감지 시 자동으로 DEEP 모드로 escalate
+        if impact_result and self._has_signature_changes(impact_result):
+            if mode in (IndexingMode.FAST, IndexingMode.BALANCED):
+                logger.warning(
+                    "signature_change_detected_auto_escalating_to_deep",
+                    original_mode=mode.value,
+                    changed_symbols=[
+                        s.fqn for s in impact_result.changed_symbols if s.change_type.value == "signature_changed"
+                    ][:5],  # Log first 5
+                    total_signature_changes=sum(
+                        1 for s in impact_result.changed_symbols if s.change_type.value == "signature_changed"
+                    ),
+                )
+                mode = IndexingMode.DEEP  # 자동 escalation for transitive invalidation
+
         if mode == IndexingMode.FAST:
             # Fast: 변경 파일만
             return change_set.all_changed
@@ -58,7 +75,22 @@ class ScopeExpander:
             )
 
         elif mode == IndexingMode.DEEP:
-            # Deep: subset 모드인지 전체인지에 따라
+            # 🔥 SOTA: DEEP 모드에서 impact_result의 transitive_affected 활용
+            if impact_result and (impact_result.direct_affected or impact_result.transitive_affected):
+                # Impact-based expansion: 변경 + direct + transitive
+                result = set(change_set.all_changed)
+                result.update(impact_result.affected_files)
+
+                logger.info(
+                    "deep_mode_with_impact_expansion",
+                    changed=len(change_set.all_changed),
+                    direct_affected=len(impact_result.direct_affected),
+                    transitive_affected=len(impact_result.transitive_affected),
+                    total_files=len(result),
+                )
+                return result
+
+            # Fallback: subset 모드인지 전체인지에 따라
             if total_files:
                 max_files = min(
                     ModeScopeLimit.DEEP_SUBSET_MAX_FILES,
@@ -85,6 +117,21 @@ class ScopeExpander:
         else:
             logger.warning(f"Unknown mode: {mode}, defaulting to changed files only")
             return change_set.all_changed
+
+    def _has_signature_changes(self, impact_result: "ImpactResult") -> bool:
+        """
+        Check if any symbol has SIGNATURE_CHANGED (breaking change).
+
+        Args:
+            impact_result: Impact analysis result
+
+        Returns:
+            True if signature changes detected
+        """
+        if not impact_result or not impact_result.changed_symbols:
+            return False
+
+        return any(s.change_type.value == "signature_changed" for s in impact_result.changed_symbols)
 
     async def _expand_to_neighbors(
         self,

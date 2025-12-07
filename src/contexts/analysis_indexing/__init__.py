@@ -1,12 +1,20 @@
 """
 Analysis Indexing Bounded Context
 
-인덱싱 오케스트레이션, 모드 관리, 변경 감지
+헥사고날 아키텍처 기반 인덱싱 시스템
+
+레이어 구조:
+- domain/: 도메인 모델과 포트 인터페이스
+- usecase/: 비즈니스 로직 (포트에만 의존)
+- infrastructure/: 실제 구현체 (어댑터)
+- di.py: 의존성 주입 컨테이너
 """
 
-from .domain import (
-    FileHash,
-    IndexingMetadata,
+from .di import AnalysisIndexingContainer, analysis_indexing_container
+from .domain.models import (
+    FileIndexingResult,
+    FileToIndex,
+    IndexingJob,
     IndexingMode,
     IndexingResult,
     IndexingStatus,
@@ -15,7 +23,10 @@ from .domain import (
 __all__ = [
     "IndexingMode",
     "IndexingStatus",
-    "IndexingMetadata",
+    "FileToIndex",
+    "IndexingJob",
     "IndexingResult",
-    "FileHash",
+    "FileIndexingResult",
+    "AnalysisIndexingContainer",
+    "analysis_indexing_container",
 ]

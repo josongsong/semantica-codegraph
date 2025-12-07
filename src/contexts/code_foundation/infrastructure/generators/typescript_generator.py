@@ -63,6 +63,59 @@ class TypeScriptIRGenerator(IRGenerator):
 
         self._timings: dict[str, float] = {}
 
+    def _create_unified_symbol(self, node, source: SourceFile) -> "UnifiedSymbol":
+        """
+        Convert IR Node to UnifiedSymbol (SCIP-compatible)
+
+        Args:
+            node: IR Node (Class, Method, Function, etc.)
+            source: Source file
+
+        Returns:
+            UnifiedSymbol with full SCIP descriptor
+        """
+        from src.contexts.code_foundation.domain.models import UnifiedSymbol
+        from src.contexts.code_foundation.infrastructure.version_detector import VersionDetector
+        from pathlib import Path
+
+        # Extract FQN
+        fqn = node.attrs.get("fqn", node.name)
+
+        # Create SCIP descriptor suffix
+        descriptor = fqn
+        if node.kind.value in ["Function", "Method", "ArrowFunction"]:
+            descriptor += "()."
+        elif node.kind.value in ["Class", "Interface"]:
+            descriptor += "#"
+        elif node.kind.value == "Enum":
+            descriptor += "#"
+        else:
+            descriptor += "."
+
+        # Extract package name from file path or use module FQN
+        module_fqn = self._get_module_fqn(source.file_path)
+        package_name = module_fqn.split(".")[0] if module_fqn else "default"
+
+        # Detect version
+        try:
+            project_root = str(Path(source.file_path).parent.absolute())
+            detector = VersionDetector(project_root)
+            version = detector.detect_version("typescript", package_name)
+        except Exception:
+            version = "unknown"
+
+        return UnifiedSymbol(
+            scheme="typescript",
+            manager="npm",
+            package=package_name,
+            version=version,
+            root="/",
+            file_path=source.file_path,
+            descriptor=descriptor,
+            language_fqn=fqn,
+            language_kind=node.kind.value,
+        )
+
     def generate(
         self,
         source: SourceFile,
@@ -127,12 +180,26 @@ class TypeScriptIRGenerator(IRGenerator):
             f"{len(self._edges)} edges in {self._timings['total_ms']:.1f}ms"
         )
 
+        # Generate UnifiedSymbols for cross-language resolution
+        unified_symbols = []
+        for node in self._nodes:
+            # Only create UnifiedSymbols for definitions
+            if node.kind.value in ["Class", "Function", "Method", "Interface", "Enum", "ArrowFunction"]:
+                try:
+                    unified = self._create_unified_symbol(node, source)
+                    unified_symbols.append(unified)
+                except Exception as e:
+                    # Skip if conversion fails
+                    logger.debug(f"Failed to create UnifiedSymbol for {node.name}: {e}")
+                    pass
+
         return IRDocument(
             repo_id=self.repo_id,
             snapshot_id=snapshot_id,
             schema_version="4.1.0",
             nodes=self._nodes,
             edges=self._edges,
+            unified_symbols=unified_symbols,
             meta={
                 "file_path": source.file_path,
                 "language": "typescript",

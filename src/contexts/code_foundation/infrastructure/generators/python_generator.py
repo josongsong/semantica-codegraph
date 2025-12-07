@@ -21,8 +21,6 @@ from src.contexts.code_foundation.infrastructure.generators.python import (
     PythonSignatureBuilder,
     PythonVariableAnalyzer,
 )
-from src.contexts.code_foundation.infrastructure.generators.python.dataflow_analyzer import DataflowAnalyzer
-from src.contexts.code_foundation.infrastructure.generators.python.exception_analyzer import ExceptionAnalyzer
 from src.contexts.code_foundation.infrastructure.generators.python.analyzers import (
     ClassAnalyzer,
     FunctionAnalyzer,
@@ -30,6 +28,8 @@ from src.contexts.code_foundation.infrastructure.generators.python.analyzers imp
     ModuleAnalyzer,
 )
 from src.contexts.code_foundation.infrastructure.generators.python.builders.edge_builder import EdgeBuilder
+from src.contexts.code_foundation.infrastructure.generators.python.dataflow_analyzer import DataflowAnalyzer
+from src.contexts.code_foundation.infrastructure.generators.python.exception_analyzer import ExceptionAnalyzer
 from src.contexts.code_foundation.infrastructure.generators.python.override_analyzer import analyze_method_overrides
 from src.contexts.code_foundation.infrastructure.generators.scope_stack import ScopeStack
 from src.contexts.code_foundation.infrastructure.ir.id_strategy import (
@@ -269,6 +269,22 @@ class PythonIRGenerator(IRGenerator):
         measured_time = self._timings["function_process_ms"] + self._timings["class_process_ms"]
         self._timings["other_ms"] = max(0.0, gen_time - measured_time)
 
+        # Generate UnifiedSymbols for cross-language resolution
+        unified_symbols = []
+        for node in self._nodes:
+            # Only create UnifiedSymbols for definitions
+            if node.kind.value in ["Class", "Function", "Method"]:
+                try:
+                    unified = self._create_unified_symbol(node, source)
+                    unified_symbols.append(unified)
+                except Exception as e:
+                    # Debug: print exception
+                    print(f"Failed to create UnifiedSymbol for {node.name}: {e}")
+                    import traceback
+
+                    traceback.print_exc()
+                    pass
+
         # Build IR document
         doc = IRDocument(
             repo_id=self.repo_id,
@@ -278,6 +294,7 @@ class PythonIRGenerator(IRGenerator):
             edges=self._edges,
             types=list(self._types.values()),
             signatures=list(self._signatures.values()),
+            unified_symbols=unified_symbols,  # ⭐ NEW
             meta={
                 "file_path": source.file_path,
                 "language": source.language,
@@ -746,6 +763,64 @@ class PythonIRGenerator(IRGenerator):
             fqn = fqn[:-9]
 
         return fqn
+
+    def _create_unified_symbol(self, node: Node, source: SourceFile) -> "UnifiedSymbol":
+        """
+        Convert Node → UnifiedSymbol (SCIP-compatible)
+
+        Args:
+            node: IR Node
+            source: Source file
+
+        Returns:
+            UnifiedSymbol for cross-language resolution
+        """
+        from src.contexts.code_foundation.domain.models import UnifiedSymbol
+        from src.contexts.code_foundation.infrastructure.version_detector import VersionDetector
+        from pathlib import Path
+
+        # Extract package from module FQN
+        # e.g., "myproject.utils.helpers" → package="myproject"
+        module_fqn = self._get_module_fqn(source.file_path)
+        package = module_fqn.split(".")[0] if "." in module_fqn else module_fqn
+
+        # Get relative file path
+        rel_path = source.file_path  # Use as-is for now
+
+        # Create descriptor from node FQN
+        # e.g., "MyClass.my_method" → "MyClass.my_method()."
+        descriptor = node.attrs.get("fqn", node.name)
+        if node.kind.value == "Function" or node.kind.value == "Method":
+            descriptor += "()."
+        elif node.kind.value == "Class":
+            descriptor += "#"
+        else:
+            descriptor += "."
+
+        # Extract generic parameters if available
+        generic_params = None
+        type_params = node.attrs.get("type_parameters")
+        if type_params:
+            generic_params = type_params if isinstance(type_params, list) else [type_params]
+
+        # Detect version from project files
+        # Use parent directory of source file as project root
+        try:
+            project_root = str(Path(source.file_path).parent.absolute())
+            detector = VersionDetector(project_root)
+            version = detector.detect_version("python", package)
+        except Exception:
+            version = "unknown"
+
+        return UnifiedSymbol.from_simple(
+            scheme="python",
+            package=package,
+            descriptor=descriptor,
+            language_fqn=node.attrs.get("fqn", node.name),
+            language_kind=node.kind.value,
+            version=version,
+            file_path=rel_path,
+        )
 
     def _is_test_file(self, file_path: str) -> bool:
         """Check if file is a test file"""

@@ -8,13 +8,11 @@ This is the CRITICAL feature that improves IDE/Agent accuracy by 30-50%.
 """
 
 import asyncio
-from pathlib import Path
 
 from src.contexts.analysis_indexing.infrastructure.overlay import (
-    OverlayIRBuilder,
-    GraphMerger,
     ConflictResolver,
-    OverlayConfig,
+    GraphMerger,
+    OverlayIRBuilder,
 )
 
 
@@ -82,8 +80,8 @@ def calculate(x: int, y: int, z: int) -> int:
     # Check updated signature
     updated_symbol = merged.symbol_index.get("src.utils.calculate")
     print(f"\n📝 Updated signature: {updated_symbol['signature']}")
-    print(f"   (Base had: (x: int, y: int) -> int)")
-    print(f"   (Overlay has: (x: int, y: int, z: int) -> int)")
+    print("   (Base had: (x: int, y: int) -> int)")
+    print("   (Overlay has: (x: int, y: int, z: int) -> int)")
 
 
 async def example_breaking_change_detection():
@@ -190,7 +188,7 @@ def bar():
     }
 
     print(f"\n📍 LSP Request: {lsp_request['method']}")
-    print(f"   File: src/main.py")
+    print("   File: src/main.py")
     print(f"   Position: Line {lsp_request['params']['position']['line']}")
 
     # Build overlay
@@ -213,11 +211,11 @@ def bar():
     # Resolve "foo" from overlay
     foo_symbol = merged.symbol_index.get("src.main.foo")
 
-    print(f"\n✅ Definition found (from overlay):")
+    print("\n✅ Definition found (from overlay):")
     print(f"   Symbol: {foo_symbol['name']}")
     print(f"   Signature: {foo_symbol['signature']}")
     print(f"   Location: {foo_symbol['file']}:{foo_symbol['range']['start']['line']}")
-    print(f"\n   👉 This is the UNCOMMITTED version!")
+    print("\n   👉 This is the UNCOMMITTED version!")
 
 
 async def example_agent_usage():
@@ -281,13 +279,13 @@ def handle_stream():  # NEW caller (uncommitted)
     # Find callers in merged graph
     callers = [caller for caller, callee in merged.call_graph_edges if callee == "src.utils.process_data"]
 
-    print(f"\n✅ Callers found (including uncommitted):")
+    print("\n✅ Callers found (including uncommitted):")
     for caller in callers:
         is_new = "(NEW - uncommitted)" if "stream" in caller else ""
         print(f"   - {caller} {is_new}")
 
-    print(f"\n   📈 Base had 2 callers, overlay has 3 (33% increase)")
-    print(f"   👉 Agent sees the REAL current state!")
+    print("\n   📈 Base had 2 callers, overlay has 3 (33% increase)")
+    print("   👉 Agent sees the REAL current state!")
 
 
 async def example_performance():
@@ -309,7 +307,7 @@ async def example_performance():
 
     start = time.perf_counter()
 
-    overlay = await builder.build_overlay(
+    await builder.build_overlay(
         base_snapshot_id="base_v1",
         repo_id="my_repo",
         uncommitted_files=uncommitted_files,
@@ -318,7 +316,7 @@ async def example_performance():
 
     elapsed_ms = (time.perf_counter() - start) * 1000
 
-    print(f"\n⚡ Performance:")
+    print("\n⚡ Performance:")
     print(f"   Files: {len(uncommitted_files)}")
     print(f"   Time: {elapsed_ms:.2f}ms")
     print(f"   Per file: {elapsed_ms / len(uncommitted_files):.2f}ms")

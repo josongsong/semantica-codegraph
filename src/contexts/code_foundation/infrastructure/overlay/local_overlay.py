@@ -5,10 +5,8 @@ Git uncommitted changes를 IR에 반영
 """
 
 import subprocess
-from pathlib import Path
-from typing import Dict, Set, Optional, List
 from dataclasses import dataclass
-import hashlib
+from pathlib import Path
 
 
 @dataclass
@@ -17,7 +15,7 @@ class LocalChange:
 
     file_path: str
     change_type: str  # modified, added, deleted
-    content: Optional[str]
+    content: str | None
     is_staged: bool
 
 
@@ -33,9 +31,9 @@ class LocalOverlay:
 
     def __init__(self, repo_root: Path):
         self.repo_root = repo_root
-        self._changes_cache: Dict[str, LocalChange] = {}
+        self._changes_cache: dict[str, LocalChange] = {}
 
-    def detect_local_changes(self) -> Dict[str, LocalChange]:
+    def detect_local_changes(self) -> dict[str, LocalChange]:
         """
         Git으로 uncommitted 변경 감지
 
@@ -86,14 +84,14 @@ class LocalOverlay:
                         is_staged=is_staged,
                     )
 
-        except Exception as e:
+        except Exception:
             # Fallback: 모든 파일을 uncommitted로 간주
             pass
 
         self._changes_cache = changes
         return changes
 
-    def get_file_content(self, file_path: str) -> Optional[str]:
+    def get_file_content(self, file_path: str) -> str | None:
         """
         파일 내용 가져오기 (local overlay 우선)
 
@@ -116,7 +114,7 @@ class LocalOverlay:
 
         return None
 
-    def get_all_files(self, include_uncommitted: bool = True) -> Set[str]:
+    def get_all_files(self, include_uncommitted: bool = True) -> set[str]:
         """
         모든 파일 목록 (committed + uncommitted)
 
@@ -142,7 +140,7 @@ class LocalOverlay:
                 for line in result.stdout.strip().split("\n"):
                     if line:
                         files.add(str(self.repo_root / line))
-        except:
+        except Exception:  # noqa: S110
             # Fallback: scan directory
             for py_file in self.repo_root.rglob("*.py"):
                 files.add(str(py_file))

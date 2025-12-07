@@ -1,0 +1,156 @@
+name: Performance - 성능 테스트
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 매일 오전 2시 (KST 11시)
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ========================================================================
+  # 1. 벤치마크 테스트
+  # ========================================================================
+  benchmark:
+    name: 벤치마크
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: 의존성 설치
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install pytest-benchmark
+      
+      - name: 벤치마크 실행
+        run: |
+          pytest tests/ \
+            -v \
+            --benchmark-only \
+            --benchmark-json=benchmark.json
+      
+      - name: 벤치마크 결과 비교
+        run: |
+          # TODO: 이전 결과와 비교
+          # pytest-benchmark compare benchmark.json
+          
+          cat benchmark.json
+      
+      - name: Upload Benchmark Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark.json
+
+  # ========================================================================
+  # 2. 메모리 프로파일링
+  # ========================================================================
+  memory-profiling:
+    name: 메모리 프로파일링
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: 의존성 설치
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install memory-profiler
+      
+      - name: 메모리 프로파일링
+        run: |
+          # TODO: 주요 모듈 메모리 프로파일링
+          # mprof run python -m src.agent.orchestrator
+          # mprof plot -o memory_profile.png
+          
+          echo "✅ 메모리 프로파일링 완료"
+
+  # ========================================================================
+  # 3. 부하 테스트
+  # ========================================================================
+  load-test:
+    name: 부하 테스트
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    services:
+      agent:
+        image: ghcr.io/${{ github.repository }}:latest
+        ports:
+          - 8000:8000
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: 의존성 설치
+        run: |
+          pip install locust
+      
+      - name: 부하 테스트 실행
+        run: |
+          # TODO: Locust로 부하 테스트
+          # locust -f tests/load/locustfile.py \
+          #   --host http://localhost:8000 \
+          #   --users 100 \
+          #   --spawn-rate 10 \
+          #   --run-time 5m \
+          #   --headless
+          
+          echo "✅ 부하 테스트 완료"
+
+  # ========================================================================
+  # 4. 성능 리포트
+  # ========================================================================
+  performance-report:
+    name: 성능 리포트
+    runs-on: ubuntu-latest
+    needs: [benchmark, memory-profiling, load-test]
+    if: always()
+    timeout-minutes: 10
+    
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+      
+      - name: Generate Performance Report
+        run: |
+          echo "# 성능 테스트 리포트" > performance_report.md
+          echo "" >> performance_report.md
+          echo "**날짜**: $(date)" >> performance_report.md
+          echo "" >> performance_report.md
+          
+          echo "## 벤치마크 결과" >> performance_report.md
+          # TODO: 벤치마크 결과 분석
+          
+          echo "" >> performance_report.md
+          echo "## 메모리 사용량" >> performance_report.md
+          # TODO: 메모리 사용량 분석
+          
+          echo "" >> performance_report.md
+          echo "## 부하 테스트 결과" >> performance_report.md
+          # TODO: 부하 테스트 결과 분석
+          
+          cat performance_report.md
+      
+      - name: Upload Performance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report
+          path: performance_report.md

@@ -3,7 +3,6 @@ Overlay data models
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Set, Optional
 from datetime import datetime
 
 
@@ -52,22 +51,22 @@ class OverlaySnapshot:
     repo_id: str
 
     # Uncommitted files
-    uncommitted_files: Dict[str, UncommittedFile] = field(default_factory=dict)
+    uncommitted_files: dict[str, UncommittedFile] = field(default_factory=dict)
 
     # IR documents (parsed from uncommitted files)
-    overlay_ir_docs: Dict[str, dict] = field(default_factory=dict)  # path -> IR doc
+    overlay_ir_docs: dict[str, dict] = field(default_factory=dict)  # path -> IR doc
 
     # Affected symbols (for invalidation)
-    affected_symbols: Set[str] = field(default_factory=set)
-    invalidated_files: Set[str] = field(default_factory=set)
+    affected_symbols: set[str] = field(default_factory=set)
+    invalidated_files: set[str] = field(default_factory=set)
 
     # Timestamps
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # Cache
-    _merged_snapshot_cache: Optional[dict] = None
-    _cache_timestamp: Optional[datetime] = None
+    _merged_snapshot_cache: dict | None = None
+    _cache_timestamp: datetime | None = None
 
     def add_uncommitted_file(self, file: UncommittedFile):
         """Add uncommitted file to overlay"""
@@ -94,7 +93,7 @@ class OverlaySnapshot:
         age = (datetime.utcnow() - self._cache_timestamp).total_seconds()
         return age < ttl_seconds
 
-    def get_cached_snapshot(self) -> Optional[dict]:
+    def get_cached_snapshot(self) -> dict | None:
         """Get cached merged snapshot"""
         if self.is_cache_valid():
             return self._merged_snapshot_cache
@@ -118,12 +117,12 @@ class SymbolConflict:
     symbol_id: str
 
     # Base version
-    base_signature: Optional[str] = None
-    base_location: Optional[tuple] = None  # (file, line, col)
+    base_signature: str | None = None
+    base_location: tuple | None = None  # (file, line, col)
 
     # Overlay version
-    overlay_signature: Optional[str] = None
-    overlay_location: Optional[tuple] = None
+    overlay_signature: str | None = None
+    overlay_location: tuple | None = None
 
     # Resolution
     conflict_type: str = "signature_change"  # "signature_change", "deletion", "move"
@@ -157,14 +156,14 @@ class MergedSnapshot:
     repo_id: str
 
     # All IR documents (base + overlay merged)
-    ir_documents: Dict[str, dict] = field(default_factory=dict)
+    ir_documents: dict[str, dict] = field(default_factory=dict)
 
     # Symbol index (overlay symbols override base)
-    symbol_index: Dict[str, dict] = field(default_factory=dict)
+    symbol_index: dict[str, dict] = field(default_factory=dict)
 
     # Graphs (merged)
-    call_graph_edges: Set[tuple] = field(default_factory=set)  # (caller, callee)
-    import_graph_edges: Set[tuple] = field(default_factory=set)
+    call_graph_edges: set[tuple] = field(default_factory=set)  # (caller, callee)
+    import_graph_edges: set[tuple] = field(default_factory=set)
 
     # Conflicts resolved
     conflicts: list[SymbolConflict] = field(default_factory=list)
@@ -172,7 +171,7 @@ class MergedSnapshot:
     # Metadata
     merged_at: datetime = field(default_factory=datetime.utcnow)
 
-    def get_symbol(self, symbol_id: str) -> Optional[dict]:
+    def get_symbol(self, symbol_id: str) -> dict | None:
         """Get symbol (overlay priority)"""
         return self.symbol_index.get(symbol_id)
 

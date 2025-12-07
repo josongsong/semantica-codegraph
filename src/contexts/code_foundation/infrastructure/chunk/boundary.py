@@ -112,7 +112,16 @@ class ChunkBoundaryValidator:
             assert current_chunk.end_line is not None
 
             # Check for overlap
+            # Allow overlap for different chunk kinds (e.g., file_header + skeleton)
             if current_chunk.start_line <= prev_chunk.end_line:
+                # Allow overlap if chunks have different kinds
+                # file_header, skeleton, docstring can overlap with other chunks
+                overlapping_kinds = {"file_header", "skeleton", "docstring"}
+                if prev_chunk.kind in overlapping_kinds or current_chunk.kind in overlapping_kinds:
+                    # Allow overlap for meta chunks
+                    prev_chunk = current_chunk
+                    continue
+
                 raise BoundaryValidationError(
                     f"Chunk overlap detected:\n"
                     f"  Previous: {prev_chunk.chunk_id} "

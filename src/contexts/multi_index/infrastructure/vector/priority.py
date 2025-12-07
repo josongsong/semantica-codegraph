@@ -58,7 +58,7 @@ def get_chunk_priority(chunk: Chunk) -> int:
     # PageRank 높으면 +1
     try:
         pagerank = getattr(chunk, "pagerank", None)
-        if pagerank and isinstance(pagerank, (int, float)) and pagerank > 0.5:
+        if pagerank and isinstance(pagerank, int | float) and pagerank > 0.5:
             bonus += 1
     except Exception:
         pass
@@ -67,7 +67,7 @@ def get_chunk_priority(chunk: Chunk) -> int:
     try:
         is_test = getattr(chunk, "is_test", False)
         importance = getattr(chunk, "importance", None)
-        if not is_test and importance and isinstance(importance, (int, float)) and importance > 0.7:
+        if not is_test and importance and isinstance(importance, int | float) and importance > 0.7:
             bonus += 1
     except Exception:
         pass

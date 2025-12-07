@@ -4,7 +4,7 @@ Taint Flow Analyzer
 Source → Sink 오염 데이터 흐름 추적
 """
 
-from typing import Set, Dict, List, Optional
+import re
 from dataclasses import dataclass
 
 
@@ -31,7 +31,7 @@ class TaintPath:
 
     source: str
     sink: str
-    path: List[str]  # 중간 함수들
+    path: list[str]  # 중간 함수들
     is_sanitized: bool
 
 
@@ -70,9 +70,9 @@ class TaintAnalyzer:
 
     def __init__(
         self,
-        sources: Dict[str, TaintSource] = None,
-        sinks: Dict[str, TaintSink] = None,
-        sanitizers: Set[str] = None,
+        sources: dict[str, TaintSource] = None,
+        sinks: dict[str, TaintSink] = None,
+        sanitizers: set[str] = None,
     ):
         self.sources = sources or self.DEFAULT_SOURCES.copy()
         self.sinks = sinks or self.DEFAULT_SINKS.copy()
@@ -80,9 +80,9 @@ class TaintAnalyzer:
 
     def analyze_taint_flow(
         self,
-        call_graph: Dict[str, List[str]],
-        node_map: Dict[str, any],
-    ) -> List[TaintPath]:
+        call_graph: dict[str, list[str]],
+        node_map: dict[str, any],
+    ) -> list[TaintPath]:
         """
         Call graph에서 taint flow 분석
 
@@ -124,29 +124,43 @@ class TaintAnalyzer:
 
         return taint_paths
 
-    def _find_source_nodes(self, node_map: Dict[str, any]) -> Set[str]:
+    def _find_source_nodes(self, node_map: dict[str, any]) -> set[str]:
         """Source 함수 노드 찾기"""
         sources = set()
 
         for node_id, node in node_map.items():
-            if hasattr(node, "name"):
+            if hasattr(node, "name") and node.name:
                 for source_pattern in self.sources.keys():
-                    if source_pattern in node.name:
-                        sources.add(node_id)
-                        break
+                    # ✅ Regex matching (pattern은 regex!)
+                    try:
+                        if re.search(source_pattern, node.name):
+                            sources.add(node_id)
+                            break
+                    except re.error:
+                        # Fallback to substring matching if pattern is invalid
+                        if source_pattern in node.name:
+                            sources.add(node_id)
+                            break
 
         return sources
 
-    def _find_sink_nodes(self, node_map: Dict[str, any]) -> Set[str]:
+    def _find_sink_nodes(self, node_map: dict[str, any]) -> set[str]:
         """Sink 함수 노드 찾기"""
         sinks = set()
 
         for node_id, node in node_map.items():
-            if hasattr(node, "name"):
+            if hasattr(node, "name") and node.name:
                 for sink_pattern in self.sinks.keys():
-                    if sink_pattern in node.name:
-                        sinks.add(node_id)
-                        break
+                    # ✅ Regex matching (pattern은 regex!)
+                    try:
+                        if re.search(sink_pattern, node.name):
+                            sinks.add(node_id)
+                            break
+                    except re.error:
+                        # Fallback to substring matching if pattern is invalid
+                        if sink_pattern in node.name:
+                            sinks.add(node_id)
+                            break
 
         return sinks
 
@@ -154,10 +168,10 @@ class TaintAnalyzer:
         self,
         source_id: str,
         sink_id: str,
-        call_graph: Dict[str, List[str]],
-        node_map: Dict[str, any],
+        call_graph: dict[str, list[str]],
+        node_map: dict[str, any],
         max_depth: int = 10,
-    ) -> List[List[str]]:
+    ) -> list[list[str]]:
         """Source → Sink 경로 찾기 (BFS)"""
         if source_id == sink_id:
             return [[source_id]]
@@ -187,7 +201,7 @@ class TaintAnalyzer:
 
         return paths
 
-    def _check_sanitization(self, path: List[str], node_map: Dict[str, any]) -> bool:
+    def _check_sanitization(self, path: list[str], node_map: dict[str, any]) -> bool:
         """경로에 sanitizer가 있는지 체크"""
         for node_id in path:
             node = node_map.get(node_id)

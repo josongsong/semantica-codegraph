@@ -33,6 +33,8 @@ venv.bak/
 # IDEs
 .vscode/
 .idea/
+.claude/
+.serena/
 *.swp
 *.swo
 *~
@@ -75,3 +77,45 @@ data/
 
 # Benchmark reports
 benchmark/reports/
+benchmark_results/
+
+# Profiling
+*.stats
+*.prof
+
+# Temporary/backup files
+*.zip
+*.bak
+*.tmp
+
+# Root test/validation files
+/conftest.py
+/test_*.py
+/debug_*.py
+/restore_*.py
+/delete_*.py
+/check_*.py
+/verify_*.py
+/critical_*.py
+/comprehensive_*.py
+/final_*.py
+/*.java
+*_results.json
+*_results.txt
+
+# Root temporary docs (keep main docs only)
+/*_COMPLETE.md
+/*_STATUS.md
+/*_IMPLEMENTATION.md
+/*_VALIDATION.md
+/*_REVIEW.md
+/*_SUMMARY.md
+/*_PLAN.md
+/*_SETUP.md
+/*_INTEGRATION.md
+/BUGFIX_*.md
+/JAVA_*.md
+/DOCKER_*.md
+/LSP_*.md
+/README_V*.md
+/V*_*.md

@@ -146,11 +146,11 @@ class GlobalContext:
         - Files with many dependents ranked higher (popular modules)
         """
         # Collect all files
-        all_files = set(self.dependencies.keys()) | set(dep for deps in self.dependencies.values() for dep in deps)
+        all_files = set(self.dependencies.keys()) | {dep for deps in self.dependencies.values() for dep in deps}
         self.total_files = len(all_files)
 
         # Calculate in-degree (number of dependencies)
-        in_degree = {f: 0 for f in all_files}
+        in_degree = dict.fromkeys(all_files, 0)
         for deps in self.dependencies.values():
             for dep in deps:
                 in_degree[dep] = in_degree.get(dep, 0) + 1

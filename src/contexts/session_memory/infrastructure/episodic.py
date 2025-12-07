@@ -85,6 +85,7 @@ class EpisodicMemoryManager:
         stop_words: frozenset[str] | None = None,
         cache_size: int = 100,
         cache_ttl_seconds: int = 300,
+        scoring_engine: Any | None = None,
     ):
         """
         Initialize episodic memory manager.
@@ -95,10 +96,16 @@ class EpisodicMemoryManager:
             stop_words: Custom stop words for keyword extraction (uses DEFAULT_STOP_WORDS if not provided)
             cache_size: Maximum number of cached similarity results
             cache_ttl_seconds: Cache TTL in seconds (default 5 minutes)
+            scoring_engine: MemoryScoringEngine for 3-axis scoring (NEW)
         """
         self.storage: dict[str, Episode] = storage or {}
         self.embedder = embedder
         self.stop_words = stop_words if stop_words is not None else DEFAULT_STOP_WORDS
+
+        # SOTA: 3-axis scoring engine
+        self.scoring_engine = scoring_engine
+        if scoring_engine:
+            logger.info("episodic_memory_with_3axis_scoring_enabled")
 
         # Indices for fast lookup
         self.by_project: dict[str, list[str]] = {}
@@ -358,8 +365,53 @@ class EpisodicMemoryManager:
             episode_ids = self.by_error_type.get(query.error_type, [])
             candidates = [e for e in candidates if e.id in episode_ids]
 
-        # Vector similarity search if description provided
-        if query.description and self.embedder:
+        # SOTA: 3-axis scoring (similarity + recency + importance)
+        if self.scoring_engine and query.description and self.embedder:
+            try:
+                query_embedding = await self.embedder.embed(query.description)
+
+                # Use 3-axis scoring engine
+                scored_episodes = []
+                for episode in candidates:
+                    if episode.task_description_embedding:
+                        # Check min_similarity first (optimization)
+                        similarity = self._cosine_similarity(query_embedding, episode.task_description_embedding)
+                        if similarity >= query.min_similarity:
+                            # Calculate 3-axis score
+                            score = self.scoring_engine.score_episode(episode, query_embedding)
+                            scored_episodes.append((episode, score))
+
+                # Sort by composite score (similarity + recency + importance)
+                scored_episodes.sort(key=lambda x: x[1].composite_score, reverse=True)
+                candidates = [ep for ep, _ in scored_episodes]
+
+                logger.debug(
+                    "3axis_scoring_completed",
+                    query_len=len(query.description),
+                    candidates_after_filter=len(candidates),
+                    scoring_enabled=True,
+                )
+            except Exception as e:
+                logger.warning("3axis_scoring_failed_fallback_to_simple", error=str(e))
+                # Fallback to simple vector search
+                if query.description and self.embedder:
+                    try:
+                        query_embedding = await self.embedder.embed(query.description)
+                        candidates_with_scores: list[tuple[Episode, float]] = []
+                        for episode in candidates:
+                            if episode.task_description_embedding:
+                                similarity = self._cosine_similarity(
+                                    query_embedding, episode.task_description_embedding
+                                )
+                                if similarity >= query.min_similarity:
+                                    candidates_with_scores.append((episode, similarity))
+                        candidates_with_scores.sort(key=lambda x: x[1], reverse=True)
+                        candidates = [ep for ep, _ in candidates_with_scores]
+                    except Exception:  # noqa: S110
+                        pass  # Fall through to simple sort
+
+        # Vector similarity search if description provided (no scoring engine)
+        elif query.description and self.embedder:
             try:
                 query_embedding = await self.embedder.embed(query.description)
                 # Calculate cosine similarity and filter/sort by it
@@ -383,11 +435,12 @@ class EpisodicMemoryManager:
                 logger.warning("vector_search_failed", error=str(e))
                 # Fall back to non-vector search
 
-        # Sort by usefulness score and retrieval count
-        candidates.sort(
-            key=lambda e: e.usefulness_score * (1 + e.retrieval_count * 0.1),
-            reverse=True,
-        )
+        # Fallback: Simple sort by usefulness score and retrieval count
+        if not query.description or not self.embedder:
+            candidates.sort(
+                key=lambda e: e.usefulness_score * (1 + e.retrieval_count * 0.1),
+                reverse=True,
+            )
 
         # Limit results
         results = candidates[: query.limit]

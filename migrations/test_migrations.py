@@ -47,12 +47,14 @@ async def test_pg_trgm_extension(conn: asyncpg.Connection) -> bool:
     print("\n2. Testing pg_trgm extension...")
     try:
         # Check if extension exists
-        result = await conn.fetchval("""
+        result = await conn.fetchval(
+            """
             SELECT EXISTS (
                 SELECT FROM pg_extension
                 WHERE extname = 'pg_trgm'
             )
-        """)
+        """
+        )
 
         if result:
             print("   ✓ pg_trgm extension is installed")
@@ -71,24 +73,28 @@ async def test_fuzzy_table_exists(conn: asyncpg.Connection) -> bool:
     """Test that fuzzy_identifiers table exists."""
     print("\n3. Testing fuzzy_identifiers table...")
     try:
-        result = await conn.fetchval("""
+        result = await conn.fetchval(
+            """
             SELECT EXISTS (
                 SELECT FROM information_schema.tables
                 WHERE table_name = 'fuzzy_identifiers'
             )
-        """)
+        """
+        )
 
         if result:
             print("   ✓ fuzzy_identifiers table exists")
 
             # Check index exists
-            idx_result = await conn.fetchval("""
+            idx_result = await conn.fetchval(
+                """
                 SELECT EXISTS (
                     SELECT FROM pg_indexes
                     WHERE tablename = 'fuzzy_identifiers'
                       AND indexname = 'idx_fuzzy_identifier_trgm'
                 )
-            """)
+            """
+            )
 
             if idx_result:
                 print("   ✓ GIN trigram index exists")
@@ -110,24 +116,28 @@ async def test_domain_table_exists(conn: asyncpg.Connection) -> bool:
     """Test that domain_documents table exists."""
     print("\n4. Testing domain_documents table...")
     try:
-        result = await conn.fetchval("""
+        result = await conn.fetchval(
+            """
             SELECT EXISTS (
                 SELECT FROM information_schema.tables
                 WHERE table_name = 'domain_documents'
             )
-        """)
+        """
+        )
 
         if result:
             print("   ✓ domain_documents table exists")
 
             # Check index exists
-            idx_result = await conn.fetchval("""
+            idx_result = await conn.fetchval(
+                """
                 SELECT EXISTS (
                     SELECT FROM pg_indexes
                     WHERE tablename = 'domain_documents'
                       AND indexname = 'idx_domain_content_fts'
                 )
-            """)
+            """
+            )
 
             if idx_result:
                 print("   ✓ GIN tsvector index exists")
@@ -136,12 +146,14 @@ async def test_domain_table_exists(conn: asyncpg.Connection) -> bool:
                 return False
 
             # Check trigger exists
-            trigger_result = await conn.fetchval("""
+            trigger_result = await conn.fetchval(
+                """
                 SELECT EXISTS (
                     SELECT FROM pg_trigger
                     WHERE tgname = 'domain_documents_tsvector_update'
                 )
-            """)
+            """
+            )
 
             if trigger_result:
                 print("   ✓ Automatic tsvector update trigger exists")
@@ -167,24 +179,28 @@ async def test_fuzzy_search(conn: asyncpg.Connection) -> bool:
         await conn.execute("DELETE FROM fuzzy_identifiers WHERE repo_id = 'test_repo'")
 
         # Insert test data
-        await conn.execute("""
+        await conn.execute(
+            """
             INSERT INTO fuzzy_identifiers (repo_id, snapshot_id, chunk_id, identifier, kind)
             VALUES
                 ('test_repo', 'commit123', 'chunk:1', 'SearchService', 'class'),
                 ('test_repo', 'commit123', 'chunk:2', 'IndexManager', 'class'),
                 ('test_repo', 'commit123', 'chunk:3', 'get_user_by_id', 'function'),
                 ('test_repo', 'commit123', 'chunk:4', 'HybridRetriever', 'class')
-        """)
+        """
+        )
         print("   ✓ Test data inserted")
 
         # Test exact match
-        result = await conn.fetch("""
+        result = await conn.fetch(
+            """
             SELECT identifier, similarity(LOWER(identifier), 'searchservice') AS score
             FROM fuzzy_identifiers
             WHERE repo_id = 'test_repo'
               AND LOWER(identifier) % 'searchservice'
             ORDER BY score DESC
-        """)
+        """
+        )
 
         if result and len(result) > 0:
             print(f"   ✓ Exact match: '{result[0]['identifier']}' (score: {result[0]['score']:.3f})")
@@ -193,14 +209,16 @@ async def test_fuzzy_search(conn: asyncpg.Connection) -> bool:
             return False
 
         # Test typo tolerance
-        result = await conn.fetch("""
+        result = await conn.fetch(
+            """
             SELECT identifier, similarity(LOWER(identifier), 'searchservce') AS score
             FROM fuzzy_identifiers
             WHERE repo_id = 'test_repo'
               AND LOWER(identifier) % 'searchservce'
             ORDER BY score DESC
             LIMIT 1
-        """)
+        """
+        )
 
         if result and len(result) > 0:
             print(f"   ✓ Typo match: 'searchservce' → '{result[0]['identifier']}' (score: {result[0]['score']:.3f})")
@@ -208,14 +226,16 @@ async def test_fuzzy_search(conn: asyncpg.Connection) -> bool:
             print("   ⚠ Typo tolerance test returned no results (may be expected)")
 
         # Test partial match
-        result = await conn.fetch("""
+        result = await conn.fetch(
+            """
             SELECT identifier, similarity(LOWER(identifier), 'hybrid') AS score
             FROM fuzzy_identifiers
             WHERE repo_id = 'test_repo'
               AND LOWER(identifier) % 'hybrid'
             ORDER BY score DESC
             LIMIT 1
-        """)
+        """
+        )
 
         if result and len(result) > 0:
             print(f"   ✓ Partial match: 'hybrid' → '{result[0]['identifier']}' (score: {result[0]['score']:.3f})")
@@ -243,7 +263,8 @@ async def test_domain_search(conn: asyncpg.Connection) -> bool:
         await conn.execute("DELETE FROM domain_documents WHERE repo_id = 'test_repo'")
 
         # Insert test data
-        await conn.execute("""
+        await conn.execute(
+            """
             INSERT INTO domain_documents (repo_id, snapshot_id, chunk_id, doc_type, title, content)
             VALUES
                 ('test_repo', 'commit123', 'chunk:readme', 'readme', 'My Project',
@@ -252,53 +273,58 @@ async def test_domain_search(conn: asyncpg.Connection) -> bool:
                  'We decided to use PostgreSQL for its excellent full-text search capabilities.'),
                 ('test_repo', 'commit123', 'chunk:api', 'api_spec', 'Search API',
                  'The search endpoint allows you to query code using natural language.')
-        """)
+        """
+        )
         print("   ✓ Test data inserted")
 
         # Test full-text search
-        result = await conn.fetch("""
+        result = await conn.fetch(
+            """
             SELECT title, doc_type,
                    ts_rank(content_vector, plainto_tsquery('english', 'authentication')) AS score
             FROM domain_documents
             WHERE repo_id = 'test_repo'
               AND content_vector @@ plainto_tsquery('english', 'authentication')
             ORDER BY score DESC
-        """)
+        """
+        )
 
         if result and len(result) > 0:
-            print(
-                f"   ✓ Search 'authentication': '{result[0]['title']}' ({result[0]['doc_type']}, score: {result[0]['score']:.3f})"
-            )
+            r = result[0]
+            print(f"   ✓ Search 'authentication': '{r['title']}' ({r['doc_type']}, score: {r['score']:.3f})")
         else:
             print("   ✗ Full-text search failed")
             return False
 
         # Test multi-word search
-        result = await conn.fetch("""
+        result = await conn.fetch(
+            """
             SELECT title, doc_type,
                    ts_rank(content_vector, plainto_tsquery('english', 'search API')) AS score
             FROM domain_documents
             WHERE repo_id = 'test_repo'
               AND content_vector @@ plainto_tsquery('english', 'search API')
             ORDER BY score DESC
-        """)
+        """
+        )
 
         if result and len(result) > 0:
-            print(
-                f"   ✓ Search 'search API': '{result[0]['title']}' ({result[0]['doc_type']}, score: {result[0]['score']:.3f})"
-            )
+            r = result[0]
+            print(f"   ✓ Search 'search API': '{r['title']}' ({r['doc_type']}, score: {r['score']:.3f})")
         else:
             print("   ✗ Multi-word search failed")
             return False
 
         # Test document type filtering
-        result = await conn.fetch("""
+        result = await conn.fetch(
+            """
             SELECT title, doc_type
             FROM domain_documents
             WHERE repo_id = 'test_repo'
               AND doc_type = 'adr'
             ORDER BY title
-        """)
+        """
+        )
 
         if result and len(result) > 0:
             print(f"   ✓ Filter by doc_type='adr': '{result[0]['title']}'")
@@ -307,19 +333,23 @@ async def test_domain_search(conn: asyncpg.Connection) -> bool:
             return False
 
         # Test tsvector auto-update (via trigger)
-        await conn.execute("""
+        await conn.execute(
+            """
             UPDATE domain_documents
             SET content = 'Updated content about indexing and search'
             WHERE chunk_id = 'chunk:readme'
-        """)
+        """
+        )
 
-        result = await conn.fetch("""
+        result = await conn.fetch(
+            """
             SELECT title,
                    ts_rank(content_vector, plainto_tsquery('english', 'indexing')) AS score
             FROM domain_documents
             WHERE chunk_id = 'chunk:readme'
               AND content_vector @@ plainto_tsquery('english', 'indexing')
-        """)
+        """
+        )
 
         if result and len(result) > 0:
             print("   ✓ Auto-update trigger: tsvector updated on content change")
@@ -344,11 +374,13 @@ async def test_schema_migrations_table(conn: asyncpg.Connection) -> bool:
     """Test schema_migrations tracking table."""
     print("\n7. Testing schema_migrations tracking...")
     try:
-        result = await conn.fetch("""
+        result = await conn.fetch(
+            """
             SELECT version, name, applied_at
             FROM schema_migrations
             ORDER BY version
-        """)
+        """
+        )
 
         if result and len(result) > 0:
             print(f"   ✓ Found {len(result)} applied migration(s):")

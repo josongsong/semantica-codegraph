@@ -36,6 +36,8 @@ logger = get_logger(__name__)
 
 class IndexJobOrchestrator:
     """
+    ⚠️ DEPRECATED: Use job_orchestrator_v2.py (SemanticaTask 기반)
+
     Job-based indexing orchestrator with distributed locking.
 
     Wraps IndexingOrchestrator to provide:

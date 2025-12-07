@@ -850,11 +850,8 @@ class IndexingService:
 
         # 3. 실행 전략 결정: 즉시 vs 큐
         # Priority 높으면(Agent) 항상 즉시, 아니면 threshold 체크
-        use_queue = (
-            len(normalized_paths) > self.queue_threshold
-            and self.file_queue
-            and priority < 1  # Priority 1 이상은 항상 즉시
-        )
+        # Priority 1 이상은 항상 즉시
+        use_queue = len(normalized_paths) > self.queue_threshold and self.file_queue and priority < 1
 
         if use_queue:
             # 큐로 전송 (비동기 처리)
@@ -1023,8 +1020,9 @@ class IndexingService:
                     raise RuntimeError("repo_path not available")
 
                 # IndexingOrchestrator._index_single_file 호출 (전체 파이프라인)
-                from src.contexts.analysis_indexing.infrastructure.models import IndexingResult, IndexingStatus
                 from datetime import datetime
+
+                from src.contexts.analysis_indexing.infrastructure.models import IndexingResult, IndexingStatus
 
                 temp_result = IndexingResult(
                     repo_id=repo_id,

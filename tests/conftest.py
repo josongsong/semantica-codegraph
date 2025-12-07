@@ -1,183 +1,79 @@
 """
-Pytest Configuration and Fixtures
-
-테스트 규칙에 맞춘 공통 픽스처 제공:
-- Unit Test: Fake 인스턴스
-- Integration Test: Container lazy singleton
-- Test DB 설정
+Global test configuration and fixtures
 """
 
 import pytest
+import time
+from typing import Generator
 
-from tests.fakes import (
-    FakeGitProvider,
-    FakeGraphStore,
-    FakeLexicalSearch,
-    FakeLLMProvider,
-    FakeRelationalStore,
-    FakeVectorStore,
-)
-
-# ========================================================================
-# Unit Test Fixtures (Fake Implementations)
-# ========================================================================
+# 느린 테스트 임계값 (초)
+SLOW_TEST_THRESHOLD = 5.0
+WARNING_TEST_THRESHOLD = 2.0
 
 
-@pytest.fixture
-def fake_vector():
-    """Fake Vector Store (Unit Test용)."""
-    store = FakeVectorStore()
-    store.create_collection("test_collection", vector_size=1536)
-    yield store
-
-
-@pytest.fixture
-def fake_graph():
-    """Fake Graph Store (Unit Test용)."""
-    store = FakeGraphStore()
-    yield store
-    store.clear()
-
-
-@pytest.fixture
-def fake_relational():
-    """Fake Relational Store (Unit Test용)."""
-    store = FakeRelationalStore()
-    yield store
-    store.clear()
-
-
-@pytest.fixture
-def fake_lexical():
-    """Fake Lexical Search (Unit Test용)."""
-    search = FakeLexicalSearch()
-    yield search
-    search.clear()
-
-
-@pytest.fixture
-def fake_git():
-    """Fake Git Provider (Unit Test용)."""
-    return FakeGitProvider()
-
-
-@pytest.fixture
-def fake_llm():
-    """Fake LLM Provider (Unit Test용)."""
-    return FakeLLMProvider(embedding_dim=1536)
-
-
-# ========================================================================
-# Integration Test Fixtures (Container Singleton)
-# ========================================================================
-
-
-@pytest.fixture(scope="session")
-def test_settings():
-    """
-    Test 환경 Settings.
-
-    docker-compose.test.yml 포트 사용.
-    """
-    # TODO: Implement Settings after src.config is created
-    return None
-
-
-@pytest.fixture(scope="session")
-def container(test_settings):
-    """
-    Test용 Container (Integration Test용).
-
-    ⚠️  Rule: container 새 인스턴스 생성 금지
-    ⚠️  실제 구현 시 global container를 test settings로 override하는 방식 필요
-    """
-    # TODO: Implement container after src.container is created
-    return None
-
-
-# ========================================================================
-# Database Fixtures (Integration Test)
-# ========================================================================
-
-
-@pytest.fixture(scope="function")
-def clean_db(container):
-    """
-    각 테스트 전후 DB 정리.
-
-    Integration Test에서 사용.
-    """
-    # Before test: clear
-    # container.postgres.clear()  # TODO: 구현 필요
+@pytest.fixture(autouse=True)
+def track_test_duration(request):
+    """모든 테스트의 실행 시간을 추적하고 느린 테스트 경고"""
+    start_time = time.time()
 
     yield
 
-    # After test: clear
-    # container.postgres.clear()
+    duration = time.time() - start_time
+    test_name = request.node.nodeid
 
-
-# ========================================================================
-# Scenario Test Fixtures
-# ========================================================================
-
-
-@pytest.fixture
-def golden_data_dir():
-    """Golden test 데이터 디렉터리."""
-    import pathlib
-
-    # TODO: Create scenarios directory if needed
-    scenarios_dir = pathlib.Path(__file__).parent / "scenarios"
-    scenarios_dir.mkdir(exist_ok=True)
-    return scenarios_dir
+    # 느린 테스트 경고
+    if duration > SLOW_TEST_THRESHOLD:
+        print(f"\n⚠️  SLOW TEST ({duration:.2f}s): {test_name}")
+        print(f"   Consider marking with @pytest.mark.slow or optimizing")
+    elif duration > WARNING_TEST_THRESHOLD:
+        print(f"\n⏱️  Slow ({duration:.2f}s): {test_name}")
 
 
 @pytest.fixture
-def load_golden(golden_data_dir):
-    """
-    Golden test JSON 로드.
-
-    Usage:
-        data = load_golden("symbol_search_01.json")
-    """
-    import json
-
-    def _load(filename: str):
-        path = golden_data_dir / filename
-        with path.open() as f:
-            return json.load(f)
-
-    return _load
-
-
-# ========================================================================
-# Helpers
-# ========================================================================
+def temp_dir(tmp_path) -> Generator[str, None, None]:
+    """임시 디렉토리 제공"""
+    yield str(tmp_path)
 
 
 @pytest.fixture
-def sample_code():
-    """테스트용 샘플 코드."""
-    return '''
-def search_route(query: str):
-    """Search endpoint."""
-    results = vector_store.search(query)
-    return results
-'''
+def mock_repo_path(tmp_path) -> str:
+    """Mock 리포지토리 경로"""
+    repo = tmp_path / "test_repo"
+    repo.mkdir()
+    return str(repo)
 
 
-@pytest.fixture
-def sample_repo():
-    """테스트용 샘플 레포지토리 구조."""
-    return {
-        "files": [
-            {
-                "path": "src/api/routes.py",
-                "content": "def search_route(): pass",
-            },
-            {
-                "path": "src/services/search.py",
-                "content": "class SearchService: pass",
-            },
-        ],
-    }
+# Pytest hooks
+def pytest_configure(config):
+    """pytest 설정"""
+    config.addinivalue_line("markers", "unit: Unit tests (fast, isolated)")
+    config.addinivalue_line("markers", "integration: Integration tests (medium speed)")
+    config.addinivalue_line("markers", "e2e: End-to-end tests (slow)")
+    config.addinivalue_line("markers", "slow: Slow tests (>5s)")
+    config.addinivalue_line("markers", "benchmark: Performance benchmarks")
+    config.addinivalue_line("markers", "security: Security tests")
+
+
+def pytest_collection_modifyitems(config, items):
+    """테스트 수집 후 처리"""
+    for item in items:
+        # 경로 기반 자동 마커 추가
+        if "unit" in str(item.fspath):
+            item.add_marker(pytest.mark.unit)
+        elif "integration" in str(item.fspath):
+            item.add_marker(pytest.mark.integration)
+        elif "e2e" in str(item.fspath):
+            item.add_marker(pytest.mark.e2e)
+        elif "performance" in str(item.fspath):
+            item.add_marker(pytest.mark.benchmark)
+        elif "security" in str(item.fspath):
+            item.add_marker(pytest.mark.security)
+
+
+def pytest_report_header(config):
+    """리포트 헤더 추가"""
+    return [
+        "Test Structure: SOTA-level Pyramid (Unit > Integration > E2E)",
+        f"Slow test threshold: {SLOW_TEST_THRESHOLD}s",
+        f"Warning threshold: {WARNING_TEST_THRESHOLD}s",
+    ]

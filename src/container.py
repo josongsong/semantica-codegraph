@@ -24,7 +24,18 @@ from src.common.factory import weak_cached_factory
 from src.common.observability import get_logger
 from src.common.types import GraphStoreFactory, RepoMapStoreFactory
 from src.config import settings
-from src.contexts.agent_automation.infrastructure.di import AgentContainer, IndexingContainerFactory
+from src.infra.config.profiles import get_profile_config
+
+# Optional: agent_automation (v7로 대체됨)
+try:
+    from src.contexts.agent_automation.infrastructure.di import AgentContainer, IndexingContainerFactory
+
+    HAS_AGENT_AUTOMATION = True
+except ImportError:
+    HAS_AGENT_AUTOMATION = False
+    AgentContainer = None
+    IndexingContainerFactory = None
+
 from src.contexts.analysis_indexing.infrastructure.di import IndexingContainer
 from src.contexts.code_foundation.infrastructure.di import FoundationContainer
 from src.contexts.multi_index.infrastructure.di import IndexContainer
@@ -34,7 +45,10 @@ from src.infra.di import InfraContainer
 
 logger = get_logger(__name__)
 if TYPE_CHECKING:
-    from src.contexts.agent_automation.infrastructure.orchestrator import AgentOrchestrator
+    try:
+        from src.contexts.agent_automation.infrastructure.orchestrator import AgentOrchestrator
+    except ImportError:
+        AgentOrchestrator = None
 
 
 class Container:
@@ -49,6 +63,9 @@ class Container:
 
     def __init__(self):
         """Initialize container with sub-containers."""
+        # 프로파일 설정 로드
+        self._profile = get_profile_config()
+
         self._infra = InfraContainer(settings)
         self._foundation = FoundationContainer(settings, self._infra)
         self._index = IndexContainer(settings, self._infra, self._foundation)
@@ -126,11 +143,17 @@ class Container:
     @property
     def _agent(self) -> AgentContainer:
         """
-        Lazy-initialized AgentContainer.
+        Lazy-initialized AgentContainer (optional, legacy).
 
         Uses factory function for indexing_container to avoid circular dependency.
         Factory is optional and handles None gracefully.
+
+        Note: v7 Agent는 v7_agent_orchestrator 사용 권장.
         """
+        if not HAS_AGENT_AUTOMATION:
+            logger.warning("AgentContainer not available. Use v7_agent_orchestrator instead.")
+            return None
+
         if self.__agent is None:
             # Create weak + cached factory (no circular reference!)
             indexing_factory: IndexingContainerFactory = weak_cached_factory(
@@ -394,19 +417,446 @@ class Container:
         return self._foundation.create_pyright_daemon(project_root)
 
     # ========================================================================
-    # Agent System (delegated to AgentContainer)
+    # Agent System (Legacy - delegated to AgentContainer)
     # ========================================================================
 
     @property
     def agent_orchestrator(self):
-        """Singleton AgentOrchestrator (for backward compatibility)."""
+        """
+        Singleton AgentOrchestrator (legacy, for backward compatibility).
+
+        Note: v7_agent_orchestrator 사용 권장.
+        """
+        if not HAS_AGENT_AUTOMATION:
+            logger.warning("Legacy agent_orchestrator not available. Use v7_agent_orchestrator instead.")
+            return None
         return self._agent.orchestrator
 
     def create_agent_orchestrator(
         self, project_id: str = "default", repo_id: str = "default", snapshot_id: str | None = None
     ) -> "AgentOrchestrator":
-        """Create a new AgentOrchestrator instance (factory method)."""
+        """
+        Create a new AgentOrchestrator instance (legacy factory method).
+
+        Note: v7_agent_orchestrator 사용 권장.
+        """
+        if not HAS_AGENT_AUTOMATION:
+            logger.warning("Legacy create_agent_orchestrator not available. Use v7_agent_orchestrator instead.")
+            return None
         return self._agent.create_orchestrator(project_id=project_id, repo_id=repo_id, snapshot_id=snapshot_id)
+
+    # ========================================================================
+    # v7 Agent System (Port/Adapter 기반)
+    # ========================================================================
+
+    @cached_property
+    def v7_llm_provider(self):
+        """v7 LLM Provider (LiteLLM)"""
+        import os
+
+        from src.agent.adapters.llm.litellm_adapter import LiteLLMProviderAdapter
+
+        api_key = os.getenv("OPENAI_API_KEY") or os.getenv("SEMANTICA_OPENAI_API_KEY")
+        return LiteLLMProviderAdapter(
+            primary_model="gpt-4o-mini",
+            fallback_models=["gpt-3.5-turbo"],
+            api_key=api_key,
+        )
+
+    @cached_property
+    def v7_sandbox_executor(self):
+        """v7 Sandbox Executor (E2B or Local)"""
+        import os
+
+        e2b_api_key = os.getenv("E2B_API_KEY")
+
+        if e2b_api_key:
+            # E2B Sandbox (SOTA)
+            from src.agent.adapters.sandbox.e2b_adapter import E2BSandboxAdapter, E2BSandboxConfig
+            from src.agent.adapters.sandbox.security import SecurityLevel, SecurityPolicy
+
+            config = E2BSandboxConfig(
+                api_key=e2b_api_key,
+                security_policy=SecurityPolicy.for_level(SecurityLevel.MEDIUM),
+                timeout_sec=30,
+            )
+            return E2BSandboxAdapter(config=config)
+        else:
+            # Fallback: Local Sandbox
+            from src.agent.adapters.sandbox.stub_sandbox import LocalSandboxAdapter
+
+            logger.warning("E2B_API_KEY not found, using LocalSandboxAdapter")
+            return LocalSandboxAdapter()
+
+    @cached_property
+    def v7_guardrail_validator(self):
+        """v7 Guardrail Validator (Pydantic)"""
+        from src.agent.adapters.guardrail.pydantic_validator import PydanticValidatorAdapter
+
+        return PydanticValidatorAdapter()
+
+    @cached_property
+    def v7_vcs_applier(self):
+        """v7 VCS Applier (GitPython)"""
+        from src.agent.adapters.vcs.gitpython_adapter import GitPythonVCSAdapter
+
+        return GitPythonVCSAdapter(".")
+
+    @cached_property
+    def v7_workflow_engine(self):
+        """v7 Workflow Engine (LangGraph)"""
+        from src.agent.adapters.workflow.langgraph_adapter import LangGraphWorkflowAdapter
+
+        return LangGraphWorkflowAdapter()
+
+    @cached_property
+    def v7_context_manager(self):
+        """v7 Context Manager"""
+        from src.agent.context_manager import ContextManager
+
+        return ContextManager()
+
+    @cached_property
+    def v7_experience_store(self):
+        """v7 Experience Store"""
+        from src.agent.experience_store import ExperienceStore
+
+        return ExperienceStore()
+
+    @cached_property
+    def v7_incremental_workflow(self):
+        """v7 Incremental Workflow Manager (SOTA급 - 기존 인프라 활용)"""
+        from src.agent.domain.incremental_workflow import IncrementalCache, IncrementalWorkflow
+
+        return IncrementalWorkflow(
+            change_detector=self.change_detector,  # ✅ 기존 SOTA
+            graph_impact_analyzer=self._graph_impact_analyzer,  # ✅ 기존 SOTA
+            graph_store=self.graph_store,  # ✅ Memgraph
+            cache=IncrementalCache(redis_client=self.redis),  # ✅ Redis 캐시
+        )
+
+    @cached_property
+    def _graph_impact_analyzer(self):
+        """Graph Impact Analyzer (기존 SOTA 인프라)"""
+        try:
+            from src.contexts.code_foundation.infrastructure.graph.impact_analyzer import GraphImpactAnalyzer
+
+            return GraphImpactAnalyzer(
+                max_depth=5,
+                max_affected=1000,
+                include_test_files=False,
+            )
+        except ImportError:
+            # Fallback: None (IncrementalWorkflow가 간단한 방법 사용)
+            return None
+
+    @cached_property
+    def v7_diff_manager(self):
+        """v7 Diff Manager (Git diff 생성/파싱)"""
+        from src.agent.domain.diff_manager import DiffManager
+
+        return DiffManager(context_lines=3)
+
+    @cached_property
+    def v7_approval_manager(self):
+        """v7 Approval Manager (Human-in-the-loop)"""
+        from src.agent.domain.approval_manager import (
+            ApprovalCriteria,
+            ApprovalManager,
+            CLIApprovalAdapter,
+        )
+
+        # 자동 승인 규칙
+        criteria = ApprovalCriteria(
+            auto_approve_tests=True,  # 테스트 파일 자동 승인
+            auto_approve_docs=True,  # 문서 파일 자동 승인
+            max_lines_auto=20,  # 20줄 이하 자동 승인
+        )
+
+        # CLI Adapter
+        ui_adapter = CLIApprovalAdapter(colorize=True)
+
+        return ApprovalManager(
+            ui_adapter=ui_adapter,
+            criteria=criteria,
+        )
+
+    @cached_property
+    def v7_partial_committer(self):
+        """v7 Partial Committer (부분 커밋)"""
+        from src.agent.domain.partial_committer import PartialCommitter
+
+        return PartialCommitter(repo_path=".")
+
+    # ======================================================================
+    # v8.1 Components (Dynamic Reasoning)
+    # ======================================================================
+
+    @cached_property
+    def v8_complexity_analyzer(self):
+        """v8 Complexity Analyzer (Adapter)"""
+        from src.agent.adapters.reasoning import RadonComplexityAnalyzer
+
+        return RadonComplexityAnalyzer()
+
+    @cached_property
+    def v8_risk_assessor(self):
+        """v8 Risk Assessor (Adapter)"""
+        from src.agent.adapters.reasoning import HistoricalRiskAssessor
+
+        return HistoricalRiskAssessor(
+            experience_store=None  # TODO: Phase 3에서 Experience Store v2 연동
+        )
+
+    @cached_property
+    def v8_reasoning_router(self):
+        """v8 Dynamic Reasoning Router (Domain Service)"""
+        from src.agent.domain.reasoning import DynamicReasoningRouter
+
+        return DynamicReasoningRouter(
+            complexity_analyzer=self.v8_complexity_analyzer,
+            risk_assessor=self.v8_risk_assessor,
+        )
+
+    @cached_property
+    def v8_decide_reasoning_path(self):
+        """v8 Decide Reasoning Path UseCase (Application Layer)"""
+        from src.agent.application.use_cases import DecideReasoningPathUseCase
+
+        return DecideReasoningPathUseCase(
+            router=self.v8_reasoning_router,
+            complexity_analyzer=self.v8_complexity_analyzer,
+            risk_assessor=self.v8_risk_assessor,
+        )
+
+    @cached_property
+    def v8_tot_scorer(self):
+        """v8 ToT Scoring Engine (Domain Service)"""
+        from src.agent.domain.reasoning import ToTScoringEngine
+
+        return ToTScoringEngine()
+
+    @cached_property
+    def v8_sandbox_executor(self):
+        """v8 Sandbox Executor (Subprocess, 로컬)"""
+        from src.agent.adapters.reasoning import SubprocessSandbox
+
+        return SubprocessSandbox()
+
+    @cached_property
+    def v8_strategy_generator(self):
+        """v8 Strategy Generator (LLM)"""
+        from src.agent.adapters.llm.strategy_generator import StrategyGeneratorFactory
+
+        # OpenAI API Key 있으면 LLM 사용
+        return StrategyGeneratorFactory.create(use_llm=True)
+
+    @cached_property
+    def v8_tot_executor(self):
+        """v8 ToT Executor (LangGraph + LLM)"""
+        from src.agent.adapters.reasoning import LangGraphToTExecutor
+
+        return LangGraphToTExecutor(
+            llm_provider=self.v8_strategy_generator,  # LLM 연동!
+            sandbox_executor=self.v8_sandbox_executor,
+            max_strategies=5,
+            use_langgraph=True,  # LangGraph 활성화
+        )
+
+    @cached_property
+    def v8_execute_tot(self):
+        """v8 Execute ToT UseCase (Application Layer)"""
+        from src.agent.application.use_cases import ExecuteToTUseCase
+
+        return ExecuteToTUseCase(
+            tot_executor=self.v8_tot_executor,
+            tot_scorer=self.v8_tot_scorer,
+        )
+
+    @cached_property
+    def v8_graph_analyzer(self):
+        """v8 Graph Analyzer (Adapter)"""
+        from src.agent.adapters.reasoning import SimpleGraphAnalyzer
+
+        return SimpleGraphAnalyzer()
+
+    @cached_property
+    def v8_reflection_judge(self):
+        """v8 Self-Reflection Judge (Domain Service)"""
+        from src.agent.domain.reasoning import SelfReflectionJudge
+
+        return SelfReflectionJudge()
+
+    @cached_property
+    def v8_experience_repository(self):
+        """v8 Experience Repository (SOTA: Multi-Backend)"""
+        import os
+
+        # Profile에 따라 Backend 선택
+        profile = os.getenv("SEMANTICA_PROFILE", "local")
+
+        if profile in ["prod", "production", "cloud"]:
+            # Production: PostgreSQL
+            try:
+                from src.agent.infrastructure.experience_repository import ExperienceRepository
+
+                db_session = self.postgres if hasattr(self, "postgres") else None
+                return ExperienceRepository(db_session=db_session)
+            except Exception as e:
+                logger.warning(f"PostgreSQL failed, falling back to SQLite: {e}")
+
+        # Local/Dev: SQLite (SOTA!)
+        from src.agent.infrastructure.experience_repository_sqlite import ExperienceRepositorySQLite
+
+        return ExperienceRepositorySQLite()
+
+    @cached_property
+    def v7_soft_lock_manager(self):
+        """v7 Soft Lock Manager (Multi-Agent Lock 관리)"""
+        from src.agent.domain.soft_lock_manager import SoftLockManager
+
+        # 프로파일에 따라 Redis 사용 여부 결정
+        redis_client = None
+        if self._profile.should_use_redis():
+            redis_client = self.redis if hasattr(self, "redis") else None
+
+        return SoftLockManager(redis_client=redis_client)
+
+    @cached_property
+    def v7_conflict_resolver(self):
+        """v7 Conflict Resolver (Multi-Agent 충돌 해결)"""
+        from src.agent.domain.conflict_resolver import ConflictResolver
+
+        return ConflictResolver(
+            vcs_applier=self.v7_vcs_applier,
+        )
+
+    @cached_property
+    def v7_agent_coordinator(self):
+        """v7 Agent Coordinator (Multi-Agent 조율)"""
+        from src.agent.domain.agent_coordinator import AgentCoordinator
+
+        return AgentCoordinator(
+            lock_manager=self.v7_soft_lock_manager,
+            conflict_resolver=self.v7_conflict_resolver,
+            orchestrator_factory=lambda: self.v7_agent_orchestrator,
+        )
+
+    @cached_property
+    def v7_metrics_collector(self):
+        """v7 Metrics Collector (Prometheus)"""
+        from src.agent.adapters.monitoring import PrometheusMetricsAdapter
+
+        return PrometheusMetricsAdapter()  # Uses global collector
+
+    @cached_property
+    def v7_health_checker(self):
+        """v7 Health Checker (시스템 컴포넌트 상태)"""
+        from src.agent.adapters.monitoring import HealthCheckAdapter
+
+        return HealthCheckAdapter(
+            postgres_client=self.postgres,
+            redis_client=self.redis,
+            qdrant_client=self.qdrant,
+            memgraph_client=self.memgraph,
+            llm_provider=self.v7_llm_provider,
+        )
+
+    # ========================================================================
+    # v7: Performance Optimization (SOTA급)
+    # ========================================================================
+
+    @cached_property
+    def v7_optimized_llm_provider(self):
+        """v7 Optimized LLM Provider (SOTA급 성능 최적화)"""
+        from src.agent.adapters.llm.optimized_llm_adapter import OptimizedLLMAdapter
+
+        return OptimizedLLMAdapter(
+            primary_model=settings.agent_llm_model if hasattr(settings, "agent_llm_model") else "gpt-4o-mini",
+            fallback_models=["gpt-4o", "gpt-4"],
+            timeout=60,
+            max_requests_per_second=10.0,
+            max_concurrent=5,
+            enable_cache=True,
+            cache_ttl=3600,
+            redis_client=self.redis,
+        )
+
+    @cached_property
+    def v7_advanced_cache(self):
+        """v7 Advanced Multi-tier Cache (L1: Local, L2: Redis)"""
+        from src.agent.infrastructure.cache.advanced_cache import AdvancedCache
+
+        return AdvancedCache(
+            redis_client=self.redis,
+            local_max_size=1000,
+            local_max_bytes=100 * 1024 * 1024,  # 100MB
+            default_ttl=3600,
+            compression_threshold=1024,  # 1KB
+            enable_bloom_filter=True,
+        )
+
+    @cached_property
+    def v7_performance_monitor(self):
+        """v7 Performance Monitor (Request Tracing, Latency, Throughput)"""
+        from src.agent.infrastructure.performance_monitor import PerformanceMonitor
+
+        def alert_callback(message: str):
+            logger.warning(f"Performance Alert: {message}")
+
+        return PerformanceMonitor(
+            slow_threshold=1.0,  # 1초
+            histogram_window=1000,
+            alert_callback=alert_callback,
+        )
+
+    @cached_property
+    def v7_profiler(self):
+        """v7 Profiler (CPU, Memory, Async)"""
+        from src.agent.infrastructure.profiler import Profiler
+
+        return Profiler(
+            enable_cpu=True,
+            enable_memory=True,
+            enable_async=True,
+        )
+
+    @cached_property
+    def v7_bottleneck_detector(self):
+        """v7 Bottleneck Detector (자동 병목 감지)"""
+        from src.agent.infrastructure.profiler import BottleneckDetector
+
+        def alert_callback(message: str):
+            logger.warning(f"Bottleneck Alert: {message}")
+
+        return BottleneckDetector(
+            time_threshold=1.0,  # 1초
+            memory_threshold=100 * 1024 * 1024,  # 100MB
+            alert_callback=alert_callback,
+        )
+
+    @cached_property
+    def v7_agent_orchestrator(self):
+        """v7 Agent Orchestrator (SOTA급 통합)"""
+        from src.agent.orchestrator.v7_orchestrator import AgentOrchestrator as V7Orchestrator
+
+        return V7Orchestrator(
+            workflow_engine=self.v7_workflow_engine,
+            llm_provider=self.v7_llm_provider,
+            sandbox_executor=self.v7_sandbox_executor,
+            guardrail_validator=self.v7_guardrail_validator,
+            vcs_applier=self.v7_vcs_applier,
+            # 기존 시스템 통합
+            retriever_service=self.retriever_service,
+            chunk_store=self.chunk_store,
+            memory_system=self.memory_system,
+            # Incremental Execution
+            incremental_workflow=self.v7_incremental_workflow,
+            # Human-in-the-Loop
+            approval_manager=self.v7_approval_manager,
+            diff_manager=self.v7_diff_manager,
+            partial_committer=self.v7_partial_committer,
+        )
 
     # ========================================================================
     # Indexing System (delegated to IndexingContainer)

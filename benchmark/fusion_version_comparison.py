@@ -9,10 +9,8 @@ Tests with agent scenario benchmark to measure real-world performance.
 """
 
 import asyncio
-import json
 import logging
-from dataclasses import asdict, dataclass
-from pathlib import Path
+from dataclasses import dataclass
 from typing import Any
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -259,7 +257,7 @@ class MockMultiStrategyRetrieval:
             # Symbol miss
             results.append(
                 {
-                    "chunk_id": f"relevant_0",
+                    "chunk_id": "relevant_0",
                     "content": "Symbol match 0",
                     "score": 0.95,
                     "is_relevant": True,
@@ -461,7 +459,7 @@ async def run_fusion_comparison(quality_level: str = "good"):
     v1_results = results_by_version["v1"]
     v2_results = results_by_version["v2"]
 
-    logger.info(f"Pass Rate:")
+    logger.info("Pass Rate:")
     logger.info(f"  v1: {v1_results['pass_rate']:.1%}")
     logger.info(f"  v2: {v2_results['pass_rate']:.1%}")
     logger.info(
@@ -469,7 +467,7 @@ async def run_fusion_comparison(quality_level: str = "good"):
         f"({'✅ Better' if v2_results['pass_rate'] > v1_results['pass_rate'] else '⚠️ Worse'})"
     )
 
-    logger.info(f"\nAvg Precision:")
+    logger.info("\nAvg Precision:")
     logger.info(f"  v1: {v1_results['avg_precision']:.3f}")
     logger.info(f"  v2: {v2_results['avg_precision']:.3f}")
     logger.info(
@@ -477,7 +475,7 @@ async def run_fusion_comparison(quality_level: str = "good"):
         f"({'✅ Better' if v2_results['avg_precision'] > v1_results['avg_precision'] else '⚠️ Worse'})"
     )
 
-    logger.info(f"\nAvg Latency:")
+    logger.info("\nAvg Latency:")
     logger.info(f"  v1: {v1_results['avg_latency']:.1f}ms")
     logger.info(f"  v2: {v2_results['avg_latency']:.1f}ms")
     logger.info(
@@ -515,9 +513,14 @@ async def run_all_quality_levels():
         logger.info(f"{quality.upper()}:")
         logger.info(f"  v1: {v1['pass_rate']:.0%} pass, {v1['avg_precision']:.2f} precision")
         logger.info(f"  v2: {v2['pass_rate']:.0%} pass, {v2['avg_precision']:.2f} precision")
-        logger.info(
-            f"  Winner: {'v2 ✅' if v2['avg_precision'] > v1['avg_precision'] else 'v1' if v1['avg_precision'] > v2['avg_precision'] else 'Tie'}\n"
+        winner = (
+            "v2 ✅"
+            if v2["avg_precision"] > v1["avg_precision"]
+            else "v1"
+            if v1["avg_precision"] > v2["avg_precision"]
+            else "Tie"
         )
+        logger.info(f"  Winner: {winner}\n")
 
 
 if __name__ == "__main__":

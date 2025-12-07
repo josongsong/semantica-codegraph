@@ -59,6 +59,8 @@ class ProductionMemorySystem:
         self,
         postgres_store: PostgresMemoryStore,
         embedding_store: EmbeddingMemoryStore | None = None,
+        cache_manager: Any | None = None,
+        reflection_engine: Any | None = None,
     ):
         """
         Initialize production memory system.
@@ -66,13 +68,17 @@ class ProductionMemorySystem:
         Args:
             postgres_store: PostgreSQL memory store
             embedding_store: Optional Qdrant embedding store for semantic search
+            cache_manager: SOTA cache manager (L1+L2)
+            reflection_engine: SOTA reflection engine for pattern extraction
         """
         self.postgres = postgres_store
         self.embeddings = embedding_store
+        self.cache = cache_manager  # SOTA: L1+L2 caching
+        self.reflection = reflection_engine  # SOTA: Reflection
         self._initialized = False
 
     async def initialize(self) -> None:
-        """Initialize all storage backends."""
+        """Initialize all storage backends + SOTA components."""
         if self._initialized:
             return
 
@@ -81,8 +87,17 @@ class ProductionMemorySystem:
         if self.embeddings:
             await self.embeddings.initialize()
 
+        # SOTA: Initialize cache
+        if self.cache:
+            await self.cache.initialize()
+            logger.info("SOTA cache initialized (L1+L2)")
+
         self._initialized = True
-        logger.info("ProductionMemorySystem initialized")
+        logger.info(
+            "ProductionMemorySystem initialized with SOTA components",
+            has_cache=self.cache is not None,
+            has_reflection=self.reflection is not None,
+        )
 
     # ============================================================
     # Session Management
@@ -99,9 +114,13 @@ class ProductionMemorySystem:
             session_id: Optional session ID
 
         Returns:
-            WorkingMemoryManager instance
+            WorkingMemoryManager instance (with SOTA config)
         """
-        return WorkingMemoryManager(session_id=session_id)
+        # SOTA: Use config from central config system
+        from .config import get_config
+
+        config = get_config()
+        return WorkingMemoryManager(session_id=session_id, config=config.working)
 
     async def consolidate_session(
         self,
@@ -151,6 +170,47 @@ class ProductionMemorySystem:
         # Update project knowledge
         await self._update_project_knowledge(episode, project_id)
 
+        # SOTA: Trigger reflection if needed
+        if self.reflection:
+            try:
+                # Get episode count for this project
+                episode_count = await self.postgres.count_episodes(project_id=project_id)
+
+                if await self.reflection.should_reflect(episode_count):
+                    logger.info("Reflection triggered", episode_count=episode_count)
+
+                    # Get recent episodes for reflection
+                    recent_episodes_data = await self.postgres.list_episodes(
+                        project_id=project_id, limit=20, order_by="created_at DESC"
+                    )
+
+                    # Convert to Episode objects
+                    recent_episodes = [self._dict_to_episode(ep) for ep in recent_episodes_data]
+
+                    # Perform reflection
+                    reflections = await self.reflection.reflect_on_episodes(recent_episodes, project_id=project_id)
+
+                    # Store reflections as semantic memories
+                    for reflection_result in reflections:
+                        semantic_memory = reflection_result.semantic_memory
+                        await self.postgres.save_semantic_memory(
+                            {
+                                "id": semantic_memory.id,
+                                "project_id": semantic_memory.project_id,
+                                "title": semantic_memory.title,
+                                "summary": semantic_memory.summary,
+                                "key_insights": semantic_memory.key_insights,
+                                "source_episode_ids": semantic_memory.source_episode_ids,
+                                "category": semantic_memory.category,
+                                "tags": semantic_memory.tags,
+                                "importance": semantic_memory.importance,
+                            }
+                        )
+
+                    logger.info(f"Reflection complete: {len(reflections)} patterns extracted")
+            except Exception as e:
+                logger.warning(f"Reflection failed: {e}")
+
         logger.info(f"Session consolidated: {episode_id}")
         return episode_id
 
@@ -190,6 +250,14 @@ class ProductionMemorySystem:
             - entities: Related entities
             - guidance: Synthesized guidance
         """
+        # SOTA: Check L1/L2 cache first
+        if self.cache:
+            cache_key = f"recall:{project_id}:{query}:{task_type}:{limit}"
+            cached_result = await self.cache.get(cache_key)
+            if cached_result:
+                logger.info("Cache HIT for recall", project_id=project_id)
+                return cached_result
+
         memories: dict[str, Any] = {
             "episodes": [],
             "facts": [],
@@ -258,6 +326,12 @@ class ProductionMemorySystem:
 
         # Synthesize guidance
         memories["guidance"] = self._synthesize_guidance(memories)
+
+        # SOTA: Cache the result (L1+L2)
+        if self.cache:
+            cache_key = f"recall:{project_id}:{query}:{task_type}:{limit}"
+            await self.cache.put(cache_key, memories)
+            logger.info("Cache WRITE for recall", project_id=project_id)
 
         return memories
 

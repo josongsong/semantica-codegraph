@@ -10,9 +10,6 @@ Usage:
     # Get default retriever (V3)
     retriever = factory.create()
 
-    # Get specific type
-    retriever = factory.create(RetrieverType.OPTIMIZED)
-
     # With config
     config = RetrieverConfig(token_budget=8000)
     retriever = factory.create(RetrieverType.V3, config)
@@ -44,7 +41,6 @@ class RetrieverType(Enum):
     """Available retriever implementations."""
 
     BASIC = "basic"
-    OPTIMIZED = "optimized"
     V3 = "v3"
     MULTI_HOP = "multi_hop"
     REASONING = "reasoning"
@@ -141,7 +137,6 @@ class RetrieverFactory:
         logger.info(
             "creating_retriever",
             retriever_type=type_name,
-            optimization_level=config.optimization_level.value if type_name == "optimized" else None,
         )
 
         # Delegate to registry

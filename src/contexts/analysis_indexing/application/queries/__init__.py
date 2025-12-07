@@ -1,0 +1,1 @@
+"""Queries (CQRS Read Side)"""

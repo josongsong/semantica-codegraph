@@ -15,7 +15,8 @@ print("=" * 70)
 print("  Pyright LSP API 활용: Definition & References")
 print("=" * 70)
 
-print("""
+print(
+    """
 예제 코드:
 
   # file: src/models/user.py
@@ -32,7 +33,8 @@ print("""
   def main():
       user = create_user("Alice")  # ← REFERENCE 3 (line 8)
       print(user.name)
-""")
+"""
+)
 
 print("=" * 70)
 
@@ -43,7 +45,8 @@ print("=" * 70)
 print("\n📍 1. textDocument/definition (Go-to-Definition)")
 print("-" * 70)
 
-print("""
+print(
+    """
 Question: "line 5의 User는 어디서 정의되었나?"
 
 API Call:
@@ -61,7 +64,8 @@ Response:
   )
 
 ✅ Result: "src/models/user.py:2 에서 정의됨!"
-""")
+"""
+)
 
 print("\n💡 활용:")
 print("  • Go-to-Definition 기능")
@@ -77,7 +81,8 @@ print("\n" + "=" * 70)
 print("\n🔍 2. textDocument/references (Find-All-References)")
 print("-" * 70)
 
-print("""
+print(
+    """
 Question: "User 클래스가 어디서 사용되나?"
 
 API Call:
@@ -96,7 +101,8 @@ Response:
   ]
 
 ✅ Result: "3개 파일에서 총 5번 사용됨!"
-""")
+"""
+)
 
 print("\n💡 활용:")
 print("  • Find-All-References 기능")
@@ -112,7 +118,8 @@ print("\n" + "=" * 70)
 print("\n🔄 Data Flow in Name Resolution Graph")
 print("=" * 70)
 
-print("""
+print(
+    """
 1. get_definition() 활용:
 
    Source Location (src/main.py:5:11, "User")
@@ -150,7 +157,8 @@ print("""
         │
         ▼
    Build Call Graph / Usage Graph
-""")
+"""
+)
 
 # ============================================================
 # Implementation Strategy
@@ -160,7 +168,8 @@ print("\n" + "=" * 70)
 print("\n🏗️  구현 전략")
 print("=" * 70)
 
-print("""
+print(
+    """
 Phase 1: Protocol 정의 ✅ (완료)
   • ExternalAnalyzer.get_definition()
   • ExternalAnalyzer.get_references()
@@ -181,7 +190,8 @@ Phase 4: Name Resolution Graph (TODO)
   • NameBinding 구축
   • get_definition()으로 cross-file 추적
   • get_references()로 usage 추적
-""")
+"""
+)
 
 # ============================================================
 # Code Example
@@ -191,7 +201,8 @@ print("\n" + "=" * 70)
 print("\n💻 사용 예제 (향후)")
 print("=" * 70)
 
-print("""
+print(
+    """
 ```python
 from src.foundation.ir.external_analyzers import PyrightAdapter
 from pathlib import Path
@@ -222,13 +233,15 @@ for ref in references:
 
 pyright.shutdown()
 ```
-""")
+"""
+)
 
 print("\n" + "=" * 70)
 print("\n✨ Summary")
 print("=" * 70)
 
-print("""
+print(
+    """
 Pyright LSP API 두 가지:
 
 1. ✅ textDocument/definition
@@ -250,4 +263,5 @@ Pyright LSP API 두 가지:
   1. LSP client 구현
   2. Name Resolution Graph 구축
   3. Definition/Reference 활용
-""")
+"""
+)

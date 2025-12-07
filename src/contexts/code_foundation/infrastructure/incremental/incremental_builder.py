@@ -4,24 +4,23 @@ Incremental IR Builder
 Delta 기반 incremental update
 """
 
-from pathlib import Path
-from typing import Dict, Set, List, Optional
 from dataclasses import dataclass
+from pathlib import Path
 
-from src.contexts.code_foundation.infrastructure.incremental.change_tracker import ChangeTracker
 from src.contexts.code_foundation.infrastructure.generators.python_generator import PythonIRGenerator
-from src.contexts.code_foundation.infrastructure.parsing import AstTree, SourceFile
+from src.contexts.code_foundation.infrastructure.incremental.change_tracker import ChangeTracker
 from src.contexts.code_foundation.infrastructure.ir.models import IRDocument
+from src.contexts.code_foundation.infrastructure.parsing import AstTree, SourceFile
 
 
 @dataclass
 class IncrementalResult:
     """Incremental update 결과"""
 
-    changed_files: Set[str]
-    affected_files: Set[str]
-    rebuilt_files: Set[str]
-    ir_documents: Dict[str, IRDocument]
+    changed_files: set[str]
+    affected_files: set[str]
+    rebuilt_files: set[str]
+    ir_documents: dict[str, IRDocument]
     skipped_files: int
 
 
@@ -38,11 +37,11 @@ class IncrementalBuilder:
     def __init__(self, repo_id: str):
         self.repo_id = repo_id
         self._change_tracker = ChangeTracker()
-        self._ir_cache: Dict[str, IRDocument] = {}
+        self._ir_cache: dict[str, IRDocument] = {}
 
     def build_incremental(
         self,
-        files: List[Path],
+        files: list[Path],
         language: str = "python",
     ) -> IncrementalResult:
         """
@@ -132,7 +131,7 @@ class IncrementalBuilder:
             skipped_files=skipped,
         )
 
-    def get_all_ir(self) -> Dict[str, IRDocument]:
+    def get_all_ir(self) -> dict[str, IRDocument]:
         """모든 cached IR documents"""
         return self._ir_cache.copy()
 

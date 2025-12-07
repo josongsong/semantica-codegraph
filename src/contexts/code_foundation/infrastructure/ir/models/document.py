@@ -17,7 +17,7 @@ from src.contexts.code_foundation.infrastructure.ir.models.core import Edge, Nod
 if TYPE_CHECKING:
     from src.contexts.code_foundation.infrastructure.ir.models.diagnostic import Diagnostic, DiagnosticIndex
     from src.contexts.code_foundation.infrastructure.ir.models.occurrence import Occurrence, OccurrenceIndex, SymbolRole
-    from src.contexts.code_foundation.infrastructure.ir.models.package import PackageMetadata, PackageIndex
+    from src.contexts.code_foundation.infrastructure.ir.models.package import PackageIndex, PackageMetadata
     from src.contexts.code_foundation.infrastructure.semantic_ir.cfg.models import ControlFlowGraph
     from src.contexts.code_foundation.infrastructure.semantic_ir.signature.models import SignatureEntity
     from src.contexts.code_foundation.infrastructure.semantic_ir.typing.models import TypeEntity
@@ -63,7 +63,7 @@ class IRDocument:
     # [Required] Identity
     repo_id: str
     snapshot_id: str  # Timestamp or version tag
-    schema_version: str = "2.0"  # ⭐ IR schema version (v2.0 adds occurrences)
+    schema_version: str = "2.1"  # ⭐ IR schema version (v2.1 adds PDG/Slicing/Taint)
 
     # [Required] Structural IR
     nodes: list[Node] = field(default_factory=list)
@@ -83,8 +83,22 @@ class IRDocument:
     # ⭐ NEW in v2.0: Package Metadata (SCIP-compatible)
     packages: list["PackageMetadata"] = field(default_factory=list)
 
+    # ⭐ NEW: Cross-Language Symbol Resolution (Phase 1)
+    unified_symbols: list["UnifiedSymbol"] = field(default_factory=list)
+    """Unified cross-language symbols (SCIP-compatible)"""
+
     # [Optional] Metadata
     meta: dict[str, Any] = field(default_factory=dict)
+
+    # ⭐ NEW in v2.1: Advanced Analysis (PDG, Slicing, Taint)
+    pdg_nodes: list["PDGNode"] = field(default_factory=list)
+    """Program Dependence Graph nodes (control + data dependencies)"""
+
+    pdg_edges: list["PDGEdge"] = field(default_factory=list)
+    """PDG edges (CONTROL_DEP, DATA_DEP)"""
+
+    taint_findings: list["TaintFinding"] = field(default_factory=list)
+    """Taint analysis results (security vulnerabilities)"""
 
     # ============================================================
     # Private indexes (lazy-built, not serialized)
@@ -95,6 +109,8 @@ class IRDocument:
     _node_index: dict[str, Node] | None = field(default=None, repr=False, compare=False)
     _edge_index: dict[str, list[Edge]] | None = field(default=None, repr=False, compare=False)
     _file_nodes_index: dict[str, list[Node]] | None = field(default=None, repr=False, compare=False)
+    _pdg_index: "PDGBuilder | None" = field(default=None, repr=False, compare=False)
+    _slicer: "ProgramSlicer | None" = field(default=None, repr=False, compare=False)
 
     # ============================================================
     # Index Building
@@ -276,6 +292,143 @@ class IRDocument:
         return self._occurrence_index.get_by_importance(min_score)
 
     # ============================================================
+    # Advanced Analysis Queries (PDG, Slicing, Taint) ⭐ v2.1
+    # ============================================================
+
+    def get_pdg_builder(self) -> "PDGBuilder | None":
+        """
+        Get or build PDG (Program Dependence Graph).
+
+        Returns:
+            PDGBuilder instance or None if not available
+        """
+        if self._pdg_index:
+            return self._pdg_index
+
+        # Lazy build from pdg_nodes/edges
+        if self.pdg_nodes:
+            from src.contexts.reasoning_engine.infrastructure.pdg.pdg_builder import PDGBuilder
+
+            pdg = PDGBuilder()
+            for node in self.pdg_nodes:
+                pdg.nodes[node.node_id] = node
+            for edge in self.pdg_edges:
+                pdg.edges.append(edge)
+
+            self._pdg_index = pdg
+            return pdg
+
+        return None
+
+    def get_slicer(self) -> "ProgramSlicer | None":
+        """
+        Get program slicer (requires PDG).
+
+        Returns:
+            ProgramSlicer instance or None if PDG not available
+        """
+        if self._slicer:
+            return self._slicer
+
+        pdg = self.get_pdg_builder()
+        if pdg:
+            from src.contexts.reasoning_engine.infrastructure.slicer.slicer import ProgramSlicer, SliceConfig
+
+            self._slicer = ProgramSlicer(
+                pdg_builder=pdg, config=SliceConfig(interprocedural=True, max_function_depth=2)
+            )
+            return self._slicer
+
+        return None
+
+    def backward_slice(self, target_node_id: str, max_depth: int = 50) -> "SliceResult | None":
+        """
+        Backward slice: 이 노드에 영향을 준 모든 코드.
+
+        Args:
+            target_node_id: Target node ID
+            max_depth: Maximum dependency depth
+
+        Returns:
+            SliceResult or None if slicer not available
+        """
+        slicer = self.get_slicer()
+        if slicer:
+            return slicer.backward_slice(target_node_id, max_depth)
+        return None
+
+    def forward_slice(self, source_node_id: str, max_depth: int = 50) -> "SliceResult | None":
+        """
+        Forward slice: 이 노드가 영향을 주는 모든 코드.
+
+        Args:
+            source_node_id: Source node ID
+            max_depth: Maximum dependency depth
+
+        Returns:
+            SliceResult or None if slicer not available
+        """
+        slicer = self.get_slicer()
+        if slicer:
+            return slicer.forward_slice(source_node_id, max_depth)
+        return None
+
+    def get_taint_findings(self, severity: str | None = None) -> list["TaintFinding"]:
+        """
+        Get taint analysis findings (security vulnerabilities).
+
+        Args:
+            severity: Filter by severity (high, medium, low) or None for all
+
+        Returns:
+            List of taint findings
+        """
+        if not severity:
+            return self.taint_findings
+
+        return [f for f in self.taint_findings if f.severity == severity]
+
+    def find_dataflow_path(self, from_node_id: str, to_node_id: str) -> list[str] | None:
+        """
+        Find dataflow path between two nodes.
+
+        Args:
+            from_node_id: Source node ID
+            to_node_id: Target node ID
+
+        Returns:
+            List of node IDs in path or None if no path found
+        """
+        pdg = self.get_pdg_builder()
+        if not pdg:
+            return None
+
+        # BFS to find path
+        from collections import deque
+
+        queue = deque([(from_node_id, [from_node_id])])
+        visited = set()
+
+        while queue:
+            current, path = queue.popleft()
+
+            if current == to_node_id:
+                return path
+
+            if current in visited:
+                continue
+
+            visited.add(current)
+
+            # Get data dependencies
+            deps = pdg.get_dependents(current)
+            for dep in deps:
+                if dep.dependency_type.value == "DATA" and dep.to_node not in visited:
+                    queue.append((dep.to_node, path + [dep.to_node]))
+
+        return None
+
+    # ============================================================
     # Statistics
     # ============================================================
 
@@ -296,11 +449,24 @@ class IRDocument:
             "signatures": len(self.signatures),
             "cfgs": len(self.cfgs),
             "occurrences": len(self.occurrences),
+            # v2.1 additions
+            "pdg_nodes": len(self.pdg_nodes),
+            "pdg_edges": len(self.pdg_edges),
+            "taint_findings": len(self.taint_findings),
         }
 
         # Occurrence stats
         self.ensure_indexes()
         if self._occurrence_index:
             stats["occurrence_stats"] = self._occurrence_index.get_stats()
+
+        # Taint stats
+        if self.taint_findings:
+            stats["taint_stats"] = {
+                "total": len(self.taint_findings),
+                "high": len([f for f in self.taint_findings if f.severity == "high"]),
+                "medium": len([f for f in self.taint_findings if f.severity == "medium"]),
+                "low": len([f for f in self.taint_findings if f.severity == "low"]),
+            }
 
         return stats

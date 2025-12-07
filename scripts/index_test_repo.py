@@ -16,18 +16,13 @@ Example:
     python scripts/index_test_repo.py src/retriever
 """
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
-from typing import Optional
 
 from src.container import Container
-from src.foundation.chunk.builder import ChunkBuilder
 from src.foundation.chunk.git_loader import GitFileLoader
 from src.foundation.chunk.models import Chunk
-from src.foundation.graph.builder import GraphBuilder
-from src.index.service import IndexingService
-from src.index.factory import IndexFactory
 
 
 async def index_repository(
@@ -55,11 +50,11 @@ async def index_repository(
     chunk_builder = container.chunk_builder()
     graph_builder = container.graph_builder()
     index_factory = container.index_factory()
-    indexing_service = container.indexing_service()
+    container.indexing_service()
 
     # Step 1: Load files from repository
     print(f"\n📂 Step 1: Loading files from {repo_path}")
-    git_loader = GitFileLoader(repo_path=str(repo_path))
+    GitFileLoader(repo_path=str(repo_path))
 
     files = []
     for file_path in repo_path.rglob("*.py"):
@@ -67,7 +62,7 @@ async def index_repository(
             continue  # Skip cache and test files
 
         rel_path = file_path.relative_to(repo_path)
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         files.append(
@@ -81,7 +76,7 @@ async def index_repository(
     print(f"   ✅ Loaded {len(files)} Python files")
 
     # Step 2: Build chunks
-    print(f"\n🧩 Step 2: Building chunks")
+    print("\n🧩 Step 2: Building chunks")
     all_chunks: list[Chunk] = []
 
     for file_info in files:
@@ -100,7 +95,7 @@ async def index_repository(
     print(f"   ✅ Built {len(all_chunks)} chunks")
 
     # Step 3: Build graph
-    print(f"\n🕸️  Step 3: Building graph")
+    print("\n🕸️  Step 3: Building graph")
     try:
         graph = graph_builder.build_graph(chunks=all_chunks, repo_id=repo_id)
         print(f"   ✅ Built graph with {len(graph.nodes)} nodes, {len(graph.edges)} edges")
@@ -109,7 +104,7 @@ async def index_repository(
         graph = None
 
     # Step 4: Index chunks into all indexes
-    print(f"\n📇 Step 4: Indexing into all indexes")
+    print("\n📇 Step 4: Indexing into all indexes")
 
     # Get index adapters
     symbol_index = index_factory.get_symbol_index()
@@ -117,7 +112,7 @@ async def index_repository(
     lexical_index = index_factory.get_lexical_index()
 
     # Index symbols
-    print(f"   📍 Indexing into symbol index...")
+    print("   📍 Indexing into symbol index...")
     symbol_count = 0
     for chunk in all_chunks:
         if chunk.symbol_id:
@@ -130,7 +125,7 @@ async def index_repository(
     print(f"   ✅ Indexed {symbol_count} symbols")
 
     # Index vectors
-    print(f"   🔢 Indexing into vector index...")
+    print("   🔢 Indexing into vector index...")
     vector_count = 0
     for chunk in all_chunks:
         try:
@@ -142,7 +137,7 @@ async def index_repository(
     print(f"   ✅ Indexed {vector_count} vectors")
 
     # Index lexical
-    print(f"   📝 Indexing into lexical index...")
+    print("   📝 Indexing into lexical index...")
     lexical_count = 0
     for chunk in all_chunks:
         try:
@@ -155,7 +150,7 @@ async def index_repository(
 
     # Index graph (if available)
     if graph:
-        print(f"   🕸️  Indexing graph...")
+        print("   🕸️  Indexing graph...")
         graph_store = container.graph_store()
         try:
             await graph_store.store_graph(graph, repo_id=repo_id)
@@ -164,8 +159,8 @@ async def index_repository(
             print(f"      ⚠️  Failed to index graph: {e}")
 
     # Step 5: Summary
-    print(f"\n✅ Indexing complete!")
-    print(f"\n📊 Summary:")
+    print("\n✅ Indexing complete!")
+    print("\n📊 Summary:")
     print(f"   - Files: {len(files)}")
     print(f"   - Chunks: {len(all_chunks)}")
     print(f"   - Symbols: {symbol_count}")
@@ -205,7 +200,7 @@ async def main():
         sys.exit(1)
 
     try:
-        stats = await index_repository(repo_path)
+        await index_repository(repo_path)
         print(f"\n✅ Successfully indexed {repo_path}")
         sys.exit(0)
     except Exception as e:

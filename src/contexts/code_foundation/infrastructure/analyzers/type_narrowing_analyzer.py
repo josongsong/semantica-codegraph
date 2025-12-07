@@ -4,7 +4,6 @@ Type Narrowing Analyzer
 Control flow 기반 타입 추론
 """
 
-from typing import Dict, Set, Optional
 from dataclasses import dataclass
 
 
@@ -30,14 +29,14 @@ class TypeNarrowingAnalyzer:
     """
 
     def __init__(self):
-        self._narrowings: Dict[str, list[TypeNarrowingInfo]] = {}
+        self._narrowings: dict[str, list[TypeNarrowingInfo]] = {}
 
     def analyze_control_flow(
         self,
         ast_node,
         get_text_func,
         source_bytes: bytes,
-    ) -> Dict[str, list[TypeNarrowingInfo]]:
+    ) -> dict[str, list[TypeNarrowingInfo]]:
         """
         Control flow 분석해서 type narrowing 추출
 

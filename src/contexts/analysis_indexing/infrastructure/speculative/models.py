@@ -5,13 +5,13 @@ Data models for speculative graph execution.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Set, Optional, Any, List
 from enum import Enum, auto
+from typing import Any
 
 
 class PatchType(Enum):
     """Type of code patch"""
-    
+
     CODE_MOVE = "code_move"  # Move code to different location
     RENAME = "rename"  # Rename symbol
     ADD_FIELD = "add_field"  # Add new field/property
@@ -24,28 +24,28 @@ class PatchType(Enum):
 
 class RiskLevel(Enum):
     """Risk level of applying a patch"""
-    
+
     SAFE = auto()  # No breaking changes
     LOW = auto()  # Minor impact
     MEDIUM = auto()  # Moderate impact
     HIGH = auto()  # Significant impact
     CRITICAL = auto()  # Breaking changes
-    
+
     def __lt__(self, other):
         if not isinstance(other, RiskLevel):
             return NotImplemented
         return self.value < other.value
-    
+
     def __le__(self, other):
         if not isinstance(other, RiskLevel):
             return NotImplemented
         return self.value <= other.value
-    
+
     def __gt__(self, other):
         if not isinstance(other, RiskLevel):
             return NotImplemented
         return self.value > other.value
-    
+
     def __ge__(self, other):
         if not isinstance(other, RiskLevel):
             return NotImplemented
@@ -56,7 +56,7 @@ class RiskLevel(Enum):
 class SpeculativePatch:
     """
     Represents a speculative code patch
-    
+
     Example:
         # Rename variable
         patch = SpeculativePatch(
@@ -65,7 +65,7 @@ class SpeculativePatch:
             new_value="new_name",
             file_path="service.py"
         )
-        
+
         # Add new field
         patch = SpeculativePatch(
             patch_type=PatchType.ADD_FIELD,
@@ -74,26 +74,26 @@ class SpeculativePatch:
             file_path="models.py"
         )
     """
-    
+
     # Identity
     patch_id: str
     patch_type: PatchType
-    
+
     # Target
     file_path: str
     target_symbol: str  # Symbol to modify
-    
+
     # Patch content
-    old_value: Optional[str] = None  # Original code/value
-    new_value: Optional[str] = None  # New code/value
-    
+    old_value: str | None = None  # Original code/value
+    new_value: str | None = None  # New code/value
+
     # Context
     description: str = ""  # Human-readable description
     reason: str = ""  # Why this patch is needed
-    
+
     # Metadata
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
+    metadata: dict[str, Any] = field(default_factory=dict)
+
     def is_breaking_change(self) -> bool:
         """Check if patch is likely a breaking change"""
         return self.patch_type in (
@@ -101,68 +101,63 @@ class SpeculativePatch:
             PatchType.DELETE,
             PatchType.RENAME,
         )
-    
+
     def __repr__(self) -> str:
-        return (
-            f"SpeculativePatch("
-            f"type={self.patch_type.value}, "
-            f"target={self.target_symbol}, "
-            f"file={self.file_path})"
-        )
+        return f"SpeculativePatch(type={self.patch_type.value}, target={self.target_symbol}, file={self.file_path})"
 
 
 @dataclass
 class GraphDelta:
     """
     Represents changes to the graph
-    
+
     Tracks:
     - Added/removed nodes
     - Added/removed edges
     - Modified properties
     """
-    
+
     # Node changes
-    nodes_added: Set[str] = field(default_factory=set)
-    nodes_removed: Set[str] = field(default_factory=set)
-    nodes_modified: Set[str] = field(default_factory=set)
-    
+    nodes_added: set[str] = field(default_factory=set)
+    nodes_removed: set[str] = field(default_factory=set)
+    nodes_modified: set[str] = field(default_factory=set)
+
     # Edge changes
-    edges_added: Set[tuple[str, str]] = field(default_factory=set)  # (source, target)
-    edges_removed: Set[tuple[str, str]] = field(default_factory=set)
-    
+    edges_added: set[tuple[str, str]] = field(default_factory=set)  # (source, target)
+    edges_removed: set[tuple[str, str]] = field(default_factory=set)
+
     # Property changes
-    properties_changed: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    
+    properties_changed: dict[str, dict[str, Any]] = field(default_factory=dict)
+
     # Call graph changes
-    call_graph_delta: Optional[Dict[str, Any]] = None
-    
+    call_graph_delta: dict[str, Any] | None = None
+
     # Type flow changes
-    type_flow_delta: Optional[Dict[str, Any]] = None
-    
+    type_flow_delta: dict[str, Any] | None = None
+
     def is_empty(self) -> bool:
         """Check if delta is empty (no changes)"""
         return (
-            not self.nodes_added and
-            not self.nodes_removed and
-            not self.nodes_modified and
-            not self.edges_added and
-            not self.edges_removed and
-            not self.properties_changed
+            not self.nodes_added
+            and not self.nodes_removed
+            and not self.nodes_modified
+            and not self.edges_added
+            and not self.edges_removed
+            and not self.properties_changed
         )
-    
+
     def size(self) -> int:
         """Total number of changes"""
         return (
-            len(self.nodes_added) +
-            len(self.nodes_removed) +
-            len(self.nodes_modified) +
-            len(self.edges_added) +
-            len(self.edges_removed) +
-            len(self.properties_changed)
+            len(self.nodes_added)
+            + len(self.nodes_removed)
+            + len(self.nodes_modified)
+            + len(self.edges_added)
+            + len(self.edges_removed)
+            + len(self.properties_changed)
         )
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "nodes_added": list(self.nodes_added),
@@ -173,7 +168,7 @@ class GraphDelta:
             "properties_changed": self.properties_changed,
             "total_changes": self.size(),
         }
-    
+
     def __repr__(self) -> str:
         return (
             f"GraphDelta("
@@ -189,59 +184,59 @@ class GraphDelta:
 class SpeculativeResult:
     """
     Result of speculative execution
-    
+
     Contains:
     - Predicted graph changes
     - Risk analysis
     - Recommendations
-    
+
     Example:
         result = execute_speculatively(patch)
-        
+
         if result.risk_level == RiskLevel.SAFE:
             apply_patch(patch)
         else:
             print(f"Risk: {result.risk_reasons}")
     """
-    
+
     # Input
     patch: SpeculativePatch
-    
+
     # Predicted changes
     graph_delta: GraphDelta
-    
+
     # Risk analysis
     risk_level: RiskLevel
-    risk_reasons: List[str] = field(default_factory=list)
-    
+    risk_reasons: list[str] = field(default_factory=list)
+
     # Impact analysis
-    affected_symbols: Set[str] = field(default_factory=set)
-    affected_files: Set[str] = field(default_factory=set)
-    breaking_changes: List[str] = field(default_factory=list)
-    
+    affected_symbols: set[str] = field(default_factory=set)
+    affected_files: set[str] = field(default_factory=set)
+    breaking_changes: list[str] = field(default_factory=list)
+
     # Call graph changes
-    callers_affected: Set[str] = field(default_factory=set)
-    callees_affected: Set[str] = field(default_factory=set)
-    
+    callers_affected: set[str] = field(default_factory=set)
+    callees_affected: set[str] = field(default_factory=set)
+
     # Recommendations
-    recommendations: List[str] = field(default_factory=list)
-    
+    recommendations: list[str] = field(default_factory=list)
+
     # Performance estimates
     estimated_rebuild_time_ms: float = 0.0
     estimated_test_time_ms: float = 0.0
-    
+
     # Metadata
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
+    metadata: dict[str, Any] = field(default_factory=dict)
+
     def is_safe(self) -> bool:
         """Check if patch is safe to apply"""
         return self.risk_level in (RiskLevel.SAFE, RiskLevel.LOW)
-    
+
     def has_breaking_changes(self) -> bool:
         """Check if patch has breaking changes"""
         return len(self.breaking_changes) > 0
-    
-    def get_summary(self) -> Dict[str, Any]:
+
+    def get_summary(self) -> dict[str, Any]:
         """Get summary of speculative execution"""
         return {
             "patch_type": self.patch.patch_type.value,
@@ -254,8 +249,8 @@ class SpeculativeResult:
             "is_safe": self.is_safe(),
             "recommendations": len(self.recommendations),
         }
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "patch": {
@@ -274,7 +269,7 @@ class SpeculativeResult:
             "estimated_rebuild_time_ms": self.estimated_rebuild_time_ms,
             "is_safe": self.is_safe(),
         }
-    
+
     def __repr__(self) -> str:
         summary = self.get_summary()
         return (
@@ -290,37 +285,32 @@ class SpeculativeResult:
 class SimulationContext:
     """
     Context for graph simulation
-    
+
     Contains current state needed for simulation
     """
-    
+
     # Current IR
-    current_ir: Dict[str, Any] = field(default_factory=dict)
-    
+    current_ir: dict[str, Any] = field(default_factory=dict)
+
     # Current call graph
-    call_graph: Optional[Any] = None
-    
+    call_graph: Any | None = None
+
     # Current type graph
-    type_graph: Optional[Any] = None
-    
+    type_graph: Any | None = None
+
     # Symbol table
-    symbol_table: Dict[str, Any] = field(default_factory=dict)
-    
+    symbol_table: dict[str, Any] = field(default_factory=dict)
+
     # File cache
-    file_cache: Dict[str, str] = field(default_factory=dict)
-    
-    def get_symbol(self, symbol_id: str) -> Optional[Any]:
+    file_cache: dict[str, str] = field(default_factory=dict)
+
+    def get_symbol(self, symbol_id: str) -> Any | None:
         """Get symbol from table"""
         return self.symbol_table.get(symbol_id)
-    
-    def get_file_ir(self, file_path: str) -> Optional[Any]:
+
+    def get_file_ir(self, file_path: str) -> Any | None:
         """Get IR for file"""
         return self.current_ir.get(file_path)
-    
-    def __repr__(self) -> str:
-        return (
-            f"SimulationContext("
-            f"files={len(self.current_ir)}, "
-            f"symbols={len(self.symbol_table)})"
-        )
 
+    def __repr__(self) -> str:
+        return f"SimulationContext(files={len(self.current_ir)}, symbols={len(self.symbol_table)})"

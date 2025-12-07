@@ -112,7 +112,9 @@ class TestV3IntegrationSmallScale:
         assert "graph" in top_result.strategies, f"Expected graph strategy in top result, got {top_result.strategies}"
 
         print(
-            f"✅ Query 2 passed: {len(results)} results, intent={intent.dominant_intent()}, graph_weight={results[0].weights.graph:.3f}"
+            f"✅ Query 2 passed: {len(results)} results, "
+            f"intent={intent.dominant_intent()}, "
+            f"graph_weight={results[0].weights.graph:.3f}"
         )
 
     def test_query_3_code_fusion_implementation(
@@ -234,7 +236,9 @@ class TestV3IntegrationSmallScale:
             assert weights.sym > 0.25, f"Expected symbol weight > 0.25 with symbol boosting, got {weights.sym}"
 
         print(
-            f"✅ Query 6 passed: {len(results)} results, intent={intent.dominant_intent()}, symbol_weight={results[0].weights.sym:.3f}"
+            f"✅ Query 6 passed: {len(results)} results, "
+            f"intent={intent.dominant_intent()}, "
+            f"symbol_weight={results[0].weights.sym:.3f}"
         )
 
     def test_query_7_config_dataclass(

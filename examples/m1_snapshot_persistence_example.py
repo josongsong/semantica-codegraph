@@ -17,7 +17,8 @@ Requirements:
 - Migration 005 applied
 
 Run:
-    SEMANTICA_DATABASE_URL="postgresql://codegraph:codegraph_dev@localhost:7201/codegraph" python examples/m1_snapshot_persistence_example.py
+    SEMANTICA_DATABASE_URL="postgresql://codegraph:codegraph_dev@localhost:7201/codegraph" \
+    python examples/m1_snapshot_persistence_example.py
 """
 
 import asyncio

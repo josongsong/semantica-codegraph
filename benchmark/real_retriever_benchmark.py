@@ -231,7 +231,7 @@ class MockVectorIndex:
 
                 for word in query_lower.split():
                     # Docstrings (high value)
-                    if f'"""' in content or "'''" in content:
+                    if '"""' in content or "'''" in content:
                         if word in content_lower:
                             score += 0.15
 
@@ -288,7 +288,7 @@ class MockSymbolIndex:
                 lines = content.split("\n")
 
                 # Look for class/function definitions
-                for line_num, line in enumerate(lines):
+                for _line_num, line in enumerate(lines):
                     line_lower = line.strip().lower()
 
                     # Check for class definition

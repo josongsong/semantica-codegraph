@@ -16,7 +16,12 @@ from src.contexts.retrieval_search.infrastructure.query.models import (
 
 if TYPE_CHECKING:
     from src.contexts.retrieval_search.infrastructure.query.decomposer import QueryDecomposer
+    from src.contexts.retrieval_search.infrastructure.query.hyde import HyDEGenerator, HyDEQueryProcessor
     from src.contexts.retrieval_search.infrastructure.query.multi_hop import MultiHopRetriever
+    from src.contexts.retrieval_search.infrastructure.query.multi_query import (
+        MultiQueryGenerator,
+        MultiQueryRetriever,
+    )
 
 
 def __getattr__(name: str):
@@ -29,6 +34,22 @@ def __getattr__(name: str):
         from src.contexts.retrieval_search.infrastructure.query.multi_hop import MultiHopRetriever
 
         return MultiHopRetriever
+    if name == "HyDEGenerator":
+        from src.contexts.retrieval_search.infrastructure.query.hyde import HyDEGenerator
+
+        return HyDEGenerator
+    if name == "HyDEQueryProcessor":
+        from src.contexts.retrieval_search.infrastructure.query.hyde import HyDEQueryProcessor
+
+        return HyDEQueryProcessor
+    if name == "MultiQueryGenerator":
+        from src.contexts.retrieval_search.infrastructure.query.multi_query import MultiQueryGenerator
+
+        return MultiQueryGenerator
+    if name == "MultiQueryRetriever":
+        from src.contexts.retrieval_search.infrastructure.query.multi_query import MultiQueryRetriever
+
+        return MultiQueryRetriever
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
@@ -43,4 +64,10 @@ __all__ = [
     "QueryDecomposer",
     # Multi-hop (heavy - lazy import via TYPE_CHECKING)
     "MultiHopRetriever",
+    # HyDE (SOTA 2024)
+    "HyDEGenerator",
+    "HyDEQueryProcessor",
+    # RAG-Fusion (SOTA 2024)
+    "MultiQueryGenerator",
+    "MultiQueryRetriever",
 ]

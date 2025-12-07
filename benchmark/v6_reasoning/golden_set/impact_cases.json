@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "total_cases": 0,
+  "target_cases": 30,
+  "cases": [
+    {
+      "id": "impact_001",
+      "category": "ir_local",
+      "description": "함수 body만 변경, signature 불변",
+      "before": "def calculate_total(items: list) -> int:\n    return sum(item.price for item in items)",
+      "after": "def calculate_total(items: list) -> int:\n    total = 0\n    for item in items:\n        total += item.price\n    return total",
+      "expected": {
+        "impact_level": "ir_local",
+        "affected_symbols": ["calculate_total"],
+        "callers_affected": false,
+        "signature_changed": false
+      }
+    },
+    {
+      "id": "impact_002",
+      "category": "no_impact",
+      "description": "주석만 추가",
+      "before": "def get_user(user_id: int) -> User:\n    return db.query(User).filter(User.id == user_id).first()",
+      "after": "def get_user(user_id: int) -> User:\n    # Query user by ID\n    return db.query(User).filter(User.id == user_id).first()",
+      "expected": {
+        "impact_level": "no_impact",
+        "affected_symbols": [],
+        "callers_affected": false,
+        "signature_changed": false
+      }
+    },
+    {
+      "id": "impact_003",
+      "category": "signature_change",
+      "description": "파라미터 타입 변경",
+      "before": "def process_data(data: str) -> dict:\n    return json.loads(data)",
+      "after": "def process_data(data: bytes) -> dict:\n    return json.loads(data.decode('utf-8'))",
+      "expected": {
+        "impact_level": "signature_change",
+        "affected_symbols": ["process_data"],
+        "callers_affected": true,
+        "signature_changed": true
+      }
+    }
+  ],
+  "notes": [
+    "각 케이스는 실제 프로젝트에서 추출하거나 합성 생성",
+    "Expected output은 최소 2명이 검증",
+    "Target: 30개 (NO_IMPACT:5, IR_LOCAL:10, SIGNATURE:10, STRUCTURAL:5)"
+  ]
+}
+

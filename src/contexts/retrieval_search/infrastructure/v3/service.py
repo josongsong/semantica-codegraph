@@ -10,7 +10,6 @@ import time
 from typing import Any
 
 from src.contexts.multi_index.infrastructure.common.documents import SearchHit
-from src.infra.observability import get_logger, record_counter, record_histogram
 from src.contexts.retrieval_search.infrastructure.v3.cache import RetrieverV3Cache
 from src.contexts.retrieval_search.infrastructure.v3.config import RetrieverV3Config
 from src.contexts.retrieval_search.infrastructure.v3.fusion_engine import FusionEngineV3
@@ -22,6 +21,7 @@ from src.contexts.retrieval_search.infrastructure.v3.models import (
     IntentProbability,
     RankedHit,
 )
+from src.infra.observability import get_logger, record_counter, record_histogram
 
 logger = get_logger(__name__)
 

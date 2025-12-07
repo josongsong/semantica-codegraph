@@ -128,7 +128,7 @@ class FuzzyMatcher:
 
         # Common prefix
         common_prefix = 0
-        for c1, c2 in zip(s1, s2):
+        for c1, c2 in zip(s1, s2, strict=False):
             if c1 == c2:
                 common_prefix += 1
             else:
@@ -158,9 +158,9 @@ class RetrievalOptimizedIndex:
         self.logger = logger
 
         # Symbol indexes
-        self.by_symbol_name: dict[str, list["Node"]] = {}
-        self.by_fqn: dict[str, "Node"] = {}
-        self.by_type: dict[str, list["Node"]] = {}
+        self.by_symbol_name: dict[str, list[Node]] = {}
+        self.by_fqn: dict[str, Node] = {}
+        self.by_type: dict[str, list[Node]] = {}
 
         # File indexes
         self.by_file: dict[str, FileIndex] = {}
@@ -169,7 +169,12 @@ class RetrievalOptimizedIndex:
         self.fuzzy_matcher = FuzzyMatcher()
 
         # Occurrence index (from IR document)
-        self.occurrence_index: "OccurrenceIndex | None" = None
+        self.occurrence_index: OccurrenceIndex | None = None
+
+        # ⭐ v2.1: Advanced analysis (PDG, Slicer)
+        self.pdg_builder = None
+        self.slicer = None
+        self.ir_document = None
 
         # Stats
         self.total_nodes = 0
@@ -182,6 +187,9 @@ class RetrievalOptimizedIndex:
         Args:
             ir_doc: IR document to index
         """
+        # Store IR document reference
+        self.ir_document = ir_doc
+
         # Index nodes
         for node in ir_doc.nodes:
             self.total_nodes += 1
@@ -208,6 +216,21 @@ class RetrievalOptimizedIndex:
         # Store occurrence index
         if ir_doc._occurrence_index:
             self.occurrence_index = ir_doc._occurrence_index
+
+        # ⭐ v2.1: Store PDG and slicer
+        # PDG가 있으면 저장
+        if hasattr(ir_doc, "_pdg_index") and ir_doc._pdg_index:
+            if len(ir_doc.pdg_nodes) > 0:
+                self.logger.info(f"Storing PDG: {len(ir_doc.pdg_nodes)} nodes")
+                self.pdg_builder = ir_doc._pdg_index
+        else:
+            self.logger.debug(f"No PDG in ir_doc for {ir_doc.repo_id}")
+
+        if hasattr(ir_doc, "_slicer") and ir_doc._slicer:
+            self.logger.info("Storing Slicer")
+            self.slicer = ir_doc._slicer
+        else:
+            self.logger.debug(f"No Slicer in ir_doc for {ir_doc.repo_id}")
 
     def search_symbol(
         self,
@@ -246,6 +269,178 @@ class RetrievalOptimizedIndex:
         scored.sort(key=lambda x: x[1], reverse=True)
 
         return scored[:limit]
+
+    def search_with_dataflow(
+        self,
+        query: str,
+        context_node_id: str | None = None,
+        max_distance: int = 3,
+        limit: int = 20,
+    ) -> list[tuple["Node", float]]:
+        """
+        Dataflow 기반 검색: 쿼리와 관련된 노드를 데이터 흐름 기준으로 랭킹.
+
+        Args:
+            query: 검색 쿼리
+            context_node_id: 컨텍스트 노드 (이 노드 기준으로 관련도 계산)
+            max_distance: 최대 dataflow 거리
+            limit: 최대 결과 수
+
+        Returns:
+            List of (Node, relevance_score)
+        """
+        # 기본 검색
+        base_results = self.search_symbol(query, fuzzy=True, limit=limit * 2)
+
+        if not context_node_id or not self.pdg_builder:
+            return base_results
+
+        # Dataflow 관련도로 재랭킹
+        reranked = []
+
+        for node, base_score in base_results:
+            # Dataflow 거리 계산
+            distance = self._calculate_dataflow_distance(context_node_id, node.id, max_distance)
+
+            if distance is not None:
+                # 거리가 가까울수록 높은 점수
+                dataflow_score = 1.0 / (1.0 + distance)
+
+                # 기본 점수와 dataflow 점수 결합
+                final_score = base_score * 0.6 + dataflow_score * 0.4
+            else:
+                final_score = base_score * 0.5  # 연결 없으면 페널티
+
+            reranked.append((node, final_score))
+
+        # 재정렬
+        reranked.sort(key=lambda x: x[1], reverse=True)
+
+        return reranked[:limit]
+
+    def find_impact(
+        self,
+        node_id: str,
+        max_depth: int = 50,
+    ) -> list[tuple["Node", float]]:
+        """
+        영향도 분석: 이 노드를 변경하면 어떤 노드들이 영향을 받는가?
+
+        Args:
+            node_id: 분석할 노드 ID
+            max_depth: 최대 슬라이싱 깊이
+
+        Returns:
+            List of (affected_node, impact_score)
+        """
+        if not self.slicer:
+            return []
+
+        # Forward slice
+        result = self.slicer.forward_slice(node_id, max_depth)
+
+        if not result:
+            return []
+
+        # 슬라이스 노드들을 Node 객체로 변환
+        affected = []
+        for slice_node_id in result.slice_nodes:
+            node = self.by_fqn.get(slice_node_id)
+            if node:
+                # 거리 기반 점수 (가까울수록 높음)
+                # TODO: 실제 거리 계산 필요
+                impact_score = 0.8  # Placeholder
+                affected.append((node, impact_score))
+
+        # 관련도 순 정렬
+        affected.sort(key=lambda x: x[1], reverse=True)
+
+        return affected
+
+    def find_dependencies(
+        self,
+        node_id: str,
+        max_depth: int = 50,
+    ) -> list[tuple["Node", float]]:
+        """
+        의존성 분석: 이 노드가 의존하는 노드들은?
+
+        Args:
+            node_id: 분석할 노드 ID
+            max_depth: 최대 슬라이싱 깊이
+
+        Returns:
+            List of (dependency_node, dependency_score)
+        """
+        if not self.slicer:
+            return []
+
+        # Backward slice
+        result = self.slicer.backward_slice(node_id, max_depth)
+
+        if not result:
+            return []
+
+        # 슬라이스 노드들을 Node 객체로 변환
+        dependencies = []
+        for slice_node_id in result.slice_nodes:
+            node = self.by_fqn.get(slice_node_id)
+            if node:
+                dependency_score = 0.8  # Placeholder
+                dependencies.append((node, dependency_score))
+
+        dependencies.sort(key=lambda x: x[1], reverse=True)
+
+        return dependencies
+
+    def _calculate_dataflow_distance(
+        self,
+        from_node_id: str,
+        to_node_id: str,
+        max_distance: int,
+    ) -> int | None:
+        """
+        Dataflow 그래프에서 두 노드 간 거리 계산 (BFS).
+
+        Args:
+            from_node_id: 시작 노드
+            to_node_id: 목표 노드
+            max_distance: 최대 거리
+
+        Returns:
+            거리 (없으면 None)
+        """
+        if not self.pdg_builder:
+            return None
+
+        from collections import deque
+
+        queue = deque([(from_node_id, 0)])
+        visited = set()
+
+        while queue:
+            current, distance = queue.popleft()
+
+            if current == to_node_id:
+                return distance
+
+            if distance >= max_distance:
+                continue
+
+            if current in visited:
+                continue
+
+            visited.add(current)
+
+            # Get dependents (forward)
+            deps = self.pdg_builder.get_dependents(current)
+            for dep in deps:
+                # Data dependency만
+                if dep.dependency_type.value == "DATA":
+                    if dep.to_node not in visited:
+                        queue.append((dep.to_node, distance + 1))
+
+        return None
 
     def _calculate_relevance(self, node: "Node", query: str) -> float:
         """

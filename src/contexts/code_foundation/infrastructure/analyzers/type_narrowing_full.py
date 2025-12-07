@@ -4,7 +4,6 @@ Full Type Narrowing Analyzer
 Complete flow-sensitive type inference
 """
 
-from typing import Dict, Set, Optional, List, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -27,7 +26,7 @@ class TypeConstraint:
     variable: str
     constraint_type: TypeNarrowingKind
     narrowed_to: str
-    location: Tuple[int, int]  # (line, col)
+    location: tuple[int, int]  # (line, col)
     scope: str
 
 
@@ -35,14 +34,13 @@ class TypeConstraint:
 class TypeState:
     """특정 위치에서의 타입 상태"""
 
-    variables: Dict[str, Set[str]] = field(default_factory=dict)  # var -> possible types
-    constraints: List[TypeConstraint] = field(default_factory=list)
-    
+    variables: dict[str, set[str]] = field(default_factory=dict)  # var -> possible types
+    constraints: list[TypeConstraint] = field(default_factory=list)
+
     def copy(self) -> "TypeState":
         """Create a deep copy of this type state"""
         return TypeState(
-            variables={k: v.copy() for k, v in self.variables.items()},
-            constraints=self.constraints.copy()
+            variables={k: v.copy() for k, v in self.variables.items()}, constraints=self.constraints.copy()
         )
 
 
@@ -58,7 +56,7 @@ class FullTypeNarrowingAnalyzer:
     """
 
     def __init__(self):
-        self._type_states: Dict[str, TypeState] = {}  # location -> TypeState
+        self._type_states: dict[str, TypeState] = {}  # location -> TypeState
         self._current_scope = "global"
 
     def analyze_full(
@@ -66,8 +64,8 @@ class FullTypeNarrowingAnalyzer:
         ast_node,
         get_text_func,
         source_bytes: bytes,
-        initial_types: Dict[str, Set[str]] = None,
-    ) -> Dict[str, TypeState]:
+        initial_types: dict[str, set[str]] = None,
+    ) -> dict[str, TypeState]:
         """
         Complete type narrowing 분석
 
@@ -269,7 +267,7 @@ class FullTypeNarrowingAnalyzer:
         condition_node,
         get_text_func,
         source_bytes: bytes,
-    ) -> Optional[TypeConstraint]:
+    ) -> TypeConstraint | None:
         """Condition에서 type constraint 추출"""
         condition_text = get_text_func(condition_node, source_bytes)
 
@@ -321,7 +319,7 @@ class FullTypeNarrowingAnalyzer:
         expr_node,
         get_text_func,
         source_bytes: bytes,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Expression에서 타입 추론"""
         if not expr_node:
             return None
@@ -353,14 +351,14 @@ class FullTypeNarrowingAnalyzer:
         self,
         variable: str,
         location: str,
-    ) -> Optional[Set[str]]:
+    ) -> set[str] | None:
         """특정 위치에서 변수의 타입 조회"""
         if location in self._type_states:
             state = self._type_states[location]
             return state.variables.get(variable)
         return None
 
-    def get_all_narrowings(self) -> List[TypeConstraint]:
+    def get_all_narrowings(self) -> list[TypeConstraint]:
         """모든 type narrowing 조회"""
         all_constraints = []
         for state in self._type_states.values():

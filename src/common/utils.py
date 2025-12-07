@@ -14,10 +14,11 @@ import asyncio
 import json
 import time
 from collections import OrderedDict
+from collections.abc import Awaitable, Callable
 from dataclasses import fields, is_dataclass
 from functools import wraps
 from threading import Lock
-from typing import Any, Awaitable, Callable, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
 K = TypeVar("K")

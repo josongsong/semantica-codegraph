@@ -231,7 +231,7 @@ async def example_3_step_by_step():
     # Step 1: Find relevant code
     print("\n🔍 Step 1: Finding relevant code...")
     task1 = Task(query="find authentication code")
-    result1 = await orchestrator.execute_task(task1, start_mode=AgentMode.CONTEXT_NAV)
+    await orchestrator.execute_task(task1, start_mode=AgentMode.CONTEXT_NAV)
 
     context = orchestrator.get_context()
     print(f"   Found files: {context.current_files}")

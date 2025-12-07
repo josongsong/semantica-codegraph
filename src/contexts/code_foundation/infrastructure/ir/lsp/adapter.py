@@ -30,7 +30,7 @@ Example usage:
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Protocol
 
 from src.common.observability import get_logger
 
@@ -244,7 +244,7 @@ class MultiLSPManager:
                 from src.contexts.code_foundation.infrastructure.ir.lsp.pyright import PyrightAdapter
 
                 self.adapters[language] = PyrightAdapter(self.project_root)
-                self.logger.info(f"Initialized Pyright adapter for Python")
+                self.logger.info("Initialized Pyright adapter for Python")
 
             elif language in ["typescript", "javascript"]:
                 from src.contexts.code_foundation.infrastructure.ir.lsp.typescript import TypeScriptAdapter
@@ -256,13 +256,19 @@ class MultiLSPManager:
                 from src.contexts.code_foundation.infrastructure.ir.lsp.gopls import GoplsAdapter
 
                 self.adapters[language] = GoplsAdapter(self.project_root)
-                self.logger.info(f"Initialized gopls adapter for Go")
+                self.logger.info("Initialized gopls adapter for Go")
 
             elif language == "rust":
                 from src.contexts.code_foundation.infrastructure.ir.lsp.rust_analyzer import RustAnalyzerAdapter
 
                 self.adapters[language] = RustAnalyzerAdapter(self.project_root)
-                self.logger.info(f"Initialized rust-analyzer adapter for Rust")
+                self.logger.info("Initialized rust-analyzer adapter for Rust")
+
+            elif language == "java":
+                from src.contexts.code_foundation.infrastructure.ir.lsp.jdtls import JdtlsAdapter
+
+                self.adapters[language] = JdtlsAdapter(self.project_root)
+                self.logger.info("Initialized JDT.LS adapter for Java")
 
             else:
                 self.logger.warning(f"Language '{language}' not supported for LSP integration")
@@ -405,7 +411,7 @@ class MultiLSPManager:
 
     def get_supported_languages(self) -> list[str]:
         """Get list of supported languages"""
-        return ["python", "typescript", "javascript", "go", "rust"]
+        return ["python", "typescript", "javascript", "go", "rust", "java"]
 
     def is_language_supported(self, language: str) -> bool:
         """Check if language is supported"""

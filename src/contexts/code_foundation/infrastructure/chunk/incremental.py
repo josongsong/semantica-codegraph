@@ -317,7 +317,7 @@ class ChunkIncrementalRefresher:
         added_files: list[str],
         deleted_files: list[str],
         modified_files: list[str],
-        _renamed_files: dict[str, str] | None = None,  # old → new (Phase B - not yet implemented)
+        renamed_files: dict[str, str] | None = None,  # 🔥 IMPLEMENTED: old → new
         repo_config: dict | None = None,
         file_diffs: dict[str, str] | None = None,  # Phase C: file_path → diff_text
     ) -> ChunkRefreshResult:
@@ -406,7 +406,35 @@ class ChunkIncrementalRefresher:
                 )
                 record_counter("chunk_file_processed_total", labels={"operation": "deleted", "status": "error"})
 
-        # 3. Handle modified files (diff + content_hash skip) - OPTIMIZED with batch loading
+        # 3. 🔥 NEW: Handle renamed files (update file_path in chunks)
+        if renamed_files:
+            logger.info(
+                "chunk_renamed_files_start",
+                renamed_count=len(renamed_files),
+            )
+            for old_path, new_path in renamed_files.items():
+                try:
+                    renamed_chunks = await self._handle_renamed_file(
+                        repo_id, old_path, new_path, old_commit, new_commit
+                    )
+                    result.renamed_chunks.extend(renamed_chunks)
+                    logger.debug(
+                        "chunk_renamed_file_processed",
+                        old_path=old_path,
+                        new_path=new_path,
+                        chunks_count=len(renamed_chunks),
+                    )
+                    record_counter("chunk_file_processed_total", labels={"operation": "renamed", "status": "success"})
+                except Exception as e:
+                    logger.error(
+                        "chunk_renamed_file_failed",
+                        old_path=old_path,
+                        new_path=new_path,
+                        error=str(e),
+                    )
+                    record_counter("chunk_file_processed_total", labels={"operation": "renamed", "status": "error"})
+
+        # 4. Handle modified files (diff + content_hash skip) - OPTIMIZED with batch loading
         # Pre-load all chunks for modified files in one batch query (reduce DB round-trips)
         if modified_files:
             logger.debug(
@@ -524,6 +552,68 @@ class ChunkIncrementalRefresher:
             chunk.is_deleted = False
 
         return chunks
+
+    async def _handle_renamed_file(
+        self,
+        repo_id: str,
+        old_path: str,
+        new_path: str,
+        old_commit: str,
+        new_commit: str,
+    ) -> list["Chunk"]:
+        """
+        🔥 NEW: Handle renamed file (update file_path in chunks).
+
+        Strategy:
+        1. Load chunks from old_path
+        2. Update file_path to new_path
+        3. Increment version
+        4. Update last_indexed_commit
+
+        Args:
+            repo_id: Repository identifier
+            old_path: Old file path
+            new_path: New file path
+            old_commit: Previous commit hash
+            new_commit: New commit hash
+
+        Returns:
+            List of renamed chunks
+        """
+        # Get existing chunks from old path
+        old_chunks = await self._get_chunks_by_file_cached(repo_id, old_path, old_commit)
+
+        if not old_chunks:
+            logger.warning(
+                "renamed_file_no_chunks_found",
+                repo_id=repo_id,
+                old_path=old_path,
+                new_path=new_path,
+            )
+            return []
+
+        # Update file_path and metadata
+        renamed_chunks = []
+        for chunk in old_chunks:
+            # Create updated chunk (immutable if frozen dataclass)
+            updated_chunk = chunk
+            updated_chunk.file_path = new_path
+            updated_chunk.version = chunk.version + 1
+            updated_chunk.last_indexed_commit = new_commit
+            renamed_chunks.append(updated_chunk)
+
+        # Save updated chunks
+        await self.chunk_store.save_chunks(renamed_chunks)
+
+        logger.info(
+            "renamed_file_chunks_updated",
+            repo_id=repo_id,
+            old_path=old_path,
+            new_path=new_path,
+            chunks_count=len(renamed_chunks),
+        )
+
+        return renamed_chunks
 
     async def _handle_deleted_file(self, repo_id: str, file_path: str, old_commit: str, new_commit: str) -> list[str]:
         """

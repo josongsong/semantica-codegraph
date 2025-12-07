@@ -39,14 +39,18 @@ from typing import TYPE_CHECKING
 
 from src.common.observability import get_logger, record_histogram
 from src.contexts.code_foundation.infrastructure.ir.cross_file_resolver import CrossFileResolver, GlobalContext
+from src.contexts.code_foundation.infrastructure.ir.diagnostic_collector import DiagnosticCollector
 from src.contexts.code_foundation.infrastructure.ir.lsp.adapter import MultiLSPManager
 from src.contexts.code_foundation.infrastructure.ir.occurrence_generator import OccurrenceGenerator
+from src.contexts.code_foundation.infrastructure.ir.package_analyzer import PackageAnalyzer
 from src.contexts.code_foundation.infrastructure.ir.retrieval_index import RetrievalOptimizedIndex
 from src.contexts.code_foundation.infrastructure.ir.type_enricher import SelectiveTypeEnricher
 from src.contexts.code_foundation.infrastructure.parsing.parser_registry import ParserRegistry
 
 if TYPE_CHECKING:
+    from src.contexts.code_foundation.infrastructure.ir.models.diagnostic import DiagnosticIndex
     from src.contexts.code_foundation.infrastructure.ir.models.document import IRDocument
+    from src.contexts.code_foundation.infrastructure.ir.models.package import PackageIndex
 
 logger = get_logger(__name__)
 
@@ -91,10 +95,18 @@ class SOTAIRBuilder:
         self.type_enricher = SelectiveTypeEnricher(self.lsp)
         self.cross_file_resolver = CrossFileResolver()
 
+        # SCIP-compatible features
+        self.diagnostic_collector = DiagnosticCollector(self.lsp)
+        self.package_analyzer = PackageAnalyzer(self.project_root)
+
     async def build_full(
         self,
         files: list[Path],
-    ) -> tuple[dict[str, "IRDocument"], GlobalContext, RetrievalOptimizedIndex]:
+        collect_diagnostics: bool = True,
+        analyze_packages: bool = True,
+    ) -> tuple[
+        dict[str, "IRDocument"], GlobalContext, RetrievalOptimizedIndex, "DiagnosticIndex | None", "PackageIndex | None"
+    ]:
         """
         Build complete SOTA IR.
 
@@ -104,12 +116,16 @@ class SOTAIRBuilder:
         3. LSP Type Enrichment (selective)
         4. Cross-file Resolution
         5. Retrieval Indexes
+        6. Diagnostics Collection (SCIP-compatible)
+        7. Package Analysis (SCIP-compatible)
 
         Args:
             files: List of files to index
+            collect_diagnostics: Whether to collect diagnostics from LSP
+            analyze_packages: Whether to analyze package dependencies
 
         Returns:
-            (ir_documents, global_context, retrieval_index)
+            (ir_documents, global_context, retrieval_index, diagnostic_index, package_index)
         """
         start_time = time.perf_counter()
 
@@ -130,40 +146,105 @@ class SOTAIRBuilder:
         # ============================================================
         # Layer 3: LSP Type Enrichment (selective, Public APIs)
         # ============================================================
-        self.logger.info("[3/5] Enriching with LSP types (Public APIs)...")
+        self.logger.info("[3/8] Enriching with LSP types (Public APIs)...")
         await self._enrich_types_parallel(structural_irs)
 
         # ============================================================
         # Layer 4: Cross-file Resolution
         # ============================================================
-        self.logger.info("[4/5] Resolving cross-file references...")
+        self.logger.info("[4/8] Resolving cross-file references...")
         global_ctx = self.cross_file_resolver.resolve(structural_irs)
 
         # ============================================================
-        # Layer 5: Build Retrieval Indexes
+        # Layer 5: Advanced Analysis (PDG + Taint + Slicing) ⭐ v2.1
         # ============================================================
-        self.logger.info("[5/5] Building retrieval indexes...")
+        self.logger.info("[5/8] Running advanced analysis (PDG + Taint + Slicing)...")
+        try:
+            from src.contexts.code_foundation.infrastructure.ir.unified_analyzer import UnifiedAnalyzer
+
+            analyzer = UnifiedAnalyzer(
+                enable_pdg=True,
+                enable_taint=True,
+                enable_slicing=True,
+            )
+
+            enhanced_count = 0
+            for ir_doc in structural_irs.values():
+                try:
+                    analyzer.analyze(ir_doc, self.project_root)
+                    enhanced_count += 1
+                except Exception as e:
+                    self.logger.warning(f"   ⚠️ Advanced analysis failed for {ir_doc.repo_id}: {e}")
+
+            self.logger.info(f"   ✅ Advanced analysis complete: {enhanced_count}/{len(structural_irs)} files enhanced")
+        except Exception as e:
+            self.logger.warning(f"   ⚠️ Advanced analysis skipped: {e}")
+
+        # ============================================================
+        # Layer 6: Build Retrieval Indexes (PDG 생성 후)
+        # ============================================================
+        self.logger.info("[6/8] Building retrieval indexes...")
         retrieval_index = RetrievalOptimizedIndex()
         for ir_doc in structural_irs.values():
             retrieval_index.index_ir_document(ir_doc)
+
+        # ============================================================
+        # Layer 7: Collect Diagnostics (SCIP-compatible) ⭐ NEW
+        # ============================================================
+        diagnostic_index = None
+        if collect_diagnostics:
+            self.logger.info("[7/8] Collecting diagnostics from LSP...")
+            try:
+                diagnostic_index = await self.diagnostic_collector.collect(structural_irs)
+                self.logger.info(
+                    f"   ✅ Collected {diagnostic_index.total_diagnostics} diagnostics "
+                    f"({diagnostic_index.error_count} errors, {diagnostic_index.warning_count} warnings)"
+                )
+            except Exception as e:
+                self.logger.warning(f"   ⚠️ Diagnostic collection failed: {e}")
+
+        # ============================================================
+        # Layer 8: Analyze Packages (SCIP-compatible) ⭐ NEW
+        # ============================================================
+        package_index = None
+        if analyze_packages:
+            self.logger.info("[8/8] Analyzing package dependencies...")
+            try:
+                package_index = self.package_analyzer.analyze(structural_irs)
+                stats = package_index.get_stats()
+                self.logger.info(
+                    f"   ✅ Found {stats['total_packages']} packages, {stats['total_imports']} import mappings"
+                )
+            except Exception as e:
+                self.logger.warning(f"   ⚠️ Package analysis failed: {e}")
 
         # ============================================================
         # Complete
         # ============================================================
         elapsed = time.perf_counter() - start_time
 
-        self.logger.info(
-            f"✅ SOTA IR build complete in {elapsed:.1f}s\n"
-            f"   - Files: {len(structural_irs)}\n"
-            f"   - Symbols: {global_ctx.total_symbols}\n"
-            f"   - Occurrences: {sum(len(ir.occurrences) for ir in structural_irs.values())}\n"
-            f"   - Dependencies: {global_ctx.get_stats()['total_dependencies']}"
-        )
+        summary_lines = [
+            f"✅ SOTA IR build complete in {elapsed:.1f}s",
+            f"   - Files: {len(structural_irs)}",
+            f"   - Symbols: {global_ctx.total_symbols}",
+            f"   - Occurrences: {sum(len(ir.occurrences) for ir in structural_irs.values())}",
+            f"   - Dependencies: {global_ctx.get_stats()['total_dependencies']}",
+        ]
+
+        if diagnostic_index:
+            summary_lines.append(
+                f"   - Diagnostics: {diagnostic_index.total_diagnostics} ({diagnostic_index.error_count} errors)"
+            )
+
+        if package_index:
+            summary_lines.append(f"   - Packages: {package_index.total_packages}")
+
+        self.logger.info("\n".join(summary_lines))
 
         record_histogram("ir_sota_build_duration_seconds", elapsed)
         record_histogram("ir_sota_build_files", len(structural_irs))
 
-        return structural_irs, global_ctx, retrieval_index
+        return structural_irs, global_ctx, retrieval_index, diagnostic_index, package_index
 
     async def _build_structural_ir_parallel(
         self,
@@ -183,11 +264,12 @@ class SOTAIRBuilder:
         Returns:
             Mapping of file_path → IRDocument
         """
+        from src.contexts.code_foundation.infrastructure.generators.java_generator import JavaIRGenerator
         from src.contexts.code_foundation.infrastructure.generators.python_generator import PythonIRGenerator
         from src.contexts.code_foundation.infrastructure.generators.typescript_generator import TypeScriptIRGenerator
         from src.contexts.code_foundation.infrastructure.parsing import AstTree, SourceFile
 
-        ir_docs: dict[str, "IRDocument"] = {}
+        ir_docs: dict[str, IRDocument] = {}
 
         # Group files by language for batch processing
         by_language: dict[str, list[Path]] = {}
@@ -203,6 +285,8 @@ class SOTAIRBuilder:
                 generator = PythonIRGenerator(repo_id=str(self.project_root))
             elif language in ["typescript", "javascript"]:
                 generator = TypeScriptIRGenerator(repo_id=str(self.project_root))
+            elif language == "java":
+                generator = JavaIRGenerator(repo_id=str(self.project_root))
             else:
                 self.logger.warning(f"No IR generator for language: {language}")
                 continue
@@ -253,7 +337,7 @@ class SOTAIRBuilder:
         """
         total_occs = 0
 
-        for file_path, ir_doc in ir_docs.items():
+        for _file_path, ir_doc in ir_docs.items():
             occurrences, occ_index = self.occurrence_gen.generate(ir_doc)
             ir_doc.occurrences = occurrences
             ir_doc._occurrence_index = occ_index
@@ -274,7 +358,7 @@ class SOTAIRBuilder:
             ir_docs: IR documents
         """
         # Group by language
-        by_language: dict[str, list[tuple[str, "IRDocument"]]] = {}
+        by_language: dict[str, list[tuple[str, IRDocument]]] = {}
 
         for file_path, ir_doc in ir_docs.items():
             # Detect language from file extension
@@ -285,7 +369,7 @@ class SOTAIRBuilder:
         # Enrich per language
         tasks = []
         for language, docs in by_language.items():
-            for file_path, ir_doc in docs:
+            for _, ir_doc in docs:
                 task = self.type_enricher.enrich(ir_doc, language)
                 tasks.append(task)
 
@@ -303,6 +387,7 @@ class SOTAIRBuilder:
             ".jsx": "javascript",
             ".go": "go",
             ".rs": "rust",
+            ".java": "java",
         }
         return ext_map.get(file_path.suffix)
 
@@ -312,7 +397,11 @@ class SOTAIRBuilder:
         existing_irs: dict[str, "IRDocument"],
         global_ctx: GlobalContext,
         retrieval_index: RetrievalOptimizedIndex,
-    ) -> tuple[dict[str, "IRDocument"], GlobalContext, RetrievalOptimizedIndex]:
+        diagnostic_index: "DiagnosticIndex | None" = None,
+        package_index: "PackageIndex | None" = None,
+    ) -> tuple[
+        dict[str, "IRDocument"], GlobalContext, RetrievalOptimizedIndex, "DiagnosticIndex | None", "PackageIndex | None"
+    ]:
         """
         Incremental IR update (fast path).
 
@@ -328,9 +417,11 @@ class SOTAIRBuilder:
             existing_irs: Existing IR documents
             global_ctx: Existing global context
             retrieval_index: Existing retrieval index
+            diagnostic_index: Existing diagnostic index (optional)
+            package_index: Existing package index (optional)
 
         Returns:
-            (updated_ir_docs, updated_global_ctx, updated_retrieval_index)
+            (updated_ir_docs, updated_global_ctx, updated_retrieval_index, diagnostic_index, package_index)
         """
         start_time = time.perf_counter()
 
@@ -358,13 +449,66 @@ class SOTAIRBuilder:
         for ir_doc in existing_irs.values():
             retrieval_index.index_ir_document(ir_doc)
 
+        # 7. Update diagnostics (background, non-blocking)
+        if diagnostic_index is not None:
+            asyncio.create_task(self._update_diagnostics_incremental(new_irs, diagnostic_index))
+
+        # Note: Package index doesn't need incremental update (file-level only)
+
+        # 8. Advanced analysis (incremental) ⭐ v2.1
+        try:
+            from src.contexts.code_foundation.infrastructure.ir.unified_analyzer import UnifiedAnalyzer
+
+            analyzer = UnifiedAnalyzer(
+                enable_pdg=True,
+                enable_taint=True,
+                enable_slicing=True,
+            )
+
+            # 변경된 파일만 분석
+            for ir_doc in new_irs.values():
+                try:
+                    analyzer.analyze(ir_doc, self.project_root)
+                except Exception as e:
+                    self.logger.warning(f"Advanced analysis failed for {ir_doc.repo_id}: {e}")
+
+        except Exception as e:
+            self.logger.warning(f"Advanced analysis skipped: {e}")
+
         elapsed = (time.perf_counter() - start_time) * 1000  # ms
 
         self.logger.info(f"✅ Incremental update complete in {elapsed:.0f}ms")
 
         record_histogram("ir_incremental_update_duration_ms", elapsed)
 
-        return existing_irs, global_ctx, retrieval_index
+        return existing_irs, global_ctx, retrieval_index, diagnostic_index, package_index
+
+    async def _update_diagnostics_incremental(
+        self,
+        changed_irs: dict[str, "IRDocument"],
+        diagnostic_index: "DiagnosticIndex",
+    ):
+        """Update diagnostics for changed files (background task)"""
+        try:
+            # Collect diagnostics only for changed files
+            new_diags = await self.diagnostic_collector.collect(changed_irs)
+
+            # Update index (remove old, add new)
+            for file_path in changed_irs.keys():
+                # Remove old diagnostics for this file
+                old_diag_ids = diagnostic_index.by_file.get(file_path, [])
+                for diag_id in old_diag_ids:
+                    if diag_id in diagnostic_index.by_id:
+                        del diagnostic_index.by_id[diag_id]
+                diagnostic_index.by_file[file_path] = []
+
+            # Add new diagnostics
+            for diag in new_diags.by_id.values():
+                diagnostic_index.add(diag)
+
+            self.logger.debug(f"Updated diagnostics for {len(changed_irs)} files")
+        except Exception as e:
+            self.logger.warning(f"Diagnostic update failed: {e}")
 
     async def shutdown(self):
         """Shutdown all resources"""

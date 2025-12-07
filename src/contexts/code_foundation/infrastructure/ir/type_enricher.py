@@ -30,8 +30,6 @@ from src.common.observability import get_logger, record_histogram
 from src.contexts.code_foundation.infrastructure.ir.models.core import NodeKind
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from src.contexts.code_foundation.infrastructure.ir.lsp.adapter import MultiLSPManager
     from src.contexts.code_foundation.infrastructure.ir.models.core import Node
     from src.contexts.code_foundation.infrastructure.ir.models.document import IRDocument

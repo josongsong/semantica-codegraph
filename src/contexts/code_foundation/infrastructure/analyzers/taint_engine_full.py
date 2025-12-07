@@ -4,8 +4,7 @@ Full Taint Analysis Engine
 Complete interprocedural taint tracking
 """
 
-from typing import Dict, Set, List, Optional, Tuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 
@@ -24,8 +23,8 @@ class TaintFact:
 
     variable: str
     taint_level: TaintLevel
-    source: Optional[str] = None
-    location: Tuple[int, int] = (0, 0)
+    source: str | None = None
+    location: tuple[int, int] = (0, 0)
 
 
 @dataclass
@@ -34,8 +33,8 @@ class TaintVulnerability:
 
     source_function: str
     sink_function: str
-    path: List[str]
-    tainted_variables: Set[str]
+    path: list[str]
+    tainted_variables: set[str]
     severity: str
     is_sanitized: bool
     line_number: int
@@ -103,23 +102,23 @@ class FullTaintEngine:
 
     def __init__(
         self,
-        sources: Set[str] = None,
-        sinks: Set[str] = None,
-        sanitizers: Set[str] = None,
+        sources: set[str] = None,
+        sinks: set[str] = None,
+        sanitizers: set[str] = None,
     ):
         self.sources = sources or self.SOURCES.copy()
         self.sinks = sinks or self.SINKS.copy()
         self.sanitizers = sanitizers or self.SANITIZERS.copy()
 
-        self._taint_facts: Dict[str, Dict[str, TaintFact]] = {}  # location -> {var: fact}
-        self._vulnerabilities: List[TaintVulnerability] = []
+        self._taint_facts: dict[str, dict[str, TaintFact]] = {}  # location -> {var: fact}
+        self._vulnerabilities: list[TaintVulnerability] = []
 
     def analyze_full(
         self,
-        ir_documents: List,
-        call_graph: Dict[str, List[str]],
-        node_map: Dict[str, any],
-    ) -> List[TaintVulnerability]:
+        ir_documents: list,
+        call_graph: dict[str, list[str]],
+        node_map: dict[str, any],
+    ) -> list[TaintVulnerability]:
         """
         Complete taint analysis
 
@@ -177,7 +176,7 @@ class FullTaintEngine:
 
         return self._vulnerabilities
 
-    def _find_sources(self, node_map: Dict[str, any]) -> Set[str]:
+    def _find_sources(self, node_map: dict[str, any]) -> set[str]:
         """Source 함수 찾기"""
         sources = set()
 
@@ -192,7 +191,7 @@ class FullTaintEngine:
 
         return sources
 
-    def _find_sinks(self, node_map: Dict[str, any]) -> Set[str]:
+    def _find_sinks(self, node_map: dict[str, any]) -> set[str]:
         """Sink 함수 찾기"""
         sinks = set()
 
@@ -207,7 +206,7 @@ class FullTaintEngine:
 
         return sinks
 
-    def _get_return_variables(self, function_id: str, node_map: Dict[str, any]) -> Set[str]:
+    def _get_return_variables(self, function_id: str, node_map: dict[str, any]) -> set[str]:
         """함수의 반환 변수 추정"""
         # Simplified - 실제로는 dataflow 분석 필요
         return {f"result_of_{function_id}"}
@@ -216,11 +215,11 @@ class FullTaintEngine:
         self,
         source_id: str,
         sink_id: str,
-        call_graph: Dict[str, List[str]],
-        node_map: Dict[str, any],
-        tainted_vars: Set[str],
+        call_graph: dict[str, list[str]],
+        node_map: dict[str, any],
+        tainted_vars: set[str],
         max_depth: int = 15,
-    ) -> List[Tuple[List[str], bool]]:
+    ) -> list[tuple[list[str], bool]]:
         """
         Source → Sink 경로 + sanitization 여부
 
@@ -282,9 +281,9 @@ class FullTaintEngine:
 
     def get_vulnerabilities(
         self,
-        severity_filter: Optional[str] = None,
+        severity_filter: str | None = None,
         exclude_sanitized: bool = True,
-    ) -> List[TaintVulnerability]:
+    ) -> list[TaintVulnerability]:
         """
         취약점 조회 (필터링)
 

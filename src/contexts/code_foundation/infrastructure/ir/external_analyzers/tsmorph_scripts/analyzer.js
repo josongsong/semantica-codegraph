@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ts-morph TypeScript Analyzer
- * 
+ *
  * Python에서 호출하는 TypeScript 분석 스크립트.
  * stdin으로 JSON 명령 받고 stdout으로 JSON 결과 반환.
  */
@@ -50,7 +50,7 @@ function handleCommand(payload) {
 function initProject(projectRoot) {
   // Try to find tsconfig.json
   const tsconfigPath = path.join(projectRoot, 'tsconfig.json');
-  
+
   if (fs.existsSync(tsconfigPath)) {
     return new Project({
       tsConfigFilePath: tsconfigPath,
@@ -133,7 +133,7 @@ function getDefinition(project, { file_path, line, column }) {
   const definitions = node.getDefinitionNodes().map(def => {
     const sourceFile = def.getSourceFile();
     const { line, character } = sourceFile.getLineAndColumnAtPos(def.getStart());
-    
+
     return {
       file_path: sourceFile.getFilePath(),
       line: line,
@@ -168,7 +168,7 @@ function getReferences(project, { file_path, line, column }) {
     const refs = node.findReferencesAsNodes().map(ref => {
       const refSourceFile = ref.getSourceFile();
       const { line, character } = refSourceFile.getLineAndColumnAtPos(ref.getStart());
-      
+
       return {
         file_path: refSourceFile.getFilePath(),
         line: line,
@@ -284,4 +284,3 @@ function analyzeFile(project, { file_path }) {
 
   return result;
 }
-

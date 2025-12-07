@@ -15,6 +15,7 @@ from uuid import uuid4
 
 from src.infra.observability import get_logger, record_counter, record_histogram
 
+from .config import get_config
 from .models import (
     Decision,
     Discovery,
@@ -69,23 +70,30 @@ class WorkingMemoryManager:
     and is consolidated to episodic memory when the session ends.
     """
 
-    def __init__(self, session_id: str | None = None, max_buffer_size: int = 10):
+    def __init__(self, session_id: str | None = None, max_buffer_size: int = 10, config: Any | None = None):
         """
         Initialize working memory manager.
 
         Args:
             session_id: Session identifier (generates UUID if None)
             max_buffer_size: Maximum size for circular buffers
+            config: WorkingMemoryConfig (optional, loads from env if None)
         """
         self.session_id = session_id or str(uuid4())
         self.max_buffer_size = max_buffer_size
         self.started_at = datetime.now()
 
-        # Memory limits to prevent leaks
-        self.max_steps = 1000  # Maximum steps to keep
-        self.max_hypotheses = 50  # Maximum hypotheses
-        self.max_decisions = 100  # Maximum decisions
-        self.max_files = 200  # Maximum tracked files
+        # Load config
+        self.config = config or get_config().working
+
+        # Memory limits to prevent leaks (from config)
+        self.max_steps = self.config.max_steps
+        self.max_hypotheses = self.config.max_hypotheses
+        self.max_decisions = self.config.max_decisions
+        self.max_files = self.config.max_files
+        self.max_symbols = self.config.max_symbols
+        self.auto_cleanup_enabled = self.config.auto_cleanup_enabled
+        self.cleanup_threshold_ratio = self.config.cleanup_threshold_ratio
 
         # Current task
         self.current_task: dict[str, Any] | None = None
@@ -762,3 +770,138 @@ class WorkingMemoryManager:
             "errors": len(self.recent_errors),
             "stats": self.stats.copy(),
         }
+
+    # ============================================================
+    # Auto-Cleanup (Memory Leak Prevention)
+    # ============================================================
+
+    def _should_auto_cleanup(self) -> bool:
+        """
+        자동 cleanup이 필요한지 확인
+
+        Returns:
+            True if cleanup should be triggered
+        """
+        if not self.auto_cleanup_enabled:
+            return False
+
+        # Check if any collection exceeds threshold
+        return (
+            len(self.steps_completed) > self.max_steps * self.cleanup_threshold_ratio
+            or len(self.hypotheses) > self.max_hypotheses * self.cleanup_threshold_ratio
+            or len(self.decisions) > self.max_decisions * self.cleanup_threshold_ratio
+            or len(self.active_files) > self.max_files * self.cleanup_threshold_ratio
+            or len(self.active_symbols) > self.max_symbols * self.cleanup_threshold_ratio
+        )
+
+    def auto_cleanup(self) -> dict[str, int]:
+        """
+        자동 메모리 정리 (LRU 기반)
+
+        Returns:
+            Cleanup statistics (items removed per category)
+        """
+        stats = {
+            "steps": 0,
+            "hypotheses": 0,
+            "decisions": 0,
+            "files": 0,
+            "symbols": 0,
+        }
+
+        # 1. Steps cleanup (keep recent)
+        if len(self.steps_completed) > self.max_steps:
+            excess = len(self.steps_completed) - int(self.max_steps * 0.8)
+            self.steps_completed = self.steps_completed[-int(self.max_steps * 0.8) :]
+            stats["steps"] = excess
+            logger.info("steps_cleaned_up", removed=excess)
+
+        # 2. Hypotheses cleanup (remove inactive/rejected)
+        if len(self.hypotheses) > self.max_hypotheses:
+            # Keep active and confirmed, remove others
+            active = [h for h in self.hypotheses if h.status in ["active", "confirmed"]]
+            removed = len(self.hypotheses) - len(active)
+            self.hypotheses = active
+            stats["hypotheses"] = removed
+            logger.info("hypotheses_cleaned_up", removed=removed)
+
+        # 3. Decisions cleanup (keep recent)
+        if len(self.decisions) > self.max_decisions:
+            excess = len(self.decisions) - int(self.max_decisions * 0.8)
+            self.decisions = self.decisions[-int(self.max_decisions * 0.8) :]
+            stats["decisions"] = excess
+            logger.info("decisions_cleaned_up", removed=excess)
+
+        # 4. Files cleanup (remove unmodified, old access)
+        if len(self.active_files) > self.max_files:
+            # Sort by last_accessed
+            sorted_files = sorted(self.active_files.items(), key=lambda x: x[1].last_accessed, reverse=True)
+
+            # Keep modified files + recent accessed
+            keep_count = int(self.max_files * 0.8)
+            keep_files = {}
+
+            # Priority 1: Modified files
+            for path, state in sorted_files:
+                if state.modified:
+                    keep_files[path] = state
+
+            # Priority 2: Recently accessed
+            for path, state in sorted_files:
+                if len(keep_files) >= keep_count:
+                    break
+                if path not in keep_files:
+                    keep_files[path] = state
+
+            removed = len(self.active_files) - len(keep_files)
+            self.active_files = keep_files
+            stats["files"] = removed
+            logger.info("files_cleaned_up", removed=removed)
+
+        # 5. Symbols cleanup (remove unreferenced)
+        if len(self.active_symbols) > self.max_symbols:
+            # Keep symbols referenced in recent steps
+            recent_symbols = set()
+            for step in self.steps_completed[-50:]:  # Last 50 steps
+                if "symbols" in step.context:
+                    recent_symbols.update(step.context["symbols"])
+
+            # Keep only referenced symbols
+            keep_symbols = {name: info for name, info in self.active_symbols.items() if name in recent_symbols}
+
+            # If still too many, keep by reference count
+            if len(keep_symbols) > int(self.max_symbols * 0.8):
+                sorted_symbols = sorted(keep_symbols.items(), key=lambda x: x[1].reference_count, reverse=True)
+                keep_symbols = dict(sorted_symbols[: int(self.max_symbols * 0.8)])
+
+            removed = len(self.active_symbols) - len(keep_symbols)
+            self.active_symbols = keep_symbols
+            stats["symbols"] = removed
+            logger.info("symbols_cleaned_up", removed=removed)
+
+        # Record metrics
+        total_removed = sum(stats.values())
+        if total_removed > 0:
+            record_counter("memory_working_auto_cleanup_total", labels={"session_id": self.session_id})
+            record_histogram("memory_working_cleanup_items", total_removed)
+
+        return stats
+
+    def check_and_cleanup(self) -> dict[str, int] | None:
+        """
+        필요시 자동 cleanup 실행
+
+        Returns:
+            Cleanup stats or None if not needed
+        """
+        if self._should_auto_cleanup():
+            logger.info(
+                "auto_cleanup_triggered",
+                session_id=self.session_id,
+                steps=len(self.steps_completed),
+                files=len(self.active_files),
+                symbols=len(self.active_symbols),
+            )
+            return self.auto_cleanup()
+
+        return None

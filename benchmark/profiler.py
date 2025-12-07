@@ -8,7 +8,6 @@ import time
 import tracemalloc
 from collections import defaultdict
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 
@@ -124,6 +123,7 @@ class FileMetrics:
     loc: int
     parse_time_ms: float = 0.0
     build_time_ms: float = 0.0
+    store_time_ms: float = 0.0
     total_time_ms: float = 0.0
     nodes: int = 0
     edges: int = 0
@@ -245,6 +245,44 @@ class IndexingProfiler:
         phase.end_memory = self._get_memory_mb()
         phase.peak_memory = self._get_peak_memory_mb()
 
+    def add_child_phase(self, name: str, duration_ms: float, memory_delta_mb: float = 0.0):
+        """
+        Add a child phase with manual timing to the current phase.
+
+        Args:
+            name: Phase name
+            duration_ms: Duration in milliseconds
+            memory_delta_mb: Memory change in MB
+        """
+        if not self._phase_stack:
+            return
+
+        parent = self._phase_stack[-1]
+
+        # Calculate synthetic start/end times relative to parent
+        if parent.children:
+            # Start after the last child
+            last_child = parent.children[-1]
+            start_time = last_child.end_time if last_child.end_time else last_child.start_time
+        else:
+            # Start at parent's start time
+            start_time = parent.start_time
+
+        end_time = start_time + (duration_ms / 1000.0)
+
+        child_phase = PhaseMetrics(
+            name=name,
+            start_time=start_time,
+            end_time=end_time,
+            start_memory=parent.start_memory,
+            end_memory=parent.start_memory + memory_delta_mb,
+            peak_memory=parent.start_memory + memory_delta_mb,
+            parent=parent,
+        )
+
+        parent.children.append(child_phase)
+        self._all_phases.append(child_phase)
+
     def record_counter(self, key: str, value: Any):
         """
         Record a counter value for current phase.
@@ -273,6 +311,39 @@ class IndexingProfiler:
         else:
             self._global_counters[key] += delta
 
+    def get_counter(self, key: str) -> int | None:
+        """
+        Get counter value by aggregating from all phases.
+
+        Args:
+            key: Counter key
+
+        Returns:
+            Aggregated counter value or None if not found
+        """
+        total = 0
+        found = False
+
+        # Aggregate from all phases
+        def collect_from_phase(phase):
+            nonlocal total, found
+            if key in phase.counters:
+                total += phase.counters[key]
+                found = True
+            # Recursively check children
+            for child in phase.children:
+                collect_from_phase(child)
+
+        for phase in self._all_phases:
+            collect_from_phase(phase)
+
+        # Also check global counters
+        if key in self._global_counters:
+            total += self._global_counters[key]
+            found = True
+
+        return total if found else None
+
     def record_file(
         self,
         file_path: str,
@@ -280,6 +351,7 @@ class IndexingProfiler:
         loc: int,
         parse_time_ms: float,
         build_time_ms: float,
+        store_time_ms: float = 0.0,
         nodes: int = 0,
         edges: int = 0,
         chunks: int = 0,
@@ -294,6 +366,7 @@ class IndexingProfiler:
             loc: Lines of code
             parse_time_ms: Parse time in milliseconds
             build_time_ms: Build time in milliseconds
+            store_time_ms: Storage time in milliseconds
             nodes: Number of nodes created
             edges: Number of edges created
             chunks: Number of chunks created
@@ -305,7 +378,8 @@ class IndexingProfiler:
             loc=loc,
             parse_time_ms=parse_time_ms,
             build_time_ms=build_time_ms,
-            total_time_ms=parse_time_ms + build_time_ms,
+            store_time_ms=store_time_ms,
+            total_time_ms=parse_time_ms + build_time_ms + store_time_ms,
             nodes=nodes,
             edges=edges,
             chunks=chunks,

@@ -5,6 +5,7 @@ Resolves conflicts between base and overlay symbols.
 """
 
 from src.common.observability import get_logger
+
 from .models import SymbolConflict
 
 logger = get_logger(__name__)

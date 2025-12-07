@@ -19,24 +19,22 @@ LLM agent queries across all categories:
 
 import asyncio
 import logging
+
+# Reuse infrastructure from real_retriever_benchmark
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-# Reuse infrastructure from real_retriever_benchmark
-import sys
-
 sys.path.insert(0, str(Path(__file__).parent))
 
 from real_retriever_benchmark import (
-    MockLexicalIndex,
-    MockVectorIndex,
-    MockSymbolIndex,
-    FusionV1,
-    FusionV2,
-    FusionV3Simplified,
     BenchmarkResult,
+    FusionV2,
+    MockLexicalIndex,
+    MockSymbolIndex,
+    MockVectorIndex,
     calculate_ndcg,
 )
 

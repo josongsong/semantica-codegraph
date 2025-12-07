@@ -60,10 +60,10 @@ await logger.log_feedback(
 class RetrieverV3Orchestrator:
     def __init__(self, ..., search_logger=None):
         self.search_logger = search_logger
-    
+
     async def search(self, query, ...):
         # ... 검색 로직 ...
-        
+
         if self.search_logger:
             log_id = await self.search_logger.log_search(
                 query=query,
@@ -71,7 +71,7 @@ class RetrieverV3Orchestrator:
                 results=final_results,
                 # ...
             )
-        
+
         return context
 ```
 
@@ -95,7 +95,7 @@ just ml-build-chunk-golden
 
 ```sql
 -- 클릭율 높은 chunk (positive samples)
-SELECT 
+SELECT
     chunk_id,
     COUNT(*) as impressions,
     SUM(CASE WHEN clicked_rank IS NOT NULL THEN 1 ELSE 0 END) as clicks,
@@ -107,7 +107,7 @@ ORDER BY ctr DESC
 LIMIT 100;
 
 -- Late Interaction 학습 데이터
-SELECT 
+SELECT
     log_id,
     query,
     max_sim_scores,
@@ -115,7 +115,7 @@ SELECT
     clicked_rank,
     was_helpful
 FROM search_logs
-WHERE 
+WHERE
     late_interaction_enabled = true
     AND (clicked_rank IS NOT NULL OR was_helpful IS NOT NULL)
 ORDER BY timestamp DESC
@@ -128,33 +128,33 @@ LIMIT 1000;
 CREATE TABLE search_logs (
     log_id VARCHAR(64) PRIMARY KEY,
     timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
-    
+
     -- Query context
     query TEXT NOT NULL,
     intent VARCHAR(20),
     repo_id VARCHAR(255) NOT NULL,
     user_id VARCHAR(255),
     session_id VARCHAR(64),
-    
+
     -- Retrieval details
     candidate_count INTEGER,
     fusion_strategy VARCHAR(50),
-    
+
     -- Late Interaction
     late_interaction_enabled BOOLEAN DEFAULT false,
     max_sim_scores JSONB,
-    
+
     -- Results
     top_k INTEGER,
     result_chunk_ids TEXT[],
     result_scores FLOAT[],
-    
+
     -- User feedback
     clicked_rank INTEGER,
     clicked_chunk_id VARCHAR(64),
     dwell_time FLOAT,
     was_helpful BOOLEAN,
-    
+
     -- Metadata
     metadata JSONB
 );
@@ -188,4 +188,3 @@ await logger.close()
 7. ⏳ Token importance 모델 학습
 
 자세한 계획: `.temp/ML_튜닝_진행계획_2025-11-29.md`
-

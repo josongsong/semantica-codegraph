@@ -4,7 +4,7 @@ PostgreSQL Indexing Metadata Store
 PostgreSQL 기반 인덱싱 메타데이터 저장소
 """
 
-from ..domain.models import IndexingMetadata, IndexingMode, IndexingStatus
+from ..domain.models import IndexingMetadata, IndexingMode
 
 
 class PgIndexingMetadataStore:
@@ -52,7 +52,7 @@ class PgIndexingMetadataStore:
             metadata.repo_id,
             metadata.snapshot_id,
             metadata.mode.value,
-            metadata.status.value,
+            metadata.status,  # 이미 str
             metadata.files_processed,
             metadata.files_failed,
             metadata.graph_nodes_created,
@@ -84,7 +84,7 @@ class PgIndexingMetadataStore:
             repo_id=result["repo_id"],
             snapshot_id=result["snapshot_id"],
             mode=IndexingMode(result["mode"]),
-            status=IndexingStatus(result["status"]),
+            status=result["status"],  # str 타입
             files_processed=result["files_processed"],
             files_failed=result["files_failed"],
             graph_nodes_created=result["graph_nodes_created"],
@@ -115,7 +115,7 @@ class PgIndexingMetadataStore:
                 repo_id=row["repo_id"],
                 snapshot_id=row["snapshot_id"],
                 mode=IndexingMode(row["mode"]),
-                status=IndexingStatus(row["status"]),
+                status=row["status"],  # str 타입
                 files_processed=row["files_processed"],
                 files_failed=row["files_failed"],
                 graph_nodes_created=row["graph_nodes_created"],

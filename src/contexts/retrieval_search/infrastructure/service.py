@@ -8,7 +8,6 @@ import asyncio
 import time
 from typing import TYPE_CHECKING
 
-from src.infra.observability import record_counter, record_histogram
 from src.contexts.retrieval_search.infrastructure.context_builder import ContextBuilder
 from src.contexts.retrieval_search.infrastructure.exceptions import QueryValidationError, RetrievalTimeoutError
 from src.contexts.retrieval_search.infrastructure.fusion import FusionEngine
@@ -16,6 +15,7 @@ from src.contexts.retrieval_search.infrastructure.intent import IntentAnalyzer
 from src.contexts.retrieval_search.infrastructure.models import RetrievalResult
 from src.contexts.retrieval_search.infrastructure.multi_index import MultiIndexOrchestrator
 from src.contexts.retrieval_search.infrastructure.scope import ScopeSelector
+from src.infra.observability import record_counter, record_histogram
 
 if TYPE_CHECKING:
     from src.ports import RepoMapPort

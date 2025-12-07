@@ -4,17 +4,15 @@ Graph Merger
 Merges base graph with overlay graph to create a unified view.
 """
 
-from typing import Dict, Set, Optional, Tuple
-from collections import defaultdict
-
 from src.common.observability import get_logger
 from src.infra.graph.memgraph import MemgraphGraphStore
+
+from .conflict_resolver import ConflictResolver
 from .models import (
-    OverlaySnapshot,
     MergedSnapshot,
+    OverlaySnapshot,
     SymbolConflict,
 )
-from .conflict_resolver import ConflictResolver
 
 logger = get_logger(__name__)
 
@@ -31,14 +29,14 @@ class GraphMerger:
 
     def __init__(
         self,
-        graph_store: Optional[MemgraphGraphStore] = None,  # Memgraph Graph Store
-        conflict_resolver: Optional[ConflictResolver] = None,
+        graph_store: MemgraphGraphStore | None = None,  # Memgraph Graph Store
+        conflict_resolver: ConflictResolver | None = None,
     ):
         self.graph_store = graph_store or MemgraphGraphStore()
         self.conflict_resolver = conflict_resolver or ConflictResolver()
 
     async def merge_graphs(
-        self, base_snapshot_id: str, overlay: OverlaySnapshot, base_ir_docs: Dict[str, dict]
+        self, base_snapshot_id: str, overlay: OverlaySnapshot, base_ir_docs: dict[str, dict]
     ) -> MergedSnapshot:
         """
         Merge base + overlay to create unified snapshot
@@ -113,7 +111,7 @@ class GraphMerger:
 
         return merged
 
-    def _merge_ir_documents(self, base_docs: Dict[str, dict], overlay_docs: Dict[str, dict]) -> Dict[str, dict]:
+    def _merge_ir_documents(self, base_docs: dict[str, dict], overlay_docs: dict[str, dict]) -> dict[str, dict]:
         """
         Merge IR documents (overlay priority)
 
@@ -123,7 +121,7 @@ class GraphMerger:
         merged.update(overlay_docs)  # Overlay wins
         return merged
 
-    def _build_symbol_index(self, ir_documents: Dict[str, dict]) -> Dict[str, dict]:
+    def _build_symbol_index(self, ir_documents: dict[str, dict]) -> dict[str, dict]:
         """
         Build unified symbol index from IR documents
 
@@ -143,7 +141,7 @@ class GraphMerger:
         return symbol_index
 
     def _detect_conflicts(
-        self, base_docs: Dict[str, dict], overlay_docs: Dict[str, dict], merged_symbols: Dict[str, dict]
+        self, base_docs: dict[str, dict], overlay_docs: dict[str, dict], merged_symbols: dict[str, dict]
     ) -> list[SymbolConflict]:
         """
         Detect conflicts between base and overlay
@@ -157,7 +155,7 @@ class GraphMerger:
 
         # Build base symbol index
         base_symbols = {}
-        for file_path, ir_doc in base_docs.items():
+        for _file_path, ir_doc in base_docs.items():
             for symbol in ir_doc.get("symbols", []):
                 symbol_id = symbol.get("id")
                 if symbol_id:
@@ -165,7 +163,7 @@ class GraphMerger:
 
         # Build overlay symbol index
         overlay_symbols = {}
-        for file_path, ir_doc in overlay_docs.items():
+        for _file_path, ir_doc in overlay_docs.items():
             for symbol in ir_doc.get("symbols", []):
                 symbol_id = symbol.get("id")
                 if symbol_id:
@@ -226,8 +224,8 @@ class GraphMerger:
         return conflicts
 
     async def _merge_call_graph(
-        self, base_snapshot_id: str, overlay: OverlaySnapshot, merged_symbols: Dict[str, dict]
-    ) -> Set[Tuple[str, str]]:
+        self, base_snapshot_id: str, overlay: OverlaySnapshot, merged_symbols: dict[str, dict]
+    ) -> set[tuple[str, str]]:
         """
         Merge call graph edges
 
@@ -253,7 +251,7 @@ class GraphMerger:
             logger.warning("failed_to_load_base_call_graph", error=str(e))
 
         # Add overlay call graph edges
-        for file_path, ir_doc in overlay.overlay_ir_docs.items():
+        for _file_path, ir_doc in overlay.overlay_ir_docs.items():
             for symbol in ir_doc.get("symbols", []):
                 caller_id = symbol.get("id")
                 if not caller_id:
@@ -268,8 +266,8 @@ class GraphMerger:
         return merged_edges
 
     async def _merge_import_graph(
-        self, base_snapshot_id: str, overlay: OverlaySnapshot, merged_symbols: Dict[str, dict]
-    ) -> Set[Tuple[str, str]]:
+        self, base_snapshot_id: str, overlay: OverlaySnapshot, merged_symbols: dict[str, dict]
+    ) -> set[tuple[str, str]]:
         """
         Merge import graph edges
 
@@ -300,7 +298,7 @@ class GraphMerger:
 
         return merged_edges
 
-    async def _load_base_call_graph(self, snapshot_id: str, repo_id: str) -> Set[Tuple[str, str]]:
+    async def _load_base_call_graph(self, snapshot_id: str, repo_id: str) -> set[tuple[str, str]]:
         """Load call graph edges from base snapshot"""
         query = f"""
         MATCH (caller:Symbol)-[:CALLS]->(callee:Symbol)
@@ -311,7 +309,7 @@ class GraphMerger:
         results = await self.graph_store.execute_query(query)
         return {(r["caller_id"], r["callee_id"]) for r in results}
 
-    async def _load_base_import_graph(self, snapshot_id: str, repo_id: str) -> Set[Tuple[str, str]]:
+    async def _load_base_import_graph(self, snapshot_id: str, repo_id: str) -> set[tuple[str, str]]:
         """Load import graph edges from base snapshot"""
         query = f"""
         MATCH (file:File)-[:IMPORTS]->(module:Module)

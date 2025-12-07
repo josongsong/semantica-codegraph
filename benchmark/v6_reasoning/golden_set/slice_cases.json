@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "total_cases": 0,
+  "target_cases": 40,
+  "cases": [
+    {
+      "id": "slice_001",
+      "category": "simple_dataflow",
+      "description": "단순 데이터 흐름 (3-hop)",
+      "code": "def calculate():\n    x = 10\n    y = x + 5\n    z = y * 2\n    return z",
+      "target": {
+        "variable": "z",
+        "line": 5,
+        "file": "example.py"
+      },
+      "expected": {
+        "slice_nodes": ["x", "y", "z"],
+        "slice_lines": [2, 3, 4, 5],
+        "total_tokens": 45,
+        "dependencies": [
+          {"from": "x", "to": "y", "type": "data"},
+          {"from": "y", "to": "z", "type": "data"}
+        ]
+      }
+    },
+    {
+      "id": "slice_002",
+      "category": "control_dependency",
+      "description": "조건문 포함",
+      "code": "def check(value):\n    if value > 0:\n        x = value * 2\n    else:\n        x = 0\n    return x",
+      "target": {
+        "variable": "x",
+        "line": 6,
+        "file": "example.py"
+      },
+      "expected": {
+        "slice_nodes": ["value", "x"],
+        "slice_lines": [1, 2, 3, 4, 5, 6],
+        "total_tokens": 60,
+        "control_context": [
+          "x depends on condition: value > 0"
+        ]
+      }
+    },
+    {
+      "id": "slice_003",
+      "category": "cross_function",
+      "description": "함수 호출 추적",
+      "code": "def helper(n):\n    return n * 2\n\ndef main():\n    a = 5\n    b = helper(a)\n    return b",
+      "target": {
+        "variable": "b",
+        "line": 7,
+        "file": "example.py"
+      },
+      "expected": {
+        "slice_nodes": ["a", "b", "helper"],
+        "slice_lines": [1, 2, 5, 6, 7],
+        "total_tokens": 70,
+        "dependencies": [
+          {"from": "a", "to": "b", "type": "call"},
+          {"from": "helper", "to": "b", "type": "return"}
+        ]
+      }
+    }
+  ],
+  "notes": [
+    "Simple Dataflow (10개): x = y + z 형태",
+    "Control Dependency (10개): if/loop 조건",
+    "Cross-Function (10개): 함수 호출 추적",
+    "Complex (10개): Closure, side-effect 등",
+    "Token budget: 8000 (기본값)"
+  ]
+}
+

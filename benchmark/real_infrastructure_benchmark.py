@@ -31,20 +31,19 @@ os.environ.setdefault("SEMANTICA_OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Import benchmark queries
+from real_retriever_benchmark import (
+    BENCHMARK_QUERIES,
+    BenchmarkResult,
+    FusionV2,
+    calculate_ndcg,
+)
+
 from src.container import Container
 from src.foundation.chunk.builder import ChunkBuilder
 from src.foundation.graph.builder import GraphBuilder
 from src.foundation.parsing.parser_registry import ParserRegistry
 from src.index.service import IndexingService
-
-# Import benchmark queries
-from real_retriever_benchmark import (
-    BENCHMARK_QUERIES,
-    BenchmarkQuery,
-    BenchmarkResult,
-    FusionV2,
-    calculate_ndcg,
-)
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -203,10 +202,9 @@ async def index_codebase(container: Container, src_dir: Path) -> tuple[str, str]
             graph_doc=graph_doc,
             source_codes=source_codes,
         )
-        logger.info(f"  ✅ Indexing complete!")
-        logger.info(
-            f"     Indexes: Lexical(Zoekt) ✅, Symbol(Kuzu) ✅, Vector(Qdrant) {'✅' if has_openai_key else '⚠️ skipped'}"
-        )
+        logger.info("  ✅ Indexing complete!")
+        vector_status = "✅" if has_openai_key else "⚠️ skipped"
+        logger.info(f"     Indexes: Lexical(Zoekt) ✅, Symbol(Kuzu) ✅, Vector(Qdrant) {vector_status}")
         logger.info(f"     Repo ID: {repo_id}")
         logger.info(f"     Snapshot ID: {snapshot_id}")
     except Exception as e:

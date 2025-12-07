@@ -1075,18 +1075,22 @@ class ChunkBuilder:
 
             for node in sorted_nodes:
                 # Add content before this node (imports, comments, etc.)
-                before_lines = file_text[last_line : node.span.start_line - 1]
+                # Convert 1-based line numbers to 0-based indices
+                node_start_idx = node.span.start_line - 1  # 0-based
+                before_lines = file_text[last_line:node_start_idx]
                 skeleton_lines.extend(before_lines)
 
                 # Add signature only (first line of definition)
                 if node.span.start_line <= len(file_text):
-                    signature_line = file_text[node.span.start_line - 1].rstrip()
+                    signature_line = file_text[node_start_idx].rstrip()
                     skeleton_lines.append(signature_line)
 
                     # Add body placeholder
                     indent = len(signature_line) - len(signature_line.lstrip())
                     skeleton_lines.append(" " * (indent + 4) + "...")
 
+                # Update last_line: node.span.end_line is 1-based, but when used as 0-based index,
+                # it correctly points to the next line (e.g., end_line=20 -> file_text[20] = line 21)
                 last_line = node.span.end_line
 
             # Add remaining lines (if any)

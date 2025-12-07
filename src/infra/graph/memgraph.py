@@ -9,6 +9,7 @@ Performance Features:
 - CREATE mode for fastest fresh data inserts
 - Bulk query methods for efficient retrieval
 - Async interface with sync driver wrapped via asyncio.to_thread()
+- 🔥 SOTA: Real transaction support with ACID guarantees
 
 Note:
     The neo4j driver used by Memgraph is synchronous. This adapter provides

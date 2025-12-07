@@ -441,11 +441,14 @@ class IndexingOrchestratorSlim:
 
         change_set = self.change_detector.detect_changes(repo_path, repo_id)
 
+        # 🔥 SOTA: Log renamed files
         logger.info(
             "incremental_changes_detected",
             added=len(change_set.added),
             modified=len(change_set.modified),
             deleted=len(change_set.deleted),
+            renamed=len(change_set.renamed),
+            renamed_files=list(change_set.renamed.items())[:5] if change_set.renamed else [],
         )
 
         changed_paths = []
@@ -457,10 +460,13 @@ class IndexingOrchestratorSlim:
         files = discovery.discover_files(repo_path, changed_files=[str(p) for p in changed_paths])
 
         result.files_discovered = len(files)
+        # 🔥 SOTA: Include renamed in metadata
         result.metadata["change_set"] = {
             "added": len(change_set.added),
             "modified": len(change_set.modified),
             "deleted": len(change_set.deleted),
+            "renamed": len(change_set.renamed),
+            "renamed_files": dict(list(change_set.renamed.items())[:10]) if change_set.renamed else {},
         }
         result.metadata["changed_files"] = list(change_set.all_changed)
 

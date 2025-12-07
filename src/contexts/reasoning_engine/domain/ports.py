@@ -1,0 +1,181 @@
+"""
+Domain Ports - Reasoning Engine
+
+Port/Adapter 패턴의 Port 정의.
+Infrastructure layer가 구현해야 하는 인터페이스.
+"""
+
+from abc import ABC, abstractmethod
+from typing import Optional
+
+from .models import (
+    DeltaLayer,
+    EffectDiff,
+    EffectSet,
+    ImpactType,
+    SemanticDiff,
+    SliceResult,
+    SymbolHash,
+)
+
+
+class ImpactAnalyzerPort(ABC):
+    """Impact 분석 인터페이스"""
+
+    @abstractmethod
+    def compute_symbol_hash(self, node: "IRNode", callees: list["IRNode"]) -> SymbolHash:
+        """Symbol hash 계산"""
+        pass
+
+    @abstractmethod
+    def classify_impact(self, old_hash: SymbolHash, new_hash: SymbolHash) -> ImpactType:
+        """영향도 분류"""
+        pass
+
+    @abstractmethod
+    def propagate_impact(
+        self, changed_symbols: set[str], impact_types: dict[str, ImpactType], graph: "GraphDocument", max_depth: int = 5
+    ) -> set[str]:
+        """영향 전파 (graph 기반)"""
+        pass
+
+
+class EffectAnalyzerPort(ABC):
+    """Effect 분석 인터페이스"""
+
+    @abstractmethod
+    def analyze_function(
+        self, node: "IRNode", graph: "GraphDocument", callee_effects: dict[str, EffectSet]
+    ) -> EffectSet:
+        """함수의 effect 분석"""
+        pass
+
+    @abstractmethod
+    def compute_effect_diff(self, old_effect: EffectSet, new_effect: EffectSet) -> EffectDiff:
+        """Effect diff 계산"""
+        pass
+
+
+class SemanticDifferPort(ABC):
+    """Semantic diff 인터페이스"""
+
+    @abstractmethod
+    def detect_behavior_change(
+        self, old_ir: "IRDocument", new_ir: "IRDocument", old_graph: "GraphDocument", new_graph: "GraphDocument"
+    ) -> SemanticDiff:
+        """동작 변화 감지"""
+        pass
+
+    @abstractmethod
+    def is_pure_refactoring(self, diff: SemanticDiff) -> bool:
+        """순수 리팩토링 여부"""
+        pass
+
+
+class SpeculativeExecutorPort(ABC):
+    """Speculative execution 인터페이스"""
+
+    @abstractmethod
+    def create_overlay(self, base_snapshot_id: str, patch_id: str) -> DeltaLayer:
+        """Overlay 생성"""
+        pass
+
+    @abstractmethod
+    def apply_patch(self, patch: str, description: str) -> tuple[str, Optional["GraphDocument"]]:
+        """
+        패치 적용.
+
+        Returns:
+            (patch_id, graph_view or error_snapshot)
+        """
+        pass
+
+    @abstractmethod
+    def rollback_patch(self, patch_id: str) -> bool:
+        """패치 롤백 (LIFO preferred)"""
+        pass
+
+    @abstractmethod
+    def commit_overlay(self, patch_id: str) -> str:
+        """Overlay를 새 snapshot으로 승격"""
+        pass
+
+
+class SlicerPort(ABC):
+    """Program slicer 인터페이스"""
+
+    @abstractmethod
+    def backward_slice(
+        self, target_variable: str, file_path: str, line: int, max_depth: int = 10, token_budget: int = 8000
+    ) -> SliceResult:
+        """
+        Backward slice: 이 변수의 값이 어떻게 형성되었는지.
+
+        Args:
+            target_variable: 추적할 변수명
+            file_path: 파일 경로
+            line: 라인 번호
+            max_depth: 최대 PDG 깊이
+            token_budget: 토큰 예산
+
+        Returns:
+            SliceResult with LLM-friendly context
+        """
+        pass
+
+    @abstractmethod
+    def forward_slice(
+        self, source_variable: str, file_path: str, line: int, max_depth: int = 10, token_budget: int = 8000
+    ) -> SliceResult:
+        """
+        Forward slice: 이 변수가 영향을 미치는 후속 코드.
+        """
+        pass
+
+
+class ReasoningEnginePort(ABC):
+    """
+    Reasoning Engine 통합 인터페이스.
+
+    모든 하위 Port를 통합한 Facade.
+    """
+
+    @abstractmethod
+    def analyze_impact(
+        self, old_ir: "IRDocument", new_ir: "IRDocument", graph: "GraphDocument"
+    ) -> tuple[set[str], dict[str, ImpactType]]:
+        """변경 영향도 분석"""
+        pass
+
+    @abstractmethod
+    def detect_semantic_change(
+        self, old_ir: "IRDocument", new_ir: "IRDocument", old_graph: "GraphDocument", new_graph: "GraphDocument"
+    ) -> SemanticDiff:
+        """의미적 변화 감지"""
+        pass
+
+    @abstractmethod
+    def preview_patch_impact(self, patch: str, base_snapshot_id: str) -> dict:
+        """
+        패치 영향도 사전 계산.
+
+        Returns:
+            {
+                "added_calls": [...],
+                "removed_calls": [...],
+                "signature_changes": [...],
+                "effect_changes": [...],
+                "risk_score": "high" | "medium" | "low"
+            }
+        """
+        pass
+
+    @abstractmethod
+    def slice_for_debugging(self, variable: str, file_path: str, line: int) -> str:
+        """
+        디버깅용 slice (LLM에게 전달).
+
+        Returns:
+            LLM-friendly context string
+        """
+        pass

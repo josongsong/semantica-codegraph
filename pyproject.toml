@@ -16,12 +16,19 @@ dependencies = [
     "fastapi>=0.104.0",
     "uvicorn>=0.24.0",
     "litellm>=1.0.0",
+    "langgraph>=0.2.0",
+    "gitpython>=3.1.0",
+    "e2b-code-interpreter>=1.0.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
     "sqlalchemy>=2.0.0",
     "alembic>=1.12.0",
     "numpy>=1.24.0",
     "networkx>=3.0",
+    "rustworkx>=0.14.0",  # RFC-007: Rust graph engine for 10-50x speedup
+    # 원격 빌드용 (CI/CD, Docker)
+    "semantica-task-engine @ git+https://github.com/josongmin/semantica-task-engine.git@main#subdirectory=python-sdk",
+    # 로컬 개발용: pip install -e /path/to/semantica-task-engine/python-sdk
 ]
 
 [project.optional-dependencies]
@@ -39,6 +46,12 @@ dev = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
 [tool.black]
 line-length = 120
@@ -65,6 +78,11 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/**/*.py" = ["F811", "F841", "B011", "B017", "E402", "F401", "B007"]  # Allow redefinitions and unused vars in tests
+"benchmark/**/*.py" = ["E402", "B007"]  # Allow late imports and unused loop vars in benchmarks
+"examples/**/*.py" = ["E402"]  # Allow late imports in examples
+"scripts/**/*.py" = ["E402"]  # Allow late imports in scripts
+"migrations/**/*.py" = ["E402"]  # Allow late imports in migrations
+"server/**/*.py" = ["E402"]  # Allow late imports in server
 
 [tool.mypy]
 python_version = "3.10"

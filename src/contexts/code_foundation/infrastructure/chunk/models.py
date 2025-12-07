@@ -54,6 +54,11 @@ class Chunk(BaseModel):
         "middleware",  # Middleware component
         # Documentation
         "document",  # Documentation file or section
+        "docstring",  # Docstring/comment block
+        # File structure
+        "file_header",  # File-level header (imports, module docstring)
+        "skeleton",  # File skeleton (API surface, signatures only)
+        "usage",  # Usage example or pattern
         # GAP #5: Cross-file chunk types
         "module_api",  # Module-level public API (from __all__ exports)
         "interface",  # Cross-file interface/protocol definition

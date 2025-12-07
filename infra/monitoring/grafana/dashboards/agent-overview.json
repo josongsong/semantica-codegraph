@@ -1,0 +1,126 @@
+{
+  "dashboard": {
+    "title": "Semantica v2 Agent - Overview",
+    "tags": ["agent", "overview"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Agent Tasks (Total)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "agent_tasks_total",
+            "legendFormat": "Tasks"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Agent Tasks (In Progress)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "agent_tasks_in_progress",
+            "legendFormat": "In Progress"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Multi-Agent Locks",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "multi_agent_locks_total",
+            "legendFormat": "Locks"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "Multi-Agent Conflicts",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "multi_agent_conflicts_total",
+            "legendFormat": "Conflicts"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Agent Task Duration (P95)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(agent_task_duration_ms_bucket[5m]))",
+            "legendFormat": "P95"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}
+      },
+      {
+        "id": 6,
+        "title": "LLM API Calls (Rate)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(llm_calls_total[5m])",
+            "legendFormat": "{{model}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+      },
+      {
+        "id": 7,
+        "title": "LLM Cost (USD/hour)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(llm_cost_usd[1h]) * 3600",
+            "legendFormat": "{{model}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}
+      },
+      {
+        "id": 8,
+        "title": "Human-in-the-loop (Approvals vs Rejections)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "hitl_approvals_total",
+            "legendFormat": "Approvals"
+          },
+          {
+            "expr": "hitl_rejections_total",
+            "legendFormat": "Rejections"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
+      }
+    ],
+    "time": {"from": "now-1h", "to": "now"},
+    "timepicker": {}
+  }
+}

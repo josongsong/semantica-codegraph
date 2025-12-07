@@ -6,7 +6,7 @@ Collects diagnostics from LSP servers and populates DiagnosticIndex.
 
 import asyncio
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.common.observability import get_logger
 from src.contexts.code_foundation.infrastructure.ir.models.diagnostic import (
@@ -15,7 +15,6 @@ from src.contexts.code_foundation.infrastructure.ir.models.diagnostic import (
     DiagnosticSeverity,
     create_diagnostic,
 )
-from src.contexts.code_foundation.infrastructure.ir.models.core import Span
 
 if TYPE_CHECKING:
     from src.contexts.code_foundation.infrastructure.ir.lsp.adapter import LSPDiagnostic, MultiLSPManager
@@ -51,7 +50,7 @@ class DiagnosticCollector:
         self.logger.info(f"Collecting diagnostics for {len(ir_docs)} files...")
 
         # Group files by language
-        files_by_lang: dict[str, list[tuple[str, "IRDocument"]]] = {}
+        files_by_lang: dict[str, list[tuple[str, IRDocument]]] = {}
         for file_path, ir_doc in ir_docs.items():
             # Detect language from first node
             if ir_doc.nodes:

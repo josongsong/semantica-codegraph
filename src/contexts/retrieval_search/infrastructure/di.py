@@ -18,7 +18,14 @@ from src.common.factory_helpers import safe_factory_call, validate_factory
 from src.common.types import RepoMapStoreFactory
 
 if TYPE_CHECKING:
+    # SOTA 2024 components
+    from src.contexts.retrieval_search.infrastructure.adaptive.self_rag import SelfRAGDecider, SelfRAGRetriever
     from src.contexts.retrieval_search.infrastructure.context_builder import ContextBuilder
+    from src.contexts.retrieval_search.infrastructure.context_builder.compressor import (
+        BatchCompressor,
+        ContextualCompressor,
+    )
+    from src.contexts.retrieval_search.infrastructure.context_builder.position_bias import PositionBiasReorderer
     from src.contexts.retrieval_search.infrastructure.fusion import FusionEngine
     from src.contexts.retrieval_search.infrastructure.intent import IntentAnalyzer
     from src.contexts.retrieval_search.infrastructure.multi_index import (
@@ -26,6 +33,11 @@ if TYPE_CHECKING:
         MultiIndexOrchestrator,
         SymbolIndexClient,
         VectorIndexClient,
+    )
+    from src.contexts.retrieval_search.infrastructure.query.hyde import HyDEGenerator, HyDEQueryProcessor
+    from src.contexts.retrieval_search.infrastructure.query.multi_query import (
+        MultiQueryGenerator,
+        MultiQueryRetriever,
     )
     from src.contexts.retrieval_search.infrastructure.scope import ScopeSelector
     from src.contexts.retrieval_search.infrastructure.service import RetrieverService
@@ -85,6 +97,7 @@ class RetrieverContainer:
         - V3 fusion engine with intent-aware ranking
         - 2-tier caching (L1 in-memory + L2 Redis)
         - ML logging (optional)
+        - SOTA 2024: HyDE, Self-RAG, RAG-Fusion, Compression, Position Bias
         """
         from src.contexts.retrieval_search.infrastructure.v3.orchestrator import RetrieverV3Orchestrator
 
@@ -95,6 +108,12 @@ class RetrieverContainer:
             graph_index=None,
             enable_async=True,
             search_logger=self.search_logger,  # Inject search logger
+            # SOTA 2024 components (conditional on config)
+            hyde_processor=self.hyde_processor if self._settings.retriever.enable_hyde else None,
+            self_rag_retriever=self.self_rag_retriever if self._settings.retriever.enable_self_rag else None,
+            multi_query_retriever=self.multi_query_retriever if self._settings.retriever.enable_rag_fusion else None,
+            batch_compressor=self.batch_compressor if self._settings.retriever.enable_compression else None,
+            position_reorderer=self.position_reorderer if self._settings.retriever.enable_position_reordering else None,
         )
 
     @cached_property
@@ -245,4 +264,106 @@ class RetrieverContainer:
             db_pool=self._infra.postgres,  # Pass PostgresStore directly
             enable_async=True,
             buffer_size=100,
+        )
+
+    # ========================================================================
+    # SOTA 2024 Components
+    # ========================================================================
+
+    @cached_property
+    def hyde_generator(self) -> HyDEGenerator:
+        """HyDE generator for hypothetical document creation."""
+        from src.contexts.retrieval_search.infrastructure.query.hyde import HyDEGenerator
+
+        return HyDEGenerator(
+            llm=self._infra.llm,
+            embedding_provider=self._infra.local_llm,  # Use local embedding
+            temperature=self._settings.retriever.hyde_temperature,
+            num_hypotheses=self._settings.retriever.hyde_num_hypotheses,
+        )
+
+    @cached_property
+    def hyde_processor(self) -> HyDEQueryProcessor:
+        """HyDE query processor with confidence-based gating."""
+        from src.contexts.retrieval_search.infrastructure.query.hyde import HyDEQueryProcessor
+
+        return HyDEQueryProcessor(
+            hyde_generator=self.hyde_generator,
+            enable_hyde=self._settings.retriever.enable_hyde,
+            hyde_threshold=self._settings.retriever.hyde_confidence_threshold,
+        )
+
+    @cached_property
+    def self_rag_decider(self) -> SelfRAGDecider:
+        """Self-RAG decision engine for retrieval gating."""
+        from src.contexts.retrieval_search.infrastructure.adaptive.self_rag import SelfRAGDecider
+
+        return SelfRAGDecider(
+            llm=self._infra.llm,
+            temperature=0.0,  # Deterministic for consistent decisions
+        )
+
+    @cached_property
+    def self_rag_retriever(self) -> SelfRAGRetriever:
+        """Self-RAG retriever with intelligent gating."""
+        from src.contexts.retrieval_search.infrastructure.adaptive.self_rag import SelfRAGRetriever
+
+        return SelfRAGRetriever(
+            decider=self.self_rag_decider,
+            skip_retrieval_threshold=self._settings.retriever.self_rag_skip_threshold,
+            relevance_threshold=self._settings.retriever.self_rag_relevance_threshold,
+            enable_self_rag=self._settings.retriever.enable_self_rag,
+        )
+
+    @cached_property
+    def multi_query_generator(self) -> MultiQueryGenerator:
+        """Multi-query generator for RAG-Fusion."""
+        from src.contexts.retrieval_search.infrastructure.query.multi_query import MultiQueryGenerator
+
+        return MultiQueryGenerator(
+            llm=self._infra.llm,
+            num_queries=self._settings.retriever.rag_fusion_num_queries,
+            temperature=0.7,  # Some diversity for query variations
+        )
+
+    @cached_property
+    def multi_query_retriever(self) -> MultiQueryRetriever:
+        """Multi-query retriever with result fusion."""
+        from src.contexts.retrieval_search.infrastructure.query.multi_query import MultiQueryRetriever
+
+        return MultiQueryRetriever(
+            query_generator=self.multi_query_generator,
+            fusion_method=self._settings.retriever.rag_fusion_method,
+            rrf_k=self._settings.retriever.rag_fusion_rrf_k,
+        )
+
+    @cached_property
+    def contextual_compressor(self) -> ContextualCompressor:
+        """Contextual compressor for token reduction."""
+        from src.contexts.retrieval_search.infrastructure.context_builder.compressor import ContextualCompressor
+
+        return ContextualCompressor(
+            llm=self._infra.llm,
+            compression_method=self._settings.retriever.compression_method,
+            target_ratio=self._settings.retriever.compression_ratio,
+        )
+
+    @cached_property
+    def batch_compressor(self) -> BatchCompressor:
+        """Batch compressor with token budget management."""
+        from src.contexts.retrieval_search.infrastructure.context_builder.compressor import BatchCompressor
+
+        return BatchCompressor(
+            compressor=self.contextual_compressor,
+            total_token_budget=self._settings.retriever.compression_token_budget,
+        )
+
+    @cached_property
+    def position_reorderer(self) -> PositionBiasReorderer:
+        """Position bias reorderer for Lost-in-Middle mitigation."""
+        from src.contexts.retrieval_search.infrastructure.context_builder.position_bias import PositionBiasReorderer
+
+        return PositionBiasReorderer(
+            strategy=self._settings.retriever.position_strategy,
+            min_chunks_for_reorder=self._settings.retriever.position_min_chunks,
         )

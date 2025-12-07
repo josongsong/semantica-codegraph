@@ -5,9 +5,10 @@ Generates detailed performance reports in text format with waterfall visualizati
 """
 
 import platform
-import psutil
 from datetime import datetime
 from pathlib import Path
+
+import psutil
 
 from .profiler import IndexingProfiler, PhaseMetrics
 
@@ -154,7 +155,7 @@ Platform: {platform.system()} {platform.release()}"""
         if total_duration == 0:
             return ""
 
-        lines = [f"## 3. Phase별 성능 (Waterfall)", "-" * 80, "", "시간 흐름:", ""]
+        lines = ["## 3. Phase별 성능 (Waterfall)", "-" * 80, "", "시간 흐름:", ""]
 
         # Get root phases
         root_phases = self.profiler.root_phases
@@ -274,7 +275,10 @@ Platform: {platform.system()} {platform.release()}"""
 
         for idx, file in enumerate(slow_files, 1):
             lines.append(f"{idx}. {file.file_path}")
-            lines.append(f"   시간: {file.total_time_ms:.0f}ms")
+            lines.append(f"   총 시간: {file.total_time_ms:.0f}ms")
+            lines.append(f"     - Parse: {file.parse_time_ms:.0f}ms")
+            lines.append(f"     - Build: {file.build_time_ms:.0f}ms")
+            lines.append(f"     - Store: {file.store_time_ms:.0f}ms")
             lines.append(f"   언어: {file.language}")
             lines.append(f"   LOC: {file.loc}줄")
             lines.append(f"   노드: {file.nodes}개")
@@ -300,7 +304,7 @@ Platform: {platform.system()} {platform.release()}"""
         if total_symbols == 0:
             return ""
 
-        lines = [f"## 5. Semantic Nodes 파일별 심볼 수", "-" * 80]
+        lines = ["## 5. Semantic Nodes 파일별 심볼 수", "-" * 80]
 
         for idx, file in enumerate(files_with_symbols, 1):
             symbol_pct = (file.symbols / total_symbols * 100) if total_symbols > 0 else 0

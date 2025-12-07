@@ -206,16 +206,10 @@ class PatternMatcher:
 
         for pattern in patterns:
             # Error type filter (most important)
-            type_match = (
-                not pattern.error_types  # no filter
-                or observation.error_type in pattern.error_types
-            )
+            type_match = not pattern.error_types or observation.error_type in pattern.error_types  # no filter
 
             # Language filter
-            lang_match = (
-                not pattern.languages  # no filter
-                or observation.language in pattern.languages
-            )
+            lang_match = not pattern.languages or observation.language in pattern.languages  # no filter
 
             # Framework filter (if observation has framework)
             framework_match = (

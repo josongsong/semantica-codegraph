@@ -6,7 +6,6 @@ Ensures TSNode is not confused with IR Node
 
 from src.contexts.code_foundation.infrastructure.ir.id_strategy import generate_signature_id
 from src.contexts.code_foundation.infrastructure.semantic_ir.signature.models import SignatureEntity
-from src.contexts.code_foundation.infrastructure.semantic_ir.typing.models import TypeEntity
 from src.contexts.code_foundation.infrastructure.semantic_ir.typing.resolver import TypeResolver
 
 

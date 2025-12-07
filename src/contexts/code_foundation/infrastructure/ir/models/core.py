@@ -23,6 +23,8 @@ class NodeKind(str, Enum):
     FUNCTION = "Function"
     METHOD = "Method"
     LAMBDA = "Lambda"
+    METHOD_REFERENCE = "MethodReference"  # Java 8+ method references (::)
+    TYPE_PARAMETER = "TypeParameter"  # Generic type parameter (Java: <T extends X>)
     VARIABLE = "Variable"  # Local variable, parameter
     FIELD = "Field"  # Class/interface member
     IMPORT = "Import"
@@ -67,6 +69,11 @@ class EdgeKind(str, Enum):
     THROWS = "THROWS"
     ROUTE_TO = "ROUTE_TO"
     USES_REPO = "USES_REPO"
+
+    # Data Flow (Closure/Capture)
+    CAPTURES = "CAPTURES"  # Lambda → Variable (closure)
+    ACCESSES = "ACCESSES"  # Anonymous class method → Outer field
+    SHADOWS = "SHADOWS"  # Inner scope → Outer scope (name collision)
 
 
 # ============================================================

@@ -4,17 +4,17 @@ Semantic Region Index
 Indexes code by semantic regions for LLM-augmented IDEs.
 """
 
-from .models import (
-    SemanticRegion,
-    RegionType,
-    RegionPurpose,
-    TypeFlowInfo,
-    ControlFlowInfo,
-    RegionCollection,
-)
-from .segmenter import RegionSegmenter
 from .annotator import SemanticAnnotator
 from .index import RegionIndex
+from .models import (
+    ControlFlowInfo,
+    RegionCollection,
+    RegionPurpose,
+    RegionType,
+    SemanticRegion,
+    TypeFlowInfo,
+)
+from .segmenter import RegionSegmenter
 
 __all__ = [
     "SemanticRegion",
@@ -27,4 +27,3 @@ __all__ = [
     "SemanticAnnotator",
     "RegionIndex",
 ]
-

@@ -439,24 +439,41 @@ class OccurrenceGenerator:
         """
         self.logger.debug(f"Generating occurrences incrementally for {len(changed_symbol_ids)} changed symbols")
 
-        # Remove old occurrences
-        occurrences_to_remove: list[str] = []
+        # 🔥 OPTIMIZED: Selective removal instead of full rebuild
+        occurrences_to_remove: list[Occurrence] = []
         for symbol_id in changed_symbol_ids:
             old_occs = existing_index.get_references(symbol_id)
-            occurrences_to_remove.extend([o.id for o in old_occs])
+            occurrences_to_remove.extend(old_occs)
 
-        # Remove from indexes
-        for occ_id in occurrences_to_remove:
-            if occ_id in existing_index.by_id:
-                del existing_index.by_id[occ_id]
+        # Remove from all indexes selectively (O(removed) instead of O(N))
+        for occ in occurrences_to_remove:
+            # Remove from by_id
+            if occ.id in existing_index.by_id:
+                del existing_index.by_id[occ.id]
 
-        # Rebuild indexes (TODO: optimize to remove selectively)
-        existing_index.by_symbol.clear()
-        existing_index.by_file.clear()
-        existing_index.by_role.clear()
+            # Remove from by_symbol
+            if occ.symbol in existing_index.by_symbol:
+                existing_index.by_symbol[occ.symbol].discard(occ.id)
+                if not existing_index.by_symbol[occ.symbol]:
+                    del existing_index.by_symbol[occ.symbol]
 
-        for occ in existing_index.by_id.values():
-            existing_index.add(occ)
+            # Remove from by_file
+            if occ.range and occ.range.uri in existing_index.by_file:
+                existing_index.by_file[occ.range.uri].discard(occ.id)
+                if not existing_index.by_file[occ.range.uri]:
+                    del existing_index.by_file[occ.range.uri]
+
+            # Remove from by_role
+            if occ.role in existing_index.by_role:
+                existing_index.by_role[occ.role].discard(occ.id)
+                if not existing_index.by_role[occ.role]:
+                    del existing_index.by_role[occ.role]
+
+        self.logger.debug(
+            "selective_occurrence_removal",
+            removed_count=len(occurrences_to_remove),
+            optimization="O(removed) instead of O(N)",
+        )
 
         # Generate new occurrences for changed symbols
         new_occurrences: list[Occurrence] = []

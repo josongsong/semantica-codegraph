@@ -89,7 +89,8 @@ class ObservabilityConfig(BaseModel):
     otel_service_name: str = Field(default="codegraph", description="서비스 이름")
     otel_service_version: str = Field(default="0.1.0", description="서비스 버전")
     deployment_environment: str = Field(
-        default="development", description="배포 환경 (development, staging, production)"
+        default="development",
+        description="배포 환경 (development, staging, production)",
     )
 
     # TLS/Security
@@ -196,6 +197,37 @@ class RetrieverConfig(BaseModel):
 
     # 기능
     enable_query_expansion: bool = Field(default=True, description="쿼리 확장 활성화")
+
+    # ========================================================================
+    # SOTA Features (2024)
+    # ========================================================================
+    # HyDE (Hypothetical Document Embeddings)
+    enable_hyde: bool = Field(default=True, description="HyDE 활성화")
+    hyde_num_hypotheses: int = Field(default=1, ge=1, le=3, description="가상 문서 수")
+    hyde_temperature: float = Field(default=0.0, ge=0.0, le=1.0, description="생성 temperature")
+    hyde_confidence_threshold: float = Field(default=0.7, ge=0.0, le=1.0, description="HyDE 사용 임계값")
+
+    # Self-RAG (Self-Reflective Retrieval)
+    enable_self_rag: bool = Field(default=True, description="Self-RAG 활성화")
+    self_rag_skip_threshold: float = Field(default=0.7, ge=0.0, le=1.0, description="검색 스킵 임계값")
+    self_rag_relevance_threshold: float = Field(default=0.6, ge=0.0, le=1.0, description="관련성 임계값")
+
+    # RAG-Fusion (Multi-Query Generation)
+    enable_rag_fusion: bool = Field(default=True, description="RAG-Fusion 활성화")
+    rag_fusion_num_queries: int = Field(default=3, ge=2, le=5, description="쿼리 변형 수")
+    rag_fusion_method: str = Field(default="rrf", description="융합 방법: rrf|linear|max")
+    rag_fusion_rrf_k: int = Field(default=60, ge=10, le=200, description="RRF 상수")
+
+    # Contextual Compression
+    enable_compression: bool = Field(default=True, description="컨텍스트 압축 활성화")
+    compression_method: str = Field(default="llm", description="압축 방법: llm|selective|simple")
+    compression_ratio: float = Field(default=0.4, ge=0.1, le=1.0, description="목표 압축 비율")
+    compression_token_budget: int = Field(default=8000, ge=1000, le=32000, description="토큰 예산")
+
+    # Lost-in-Middle Mitigation
+    enable_position_reordering: bool = Field(default=True, description="위치 편향 완화 활성화")
+    position_strategy: str = Field(default="alternating", description="재정렬 전략")
+    position_min_chunks: int = Field(default=5, ge=3, le=20, description="재정렬 최소 청크 수")
 
 
 class AgentConfig(BaseModel):

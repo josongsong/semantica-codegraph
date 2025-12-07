@@ -96,18 +96,43 @@ class InfraContainer:
         return AsyncQdrantClient(url=self._settings.qdrant_url)
 
     @cached_property
-    def memgraph(self) -> MemgraphGraphStore:
-        """Memgraph graph database adapter."""
-        from src.infra.graph.memgraph import MemgraphGraphStore
+    def memgraph(self):
+        """
+        Graph database adapter.
 
-        return MemgraphGraphStore(
-            uri=self._settings.memgraph_uri,
-            username=self._settings.memgraph_username,
-            password=self._settings.memgraph_password,
-            node_batch_size=self._settings.memgraph_node_batch_size,
-            edge_batch_size=self._settings.memgraph_edge_batch_size,
-            delete_batch_size=self._settings.memgraph_delete_batch_size,
-        )
+        프로파일에 따라:
+        - Memgraph 사용 가능: MemgraphGraphStore
+        - 사용 불가: InMemoryGraphStore (fallback)
+        """
+        from src.infra.config.profiles import get_profile_config
+
+        profile = get_profile_config()
+
+        # 프로파일에서 Memgraph 사용 여부 확인
+        if profile.should_use_memgraph():
+            try:
+                from src.infra.graph.memgraph import MemgraphGraphStore
+
+                logger.info("Using MemgraphGraphStore (full graph features)")
+                return MemgraphGraphStore(
+                    uri=self._settings.memgraph_uri,
+                    username=self._settings.memgraph_username,
+                    password=self._settings.memgraph_password,
+                    node_batch_size=self._settings.memgraph_node_batch_size,
+                    edge_batch_size=self._settings.memgraph_edge_batch_size,
+                    delete_batch_size=self._settings.memgraph_delete_batch_size,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to load Memgraph, using fallback: {e}")
+                from src.infra.graph.in_memory_store import InMemoryGraphStore
+
+                return InMemoryGraphStore()
+        else:
+            # Fallback: InMemoryGraphStore
+            logger.info("Using InMemoryGraphStore (fallback mode)")
+            from src.infra.graph.in_memory_store import InMemoryGraphStore
+
+            return InMemoryGraphStore()
 
     # ========================================================================
     # Search & LLM

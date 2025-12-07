@@ -26,8 +26,14 @@ from .models import FusedResultV3, IntentProbability, RankedHit
 from .service import RetrieverV3Service
 
 if TYPE_CHECKING:
+    # SOTA 2024
+    from src.contexts.retrieval_search.infrastructure.adaptive.self_rag import SelfRAGRetriever
     from src.contexts.retrieval_search.infrastructure.adaptive.weight_learner import AdaptiveWeightLearner
+    from src.contexts.retrieval_search.infrastructure.context_builder.compressor import BatchCompressor
+    from src.contexts.retrieval_search.infrastructure.context_builder.position_bias import PositionBiasReorderer
     from src.contexts.retrieval_search.infrastructure.graph.cost_aware_expander import CostAwareGraphExpander
+    from src.contexts.retrieval_search.infrastructure.query.hyde import HyDEQueryProcessor
+    from src.contexts.retrieval_search.infrastructure.query.multi_query import MultiQueryRetriever
     from src.contexts.retrieval_search.infrastructure.routing.strategy_router import StrategyRouter
 
 # Valid source types for SearchHit
@@ -73,6 +79,12 @@ class RetrieverV3Orchestrator:
         cross_encoder: Any | None = None,
         # ML Logging (optional)
         search_logger: Any | None = None,
+        # SOTA 2024: Pre/Post-retrieval enhancements
+        hyde_processor: "HyDEQueryProcessor | None" = None,
+        self_rag_retriever: "SelfRAGRetriever | None" = None,
+        multi_query_retriever: "MultiQueryRetriever | None" = None,
+        batch_compressor: "BatchCompressor | None" = None,
+        position_reorderer: "PositionBiasReorderer | None" = None,
     ):
         """
         Initialize V3 orchestrator.
@@ -111,6 +123,13 @@ class RetrieverV3Orchestrator:
 
         # ML Logging
         self.search_logger = search_logger
+
+        # SOTA 2024: Pre/Post-retrieval enhancements
+        self.hyde_processor = hyde_processor
+        self.self_rag = self_rag_retriever
+        self.multi_query = multi_query_retriever
+        self.compressor = batch_compressor
+        self.position_reorderer = position_reorderer
 
         logger.info(
             "orchestrator_initialized",
@@ -159,6 +178,41 @@ class RetrieverV3Orchestrator:
             - Savings: ~5-6ms (-60%)
         """
         start_time = time.perf_counter()
+
+        # ============================================================
+        # SOTA Step 0.1: Self-RAG - 검색 필요성 판단
+        # ============================================================
+        if self.self_rag:
+            should_retrieve = await self.self_rag.should_retrieve_for_query(query)
+            if not should_retrieve:
+                # Skip retrieval, return empty results
+                logger.info("self_rag_skipped_retrieval", query=query[:50])
+                return [], IntentProbability({}, "general"), {"self_rag_skipped": True}, {}
+
+        # ============================================================
+        # SOTA Step 0.2: Query Enhancement (HyDE, RAG-Fusion)
+        # ============================================================
+        query_variations = [query]  # Start with original
+        hyde_used = False
+        rag_fusion_used = False
+
+        # HyDE: Hypothetical document generation
+        if self.hyde_processor:
+            hyde_result = await self.hyde_processor.process_query(
+                query,
+                query_complexity=0.7,  # TODO: Get from intent classifier
+            )
+            if hyde_result["use_hyde"]:
+                hyde_used = True
+                logger.info("hyde_applied", num_embeddings=len(hyde_result["embeddings"]))
+
+        # RAG-Fusion: Multi-query generation
+        if self.multi_query:
+            expanded = await self.multi_query.expand_query(query)
+            if len(expanded["queries"]) > 1:
+                query_variations = expanded["queries"]
+                rag_fusion_used = True
+                logger.info("rag_fusion_applied", num_queries=len(query_variations))
 
         # ============================================================
         # Step 0: Early intent classification for routing
@@ -228,6 +282,33 @@ class RetrieverV3Orchestrator:
         fused_results = fused_results[:limit]
 
         # ============================================================
+        # SOTA Step 3.5: Post-Retrieval Enhancements
+        # ============================================================
+        # Position Bias Mitigation (Lost-in-Middle)
+        if self.position_reorderer and len(fused_results) >= 5:
+            from src.contexts.retrieval_search.infrastructure.context_builder.position_bias import RankedChunk
+
+            # Convert to RankedChunk
+            chunks = [
+                RankedChunk(
+                    chunk_id=str(i),
+                    content=result.chunk.content,
+                    score=result.score,
+                    original_rank=i,
+                    metadata={"result": result},
+                )
+                for i, result in enumerate(fused_results)
+            ]
+
+            # Reorder
+            reordered_chunks = self.position_reorderer.reorder(chunks)
+
+            # Convert back
+            fused_results = [chunk.metadata["result"] for chunk in reordered_chunks]
+
+            logger.info("position_bias_mitigated", num_chunks=len(fused_results))
+
+        # ============================================================
         # Step 4: Collect metrics
         # ============================================================
         total_time = (time.perf_counter() - start_time) * 1000  # ms
@@ -243,6 +324,11 @@ class RetrieverV3Orchestrator:
             "result_count": len(fused_results),
             "intent": dominant_intent,
             "early_stopped": search_metrics.get("early_stopped", False),
+            # SOTA 2024 metrics
+            "hyde_used": hyde_used,
+            "rag_fusion_used": rag_fusion_used,
+            "num_query_variations": len(query_variations),
+            "position_bias_mitigated": self.position_reorderer is not None and len(fused_results) >= 5,
             **search_metrics,  # Include per-strategy timings
         }
 

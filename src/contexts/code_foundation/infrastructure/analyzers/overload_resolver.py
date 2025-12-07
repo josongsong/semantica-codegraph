@@ -4,7 +4,6 @@ Overload Resolution Analyzer
 오버로드된 함수의 정확한 타겟 결정
 """
 
-from typing import List, Optional, Dict
 from dataclasses import dataclass
 
 
@@ -14,8 +13,8 @@ class OverloadCandidate:
 
     function_id: str
     function_name: str
-    param_types: List[str]
-    return_type: Optional[str]
+    param_types: list[str]
+    return_type: str | None
     is_overload: bool
 
 
@@ -24,8 +23,8 @@ class CallSiteResolution:
     """호출 지점 resolution 결과"""
 
     call_location: str
-    candidates: List[OverloadCandidate]
-    resolved: Optional[OverloadCandidate]
+    candidates: list[OverloadCandidate]
+    resolved: OverloadCandidate | None
     reason: str
 
 
@@ -40,9 +39,9 @@ class OverloadResolver:
     """
 
     def __init__(self):
-        self._overload_groups: Dict[str, List[OverloadCandidate]] = {}
+        self._overload_groups: dict[str, list[OverloadCandidate]] = {}
 
-    def register_overloads(self, nodes: List[any]):
+    def register_overloads(self, nodes: list[any]):
         """오버로드 함수들을 그룹화"""
         self._overload_groups.clear()
 
@@ -75,7 +74,7 @@ class OverloadResolver:
     def resolve_call(
         self,
         function_name: str,
-        arg_types: List[str],
+        arg_types: list[str],
         call_location: str = "",
     ) -> CallSiteResolution:
         """
@@ -130,7 +129,7 @@ class OverloadResolver:
             call_location=call_location, candidates=candidates, resolved=None, reason="Ambiguous overload"
         )
 
-    def _is_potential_overload(self, node: any, all_nodes: List[any]) -> bool:
+    def _is_potential_overload(self, node: any, all_nodes: list[any]) -> bool:
         """같은 이름의 함수가 여러 개인지 체크"""
         if not hasattr(node, "name"):
             return False
@@ -139,36 +138,36 @@ class OverloadResolver:
 
         return same_name_count > 0
 
-    def _extract_param_types(self, node: any) -> List[str]:
+    def _extract_param_types(self, node: any) -> list[str]:
         """함수 노드에서 parameter types 추출"""
         # Would need to access signature/parameter info
         # For now, return empty list
         return []
 
-    def _extract_return_type(self, node: any) -> Optional[str]:
+    def _extract_return_type(self, node: any) -> str | None:
         """함수 노드에서 return type 추출"""
         # Would need to access signature info
         return None
 
-    def _types_match(self, arg_types: List[str], param_types: List[str]) -> bool:
+    def _types_match(self, arg_types: list[str], param_types: list[str]) -> bool:
         """타입이 정확히 일치하는지"""
         if len(arg_types) != len(param_types):
             return False
 
-        for arg_type, param_type in zip(arg_types, param_types):
+        for arg_type, param_type in zip(arg_types, param_types, strict=False):
             if arg_type != param_type:
                 return False
 
         return True
 
-    def _types_compatible(self, arg_types: List[str], param_types: List[str]) -> bool:
+    def _types_compatible(self, arg_types: list[str], param_types: list[str]) -> bool:
         """타입이 호환 가능한지 (subtype 등)"""
         if len(arg_types) != len(param_types):
             return False
 
         # Simple compatibility check
         # In production, would need full type hierarchy
-        for arg_type, param_type in zip(arg_types, param_types):
+        for arg_type, param_type in zip(arg_types, param_types, strict=False):
             if arg_type == param_type:
                 continue
             if param_type == "Any":
@@ -179,7 +178,7 @@ class OverloadResolver:
 
         return True
 
-    def get_overload_groups(self) -> Dict[str, List[OverloadCandidate]]:
+    def get_overload_groups(self) -> dict[str, list[OverloadCandidate]]:
         """모든 overload 그룹 조회"""
         return self._overload_groups.copy()
 

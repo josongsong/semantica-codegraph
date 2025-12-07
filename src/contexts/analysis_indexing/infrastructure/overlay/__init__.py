@@ -5,10 +5,10 @@ Core functionality for integrating uncommitted changes into IR/Graph.
 This is a CRITICAL feature that improves IDE/Agent accuracy by 30-50%.
 """
 
-from .models import OverlaySnapshot, OverlayConfig
-from .overlay_builder import OverlayIRBuilder
-from .graph_merger import GraphMerger
 from .conflict_resolver import ConflictResolver
+from .graph_merger import GraphMerger
+from .models import OverlayConfig, OverlaySnapshot
+from .overlay_builder import OverlayIRBuilder
 
 __all__ = [
     "OverlaySnapshot",

@@ -6,18 +6,19 @@ Index Repository Full UseCase
 
 from pathlib import Path
 
-from ..domain.models import IndexingResult
+from ..domain.ports import IndexingOrchestratorPort
+from ..infrastructure.models import IndexingResult
 
 
 class IndexRepositoryFullUseCase:
     """전체 리포지토리 인덱싱 UseCase"""
 
-    def __init__(self, orchestrator):
+    def __init__(self, orchestrator: IndexingOrchestratorPort):
         """
         초기화
 
         Args:
-            orchestrator: IndexingOrchestrator (실제 구현체)
+            orchestrator: 인덱싱 오케스트레이터 포트
         """
         self.orchestrator = orchestrator
 
@@ -38,28 +39,12 @@ class IndexRepositoryFullUseCase:
             force: 강제 재인덱싱 여부
 
         Returns:
-            인덱싱 결과
+            Infrastructure IndexingResult (정보 손실 없음)
         """
-        # 실제 오케스트레이터 호출
-        result = await self.orchestrator.index_repository_full(
+        # 포트를 통해 오케스트레이터 호출 - Infrastructure 모델 직접 반환
+        return await self.orchestrator.index_repository_full(
             repo_path=repo_path,
             repo_id=repo_id,
             snapshot_id=snapshot_id,
             force=force,
-        )
-
-        # 기존 결과를 도메인 모델로 변환
-        from ..domain.models import IndexingStatus
-
-        return IndexingResult(
-            repo_id=result.repo_id,
-            snapshot_id=result.snapshot_id,
-            status=IndexingStatus(result.status.value),
-            files_processed=result.files_processed,
-            files_failed=result.files_failed,
-            graph_nodes_created=result.graph_nodes_created,
-            graph_edges_created=result.graph_edges_created,
-            chunks_created=result.chunks_created,
-            total_duration_seconds=result.total_duration_seconds,
-            errors=result.errors or [],
         )

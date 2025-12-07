@@ -4,8 +4,8 @@ Impact-Based Partial Graph Rebuild
 Optimizes incremental updates by analyzing change impact levels.
 """
 
-from .models import ChangeImpactLevel, ChangeImpact, RebuildStrategy
 from .analyzer import ImpactAnalyzer
+from .models import ChangeImpact, ChangeImpactLevel, RebuildStrategy
 from .rebuilder import PartialGraphRebuilder
 
 __all__ = [
@@ -15,4 +15,3 @@ __all__ = [
     "ImpactAnalyzer",
     "PartialGraphRebuilder",
 ]
-

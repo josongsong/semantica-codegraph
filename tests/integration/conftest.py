@@ -10,8 +10,8 @@ from pathlib import Path
 import pytest
 
 from src.container import container
-from src.retriever.v3.config import RetrieverV3Config
-from src.retriever.v3.service import RetrieverV3Service
+from src.contexts.retrieval_search.infrastructure.v3.config import RetrieverV3Config
+from src.contexts.retrieval_search.infrastructure.v3.service import RetrieverV3Service
 
 
 @pytest.fixture(scope="session")

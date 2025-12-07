@@ -182,7 +182,7 @@ class StyleAnalyzer:
         nesting_depths: list[int] = []
 
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                 # Function length (lines)
                 if hasattr(node, "end_lineno") and node.end_lineno:
                     length = node.end_lineno - node.lineno + 1
@@ -220,7 +220,7 @@ class StyleAnalyzer:
         max_depth = current_depth
 
         for child in ast.iter_child_nodes(node):
-            if isinstance(child, (ast.If, ast.For, ast.While, ast.With, ast.Try)):
+            if isinstance(child, ast.If | ast.For | ast.While | ast.With | ast.Try):
                 child_depth = self._calculate_nesting_depth(child, current_depth + 1)
                 max_depth = max(max_depth, child_depth)
             else:
@@ -289,7 +289,7 @@ class StyleAnalyzer:
         funcs_with_return = 0
 
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                 total_funcs += 1
 
                 # Check for any parameter type hints
@@ -321,7 +321,7 @@ class StyleAnalyzer:
         docstring_samples: list[str] = []
 
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                 total_funcs += 1
                 docstring = ast.get_docstring(node)
                 if docstring:
