@@ -4,7 +4,7 @@
 # Multi-stage build for optimized production image
 # ========================================================================
 
-FROM python:3.11-slim as base
+FROM python:3.14-slim as base
 
 # 환경 변수 설정
 ENV PYTHONUNBUFFERED=1 \
