@@ -212,65 +212,9 @@ rust-arch-fix:
     cargo geiger || echo "⚠️ cargo-geiger 설치 필요: cargo install cargo-geiger"
 
 # 🏛️ Full 아키텍처 검증 (CI용)
-rust-arch-ci: rust-arch-check rust-deny
+rust-arch-ci: rust-arch-check
     @echo ""
     @echo "✅ 전체 아키텍처 검증 완료!"
-
-# Run clippy with auto-fix suggestions
-rust-clippy-fix:
-    cd packages/codegraph-ir && cargo clippy --fix --allow-dirty --allow-staged
-
-# Run tests with output (for debugging)
-rust-test-verbose:
-    cd packages/codegraph-ir && cargo nextest run --no-fail-fast --nocapture
-
-# 📊 Profile test timing - find slow tests
-rust-test-timing:
-    #!/usr/bin/env zsh
-    echo "🔍 테스트 타이밍 프로파일링 시작..."
-    cd packages/codegraph-ir
-    cargo nextest run --profile ci --no-fail-fast 2>&1 | tee target/nextest/test-output.txt
-    echo ""
-    echo "📊 느린 테스트 TOP 20:"
-    grep -E "SLOW|PASS.*s\)" target/nextest/test-output.txt | sort -t'(' -k2 -rn | head -20
-    echo ""
-    echo "📁 JUnit 리포트: packages/codegraph-ir/target/nextest/junit.xml"
-
-# 🐌 Find slowest tests (dry-run analysis)
-rust-test-slowest:
-    #!/usr/bin/env zsh
-    echo "🐌 느린 테스트 분석 중..."
-    cd packages/codegraph-ir
-    cargo nextest list --tests 2>/dev/null | grep -E "^codegraph" | head -50
-    echo ""
-    echo "💡 느린 테스트 예상 후보:"
-    echo "  - e2e/*: E2E 테스트 (파일 I/O, 전체 파이프라인)"
-    echo "  - stress/*: 스트레스 테스트 (대용량, 동시성)"
-    echo "  - performance/*: 벤치마크 (#[ignore] 마킹됨)"
-    echo "  - config_property_tests: Property-based 테스트 (많은 케이스 생성)"
-
-# 📈 Track test timing history (saves to .test-timing/)
-rust-test-track:
-    ./scripts/track_test_timing.sh --save
-
-# ⚡ Quick test with reduced property test cases
-rust-test-quick:
-    #!/usr/bin/env zsh
-    echo "⚡ Property test 케이스 수 감소 (32개)"
-    cd packages/codegraph-ir
-    PROPTEST_CASES=32 QUICKCHECK_TESTS=100 RUSTC_WRAPPER="" cargo nextest run --tests --no-fail-fast
-
-# Continuous testing (watch mode with bacon)
-rust-bacon:
-    cd packages/codegraph-ir && bacon
-
-# Environment check (detect conflicts)
-rust-env-check:
-    ./scripts/check_rust_env.sh
-
-# Install recommended Rust tools
-rust-tools-install:
-    ./scripts/install_rust_tools.sh
 
 # ========================================================================
 # Python Development

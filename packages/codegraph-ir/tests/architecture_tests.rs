@@ -126,17 +126,17 @@ fn test_layer_dependency_direction() {
 fn test_language_plugin_extensibility() {
     // Parser trait이나 Language trait이 존재하는지 확인
     let parsing_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/features/parsing");
-    
+
     if parsing_dir.exists() {
         let mod_file = parsing_dir.join("mod.rs");
         if mod_file.exists() {
             let parser_code = std::fs::read_to_string(&mod_file).unwrap();
-            
+
             // Parser 또는 Language 관련 trait 존재 확인
             let has_extensibility = parser_code.contains("pub trait")
                 || parser_code.contains("trait Parser")
                 || parser_code.contains("trait Language");
-            
+
             if !has_extensibility {
                 eprintln!("⚠️ 권장: Parser trait 패턴 사용 시 확장성 향상");
             }
@@ -192,16 +192,16 @@ fn test_config_is_leaf_dependency() {
                 // 프로덕션 코드에서만 검사 (테스트 코드는 예외)
                 // #[test] 함수 내부나 #[cfg(test)] 블록은 허용
                 let lines: Vec<&str> = content.lines().collect();
-                
+
                 for (i, line) in lines.iter().enumerate() {
                     if line.contains(import) {
                         // 이전 라인들에서 #[test] 또는 #[cfg(test)] 확인
                         let is_in_test = lines[..i].iter().rev().take(5).any(|prev_line| {
-                            prev_line.contains("#[test]") 
+                            prev_line.contains("#[test]")
                             || prev_line.contains("#[cfg(test)]")
                             || prev_line.contains("mod tests")
                         });
-                        
+
                         assert!(
                             is_in_test,
                             "❌ Config 모듈 {:?}이 프로덕션 코드에서 도메인 로직 {}에 의존 - Leaf 원칙 위반\n   (테스트 코드는 허용)",
