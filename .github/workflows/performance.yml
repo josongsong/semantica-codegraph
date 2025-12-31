@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Python 설정
         uses: actions/setup-python@v5
@@ -61,7 +61,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Python 설정
         uses: actions/setup-python@v5
@@ -97,7 +97,7 @@ jobs:
           - 8000:8000
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 의존성 설치
         run: |
