@@ -1,0 +1,110 @@
+# Justfile for codegraph-ir - Ultra-Fast Testing
+
+# CPU cores (automatically detected)
+CORES := `sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 8`
+
+# Default: Ultra-fast parallel test
+default: test-parallel
+
+# 🚀 Ultra-fast parallel test (ALL cores, < 1 min)
+test-parallel:
+    @echo "🚀 Running tests with {{CORES}} cores in parallel..."
+    cargo nextest run --lib --test-threads={{CORES}} --no-fail-fast
+
+# Quick tests (lib only, fast profile)
+test-quick:
+    cargo nextest run --lib --test-threads={{CORES}}
+
+# All tests with max parallelism
+test-all:
+    cargo nextest run --test-threads={{CORES}}
+
+# Only unit tests (maximum speed)
+test-unit:
+    cargo nextest run --lib --test-threads={{CORES}}
+
+# Only integration tests (half cores to avoid I/O contention)
+test-integration:
+    #!/bin/bash
+    HALF_CORES=$(({{CORES}} / 2))
+    echo "Running integration tests with $HALF_CORES cores..."
+    cargo nextest run --test '*' \
+        --filter 'not (test(e2e) or test(stress) or test(performance))' \
+        --test-threads=$HALF_CORES
+
+# Only E2E tests (2 cores, avoid resource conflicts)
+test-e2e:
+    cargo nextest run --filter 'test(e2e)' --test-threads=2
+
+# Stress tests (sequential, CI only)
+test-stress:
+    cargo nextest run --filter 'test(stress) or test(performance)' --test-threads=1
+
+# Specific module with max parallelism
+test MODULE:
+    cargo nextest run --lib '{{MODULE}}' --test-threads={{CORES}}
+
+# Watch mode (rerun on file change)
+test-watch:
+    cargo watch -x 'nextest run --lib --test-threads={{CORES}}'
+
+# Partition strategy: Run categories in parallel background jobs
+test-partition:
+    #!/bin/bash
+    echo "🚀 Partitioned parallel execution ({{CORES}} cores)..."
+    cargo nextest run --lib --test-threads={{CORES}} &
+    PID1=$!
+    cargo nextest run --test '*' --filter 'test(integration)' --test-threads=4 &
+    PID2=$!
+    wait $PID1 $PID2
+    echo "✅ All partitions completed!"
+
+# Run with coverage (parallel)
+test-coverage:
+    cargo llvm-cov nextest --html --test-threads={{CORES}}
+
+# Clean test artifacts
+clean:
+    cargo clean
+    rm -rf target/nextest/
+
+# CI full suite (max parallelism)
+ci:
+    cargo nextest run --test-threads={{CORES}}
+
+# Show slowest tests
+slow:
+    cargo nextest run --test-threads={{CORES}} --verbose 2>&1 | grep -E "SLOW|took" | head -20
+
+# List all tests
+list:
+    cargo nextest list
+
+# Benchmark sequential vs parallel
+bench:
+    #!/bin/bash
+    echo "📊 Benchmarking sequential vs parallel execution..."
+    echo ""
+    echo "Running sequential (1 thread)..."
+    time cargo nextest run --lib --test-threads=1 2>&1 | grep "Finished" || true
+    echo ""
+    echo "Running parallel ({{CORES}} threads)..."
+    time cargo nextest run --lib --test-threads={{CORES}} 2>&1 | grep "Finished" || true
+    echo ""
+    echo "✅ Benchmark complete!"
+
+# Fast incremental build (development)
+build:
+    cargo build
+
+# Check only (no binary, fastest)
+check:
+    cargo check
+
+# Release build (optimized)
+build-release:
+    cargo build --release
+
+# Install dependencies (nextest, just, etc.)
+install-tools:
+    cargo install cargo-nextest cargo-watch cargo-llvm-cov just

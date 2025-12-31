@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_943.NoSqlInjection
+  kind: sink
+  tags: ['cwe_943', 'NoSqlInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-943"]
+  description: Building a NoSQL query from user-controlled sources is vulnerable to insertion of
+  match:
+  -     call: NoSqlInjection
+
+- id: sink.cwe_943.NoSqlInjection
+  kind: sink
+  tags: ['cwe_943', 'NoSqlInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-943"]
+  description: Building a NoSQL query from user-controlled sources is vulnerable to insertion of
+  match:
+  -     call: NoSqlInjection

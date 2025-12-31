@@ -1,0 +1,33 @@
+# Import Linter Configuration
+# Enforces clean architecture boundaries
+
+[[contracts]]
+name = "Shared must not depend on Apps"
+type = "forbidden"
+source_modules = [
+    "codegraph_shared",
+]
+forbidden_modules = [
+    "apps",
+    "apps.api",
+    "apps.orchestrator",
+]
+
+[[contracts]]
+name = "Shared must not depend on higher layers"
+type = "layers"
+layers = [
+    "codegraph_shared",  # Layer 0: Foundation
+    "codegraph_engine | codegraph_search | codegraph_runtime | codegraph_analysis",  # Layer 1: Core
+    "apps",  # Layer 2: Application
+]
+
+[[contracts]]
+name = "Engine can depend on Shared"
+type = "independence"
+modules = [
+    "codegraph_engine",
+]
+ignore_imports = [
+    "codegraph_shared",
+]

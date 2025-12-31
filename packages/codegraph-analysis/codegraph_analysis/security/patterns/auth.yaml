@@ -1,0 +1,64 @@
+# Authentication & Authorization Patterns
+# L23: Auth/AuthZ Analysis
+
+patterns:
+  missing_authentication:
+    severity: HIGH
+    cwe: CWE-306
+    description: "Endpoint without authentication"
+    indicators:
+      # Django
+      - missing_decorator: "@login_required"
+        on_functions_matching: "^(api_|view_)"
+      # Flask
+      - missing_decorator: "@login_required"
+        on_routes: true
+      # FastAPI
+      - missing_dependency: "Depends(get_current_user)"
+        on_routes: true
+    remediation: "Add authentication decorator or dependency"
+
+  weak_password_policy:
+    severity: MEDIUM
+    cwe: CWE-521
+    description: "Weak password requirements"
+    patterns:
+      - "MIN_PASSWORD_LENGTH\\s*=\\s*[1-7]"
+      - "PASSWORD_MIN_LENGTH\\s*=\\s*[1-7]"
+    remediation: "Enforce minimum 8 characters, complexity requirements"
+
+  hardcoded_credentials:
+    severity: CRITICAL
+    cwe: CWE-798
+    description: "Hardcoded username or password"
+    patterns:
+      - "password\\s*=\\s*['\"][^'\"]+['\"]"
+      - "PASSWORD\\s*=\\s*['\"][^'\"]+['\"]"
+      - "admin_password\\s*=\\s*['\"]"
+    remediation: "Use environment variables or secrets management"
+
+  insecure_session:
+    severity: HIGH
+    cwe: CWE-614
+    description: "Session cookie without Secure flag"
+    patterns:
+      - "SESSION_COOKIE_SECURE\\s*=\\s*False"
+      - "secure\\s*=\\s*False"  # In set_cookie
+    remediation: "Set SESSION_COOKIE_SECURE = True in production"
+
+  missing_csrf:
+    severity: HIGH
+    cwe: CWE-352
+    description: "CSRF protection disabled"
+    patterns:
+      - "@csrf_exempt"
+      - "CSRF_COOKIE_SECURE\\s*=\\s*False"
+    remediation: "Enable CSRF protection for state-changing operations"
+
+  jwt_no_expiration:
+    severity: MEDIUM
+    cwe: CWE-613
+    description: "JWT without expiration time"
+    patterns:
+      - "jwt.encode\\([^)]*\\)"  # Without 'exp' claim
+    remediation: "Set 'exp' claim with reasonable timeout"

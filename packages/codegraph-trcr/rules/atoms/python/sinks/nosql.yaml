@@ -1,0 +1,56 @@
+# Python NoSQL Injection Sinks
+# CWE-943: NoSQL Injection
+# OWASP: A03:2021-Injection
+
+atoms:
+# =============================================================================
+# MongoDB (pymongo)
+# =============================================================================
+- id: sink.nosql.mongodb
+  kind: sink
+  tags: [injection, db, nosql, mongodb]
+  severity: critical
+  cwe: ["CWE-943"]
+  description: MongoDB query with user input
+  match:
+  - base_type: pymongo.collection.Collection
+    call: find
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: pymongo.collection.Collection
+    call: find_one
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: pymongo.collection.Collection
+    call: aggregate
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: motor.motor_asyncio.AsyncIOMotorCollection
+    call: find
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# Redis (Lua Script Injection)
+# =============================================================================
+- id: sink.nosql.redis
+  kind: sink
+  tags: [injection, db, nosql, redis]
+  severity: high
+  cwe: ["CWE-94"]
+  description: Redis Lua script injection
+  match:
+  - base_type: redis.Redis
+    call: eval
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: redis.Redis
+    call: evalsha
+    args: [0]
+    constraints:
+      arg_type: not_const

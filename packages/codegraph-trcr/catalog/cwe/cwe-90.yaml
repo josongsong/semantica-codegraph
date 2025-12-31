@@ -1,0 +1,105 @@
+# CWE-90: Improper Neutralization of Special Elements used in an LDAP Query (LDAP Injection)
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/90.html
+
+metadata:
+  cwe_id: CWE-90
+  name: "LDAP Injection"
+  severity: high
+  owasp: "A03:2021-Injection"
+  category: "Injection"
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+  mitre_abstraction: base
+  likelihood_of_exploit: medium
+  references:
+    - https://cwe.mitre.org/data/definitions/90.html
+    - https://owasp.org/www-community/attacks/LDAP_Injection
+
+description: |
+  The software constructs all or part of an LDAP query using externally-influenced
+  input, but does not neutralize special elements that could modify the intended
+  LDAP query.
+
+sources:
+  - id: source.user_input
+    description: "User-provided input"
+    patterns:
+      - flask.Request.args
+      - flask.Request.form
+      - django.http.HttpRequest.GET
+      - django.http.HttpRequest.POST
+      - call: input
+
+sinks:
+  - id: sink.ldap.query
+    description: "LDAP query execution"
+    patterns:
+      - base_type: ldap.ldapobject.LDAPObject
+        call: search_s
+        args: [2]
+      - base_type: ldap.ldapobject.LDAPObject
+        call: search
+        args: [2]
+      - base_type: ldap3.Connection
+        call: search
+        kwargs: [search_filter]
+
+sanitizers:
+  - id: barrier.ldap.escape
+    description: "LDAP escaping functions"
+    patterns:
+      - call: ldap.filter.escape_filter_chars
+      - call: ldap3.utils.conv.escape_filter_chars
+      - call: escape_ldap
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.ldap.query
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: ldap
+
+validation:
+  min_test_cases: 6
+  min_precision: 0.90
+  min_recall: 0.85
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE90_LDAP_Injection"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: String formatting in LDAP filter
+      filter = f"(&(uid={username})(userPassword={password}))"
+      result = conn.search_s(base_dn, ldap.SCOPE_SUBTREE, filter)
+
+  safe:
+    - |
+      # GOOD: Escaped LDAP filter
+      from ldap.filter import escape_filter_chars
+      safe_user = escape_filter_chars(username)
+      filter = f"(&(uid={safe_user})(userPassword={safe_pass}))"
+
+fix:
+  priority: 1
+  effort: low
+  recommendations:
+    - title: "Use LDAP escape functions"
+      severity: best
+      example: |
+        from ldap.filter import escape_filter_chars
+        username = escape_filter_chars(user_input)

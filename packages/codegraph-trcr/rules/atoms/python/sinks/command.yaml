@@ -1,0 +1,98 @@
+# Python Command Injection Sinks
+# CWE-78: OS Command Injection
+# OWASP: A03:2021-Injection
+
+atoms:
+# =============================================================================
+# OS Module
+# =============================================================================
+- id: sink.command.os
+  kind: sink
+  tags: [injection, os, command]
+  severity: critical
+  cwe: ["CWE-78"]
+  description: OS command execution
+  match:
+  - call: os.system
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: os.popen
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# Subprocess Module
+# =============================================================================
+- id: sink.command.subprocess
+  kind: sink
+  tags: [injection, os, command]
+  severity: high
+  cwe: ["CWE-78"]
+  description: Subprocess command execution (vulnerable with shell=True)
+  match:
+  - call: subprocess.call
+    args: [0]
+    constraints:
+      arg_type: not_const
+      kwarg_shell: true
+  - call: subprocess.run
+    args: [0]
+    constraints:
+      arg_type: not_const
+      kwarg_shell: true
+  - call: subprocess.Popen
+    args: [0]
+    constraints:
+      arg_type: not_const
+      kwarg_shell: true
+  - call: subprocess.check_output
+    args: [0]
+    constraints:
+      arg_type: not_const
+      kwarg_shell: true
+
+# =============================================================================
+# Asyncio Subprocess
+# =============================================================================
+- id: sink.command.asyncio
+  kind: sink
+  tags: [injection, os, command, async]
+  severity: critical
+  cwe: ["CWE-78"]
+  description: Asyncio subprocess
+  match:
+  - call: create_subprocess_shell
+    args: [0]
+  - call: create_subprocess_exec
+
+# =============================================================================
+# Legacy Shell Commands
+# =============================================================================
+- id: sink.command.shell
+  kind: sink
+  tags: [injection, os, command, shell]
+  severity: critical
+  cwe: ["CWE-78"]
+  description: Shell-based commands (legacy)
+  match:
+  - call: getoutput
+    args: [0]
+  - call: getstatusoutput
+    args: [0]
+
+# =============================================================================
+# SSH Remote Execution
+# =============================================================================
+- id: sink.command.ssh
+  kind: sink
+  tags: [injection, os, command, ssh, remote]
+  severity: critical
+  cwe: ["CWE-78"]
+  description: SSH remote command execution via paramiko
+  match:
+  - call: exec_command
+    args: [0]
+    constraints:
+      arg_type: not_const

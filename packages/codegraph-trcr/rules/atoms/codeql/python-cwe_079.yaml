@@ -1,0 +1,38 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_079.ReflectedXss
+  kind: sink
+  tags: ['cwe_079', 'ReflectedXss', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-079"]
+  description: Writing user input directly to a web page
+  match:
+  -     call: ReflectedXss
+
+- id: sink.cwe_079.Jinja2WithoutEscaping
+  kind: sink
+  tags: ['cwe_079', 'Jinja2WithoutEscaping', 'vulnerability']
+  severity: high
+  cwe: ["CWE-079"]
+  description: Using jinja2 templates with 'autoescape=False' can
+  match:
+  -     call: Jinja2WithoutEscaping
+
+- id: sink.cwe_079.ReflectedXss
+  kind: sink
+  tags: ['cwe_079', 'ReflectedXss', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-079"]
+  description: Writing user input directly to a web page
+  match:
+  -     call: ReflectedXss
+
+- id: sink.cwe_079.Jinja2WithoutEscaping
+  kind: sink
+  tags: ['cwe_079', 'Jinja2WithoutEscaping', 'vulnerability']
+  severity: high
+  cwe: ["CWE-079"]
+  description: Using jinja2 templates with 'autoescape=False' can
+  match:
+  -     call: Jinja2WithoutEscaping

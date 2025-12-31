@@ -1,0 +1,123 @@
+name: CodeGraph Security Scan
+
+on:
+  pull_request:
+    branches: [ main, master, develop ]
+  push:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  security-scan:
+    name: CodeGraph Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      
+      - name: Run CodeGraph Security Scan
+        id: scan
+        run: |
+          # Changed files only (for PRs)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep '\.py$' || true)
+            if [ -z "$CHANGED_FILES" ]; then
+              echo "No Python files changed"
+              exit 0
+            fi
+            FILES_ARGS=$(echo "$CHANGED_FILES" | xargs -I {} echo "{}")
+          else
+            FILES_ARGS="."
+          fi
+          
+          # Run scan
+          python -m src.contexts.code_foundation.cli.scan \
+            --files $FILES_ARGS \
+            --format sarif \
+            --output codegraph-results.sarif \
+            --fail-on-severity high
+        continue-on-error: true
+      
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: codegraph-results.sarif
+          category: codegraph
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let results;
+            try {
+              const sarif = JSON.parse(fs.readFileSync('codegraph-results.sarif', 'utf8'));
+              results = sarif.runs[0].results || [];
+            } catch (e) {
+              console.log('No results file found');
+              return;
+            }
+            
+            const critical = results.filter(r => r.level === 'error');
+            const high = results.filter(r => r.level === 'warning');
+            const medium = results.filter(r => r.level === 'note');
+            
+            const body = `## 🔒 CodeGraph Security Scan
+            
+            **Summary:**
+            - 🔴 Critical: ${critical.length}
+            - 🟠 High: ${high.length}
+            - 🟡 Medium: ${medium.length}
+            
+            ${critical.length > 0 ? `
+            ### Critical Issues
+            ${critical.slice(0, 5).map(r => `
+            - **${r.ruleId}**: ${r.message.text}
+              - File: \`${r.locations[0].physicalLocation.artifactLocation.uri}\`
+              - Line: ${r.locations[0].physicalLocation.region.startLine}
+            `).join('\n')}
+            ${critical.length > 5 ? `\n_... and ${critical.length - 5} more_` : ''}
+            ` : '✅ No critical issues found!'}
+            
+            <details>
+            <summary>View all findings in Security tab</summary>
+            
+            Check the [Security](https://github.com/${{ github.repository }}/security/code-scanning) tab for detailed results.
+            </details>
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+      
+      - name: Fail if critical issues found
+        if: steps.scan.outcome == 'failure'
+        run: |
+          echo "Critical security issues found!"
+          exit 1
+

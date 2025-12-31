@@ -1,0 +1,61 @@
+# Python SQL Sanitizers
+# CWE-89: SQL Injection Prevention
+
+atoms:
+# =============================================================================
+# SQL Escaping
+# =============================================================================
+- id: barrier.sql.escape
+  kind: sanitizer
+  tags: [safety, db, sql]
+  description: SQL escaping functions
+  scope: return
+  match:
+  - call: escape_sql
+    scope: return
+  - call: sql_escape
+    scope: return
+  - base_type: sqlalchemy.engine.Connection
+    call: escape
+    scope: return
+
+# =============================================================================
+# Parameterized Queries
+# =============================================================================
+- id: barrier.sql.parameterized_sqlite
+  kind: sanitizer
+  tags: [safety, db, sql, sqlite]
+  description: SQLite parameterized query (2+ args = safe)
+  match:
+  - base_type: sqlite3.Cursor
+    call: execute
+    constraints:
+      arg_count: 2
+  - base_type: sqlite3.Connection
+    call: execute
+    constraints:
+      arg_count: 2
+
+- id: barrier.sql.parameterized_psycopg2
+  kind: sanitizer
+  tags: [safety, db, sql, postgresql]
+  description: PostgreSQL parameterized query
+  match:
+  - base_type: psycopg2.extensions.cursor
+    call: execute
+    constraints:
+      arg_count: 2
+  - base_type: psycopg2.extras.DictCursor
+    call: execute
+    constraints:
+      arg_count: 2
+
+- id: barrier.sql.parameterized_pymysql
+  kind: sanitizer
+  tags: [safety, db, sql, mysql]
+  description: MySQL parameterized query
+  match:
+  - base_type: pymysql.cursors.Cursor
+    call: execute
+    constraints:
+      arg_count: 2

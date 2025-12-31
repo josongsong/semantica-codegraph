@@ -1,0 +1,68 @@
+name: Rust+Rayon Build
+
+on:
+  push:
+    branches: [main, develop, 'feature/*']
+    paths:
+      - 'packages/codegraph-rust-core/**'
+      - '.github/workflows/rust-build.yml'
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-rust:
+    name: Build Rust Extension
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/codegraph-rust-core/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('packages/codegraph-rust-core/Cargo.lock') }}
+
+      - name: Install maturin
+        run: pip install maturin
+
+      - name: Build Rust extension
+        working-directory: packages/codegraph-rust-core
+        run: |
+          maturin build --release
+          maturin develop
+
+      - name: Test Rust extension
+        run: |
+          python -c "from codegraph_rust_core import build_ir_parallel, get_thread_pool_info; print('✅ Import successful'); info = get_thread_pool_info(); print(f'Thread pool: {info}')"
+
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/test_rust_parallel_builder.py -v
+
+      - name: Run benchmark
+        run: |
+          python tools/benchmark/bench_rust_rayon.py
+
+      - name: Upload wheel
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-wheel
+          path: packages/codegraph-rust-core/target/wheels/*.whl
+

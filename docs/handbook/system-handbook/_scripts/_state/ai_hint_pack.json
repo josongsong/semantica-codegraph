@@ -1,0 +1,414 @@
+{
+  "intent": "static alignment + hints for next AI iteration",
+  "modules": [
+    {
+      "name": "agent",
+      "kind": "agent",
+      "root": "src/agent",
+      "role_hints": [
+        "adapters",
+        "orchestration",
+        "tools",
+        "verification loop"
+      ],
+      "python_loc": 67696,
+      "recommended_entry_files": [
+        "src/agent/ports/__init__.py",
+        "src/agent/application/__init__.py",
+        "src/agent/domain/__init__.py",
+        "src/agent/infrastructure/__init__.py",
+        "src/agent/adapters/__init__.py",
+        "src/agent/api/unified_query_api.py",
+        "src/agent/domain/services.py",
+        "src/agent/domain/real_services.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/agent.md",
+      "doc_src_paths": [
+        "src/agent/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "agent_code_editing",
+      "kind": "context",
+      "root": "src/contexts/agent_code_editing",
+      "role_hints": [],
+      "python_loc": 342,
+      "recommended_entry_files": [
+        "src/contexts/agent_code_editing/adapters/cascade/fuzzy_patcher.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/agent-code-editing.md",
+      "doc_src_paths": [
+        "src/contexts/agent_code_editing/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "analysis_indexing",
+      "kind": "context",
+      "root": "src/contexts/analysis_indexing",
+      "role_hints": [
+        "DDD(domain)",
+        "jobs",
+        "pipeline(stages)",
+        "ports"
+      ],
+      "python_loc": 14108,
+      "recommended_entry_files": [
+        "src/contexts/analysis_indexing/di.py",
+        "src/contexts/analysis_indexing/ports/__init__.py",
+        "src/contexts/analysis_indexing/domain/__init__.py",
+        "src/contexts/analysis_indexing/infrastructure/__init__.py",
+        "src/contexts/analysis_indexing/infrastructure/watcher_service.py",
+        "src/contexts/analysis_indexing/infrastructure/stages/discovery_stage.py",
+        "src/contexts/analysis_indexing/infrastructure/stages/graph_stage.py",
+        "src/contexts/analysis_indexing/infrastructure/stages/chunk_stage.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/analysis-indexing.md",
+      "doc_src_paths": [
+        "src/contexts/analysis_indexing/",
+        "src/contexts/analysis_indexing/infrastructure/stages/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "code_foundation",
+      "kind": "context",
+      "root": "src/contexts/code_foundation",
+      "role_hints": [
+        "Chunk",
+        "DDD(application)",
+        "DDD(domain)",
+        "DFG/CFG",
+        "Graph",
+        "IR",
+        "QueryEngine",
+        "TypeInference",
+        "ports"
+      ],
+      "python_loc": 159785,
+      "recommended_entry_files": [
+        "src/contexts/code_foundation/di.py",
+        "src/contexts/code_foundation/ports/__init__.py",
+        "src/contexts/code_foundation/application/__init__.py",
+        "src/contexts/code_foundation/domain/__init__.py",
+        "src/contexts/code_foundation/infrastructure/__init__.py",
+        "src/contexts/code_foundation/adapters/__init__.py",
+        "src/contexts/code_foundation/application/taint_analysis_service.py",
+        "src/contexts/code_foundation/application/taint_analysis_service_v1_legacy.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/code-foundation.md",
+      "doc_src_paths": [
+        "src/contexts/code_foundation/",
+        "src/contexts/code_foundation/infrastructure/parsing/",
+        "src/contexts/code_foundation/infrastructure/generators/",
+        "src/contexts/code_foundation/infrastructure/ir/",
+        "src/contexts/code_foundation/infrastructure/dfg/",
+        "src/contexts/code_foundation/infrastructure/chunk/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "codegen_loop",
+      "kind": "context",
+      "root": "src/contexts/codegen_loop",
+      "role_hints": [
+        "DDD(application)",
+        "DDD(domain)"
+      ],
+      "python_loc": 11918,
+      "recommended_entry_files": [
+        "src/contexts/codegen_loop/application/__init__.py",
+        "src/contexts/codegen_loop/domain/__init__.py",
+        "src/contexts/codegen_loop/infrastructure/__init__.py",
+        "src/contexts/codegen_loop/infrastructure/shadowfs/plugins/incremental_plugin.py",
+        "src/contexts/codegen_loop/infrastructure/shadowfs/core_v2.py",
+        "src/contexts/codegen_loop/infrastructure/shadowfs/ir_transaction_manager.py",
+        "src/contexts/codegen_loop/infrastructure/shadowfs/core.py",
+        "src/contexts/codegen_loop/application/codegen_loop.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/codegen-loop.md",
+      "doc_src_paths": [
+        "src/contexts/codegen_loop/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "llm_arbitration",
+      "kind": "context",
+      "root": "src/contexts/llm_arbitration",
+      "role_hints": [
+        "DDD(application)",
+        "DDD(domain)",
+        "ports"
+      ],
+      "python_loc": 5935,
+      "recommended_entry_files": [
+        "src/contexts/llm_arbitration/ports/__init__.py",
+        "src/contexts/llm_arbitration/application/__init__.py",
+        "src/contexts/llm_arbitration/domain/__init__.py",
+        "src/contexts/llm_arbitration/infrastructure/__init__.py",
+        "src/contexts/llm_arbitration/infrastructure/envelope_builder.py",
+        "src/contexts/llm_arbitration/application/executors/analyze_executor.py",
+        "src/contexts/llm_arbitration/infrastructure/adapters/cost_adapter.py",
+        "src/contexts/llm_arbitration/infrastructure/adapters/taint_adapter.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/llm-arbitration.md",
+      "doc_src_paths": [
+        "src/contexts/llm_arbitration/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "multi_index",
+      "kind": "context",
+      "root": "src/contexts/multi_index",
+      "role_hints": [
+        "DDD(domain)"
+      ],
+      "python_loc": 12617,
+      "recommended_entry_files": [
+        "src/contexts/multi_index/di.py",
+        "src/contexts/multi_index/domain/__init__.py",
+        "src/contexts/multi_index/infrastructure/__init__.py",
+        "src/contexts/multi_index/infrastructure/fake_index.py",
+        "src/contexts/multi_index/usecase/delete_from_indexes.py",
+        "src/contexts/multi_index/usecase/upsert_to_index.py",
+        "src/contexts/multi_index/infrastructure/symbol/call_graph_query.py",
+        "src/contexts/multi_index/infrastructure/symbol/adapter_memgraph.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/multi-index.md",
+      "doc_src_paths": [
+        "src/contexts/multi_index/",
+        "src/contexts/multi_index/infrastructure/common/documents.py",
+        "src/contexts/multi_index/infrastructure/common/transformer.py",
+        "src/contexts/multi_index/infrastructure/service/index_orchestrator.py"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "reasoning_engine",
+      "kind": "context",
+      "root": "src/contexts/reasoning_engine",
+      "role_hints": [
+        "DDD(application)",
+        "DDD(domain)",
+        "ports"
+      ],
+      "python_loc": 13884,
+      "recommended_entry_files": [
+        "src/contexts/reasoning_engine/ports/__init__.py",
+        "src/contexts/reasoning_engine/application/__init__.py",
+        "src/contexts/reasoning_engine/domain/__init__.py",
+        "src/contexts/reasoning_engine/infrastructure/__init__.py",
+        "src/contexts/reasoning_engine/adapters/__init__.py",
+        "src/contexts/reasoning_engine/adapters/value_flow_builder_adapter.py",
+        "src/contexts/reasoning_engine/application/incremental_builder.py",
+        "src/contexts/reasoning_engine/application/reasoning_pipeline.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/reasoning-engine.md",
+      "doc_src_paths": [
+        "src/contexts/reasoning_engine/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "replay_audit",
+      "kind": "context",
+      "root": "src/contexts/replay_audit",
+      "role_hints": [
+        "DDD(application)",
+        "DDD(domain)"
+      ],
+      "python_loc": 651,
+      "recommended_entry_files": [
+        "src/contexts/replay_audit/domain/__init__.py",
+        "src/contexts/replay_audit/infrastructure/__init__.py",
+        "src/contexts/replay_audit/application/replay_executor.py",
+        "src/contexts/replay_audit/infrastructure/audit_store.py",
+        "src/contexts/replay_audit/domain/models.py",
+        "src/contexts/replay_audit/__init__.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/replay-audit.md",
+      "doc_src_paths": [
+        "src/contexts/replay_audit/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "repo_structure",
+      "kind": "context",
+      "root": "src/contexts/repo_structure",
+      "role_hints": [],
+      "python_loc": 6146,
+      "recommended_entry_files": [
+        "src/contexts/repo_structure/infrastructure/__init__.py",
+        "src/contexts/repo_structure/infrastructure/tree/builder.py",
+        "src/contexts/repo_structure/infrastructure/pagerank/graph_adapter.py",
+        "src/contexts/repo_structure/infrastructure/git_history.py",
+        "src/contexts/repo_structure/infrastructure/builder/orchestrator.py",
+        "src/contexts/repo_structure/infrastructure/storage_json.py",
+        "src/contexts/repo_structure/infrastructure/summarizer/hierarchical_summarizer.py",
+        "src/contexts/repo_structure/infrastructure/pagerank/incremental.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/repo-structure.md",
+      "doc_src_paths": [
+        "src/contexts/repo_structure/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "retrieval_search",
+      "kind": "context",
+      "root": "src/contexts/retrieval_search",
+      "role_hints": [
+        "DDD(domain)",
+        "Graph",
+        "QueryEngine",
+        "fusion",
+        "multi_index client",
+        "ports"
+      ],
+      "python_loc": 33435,
+      "recommended_entry_files": [
+        "src/contexts/retrieval_search/di.py",
+        "src/contexts/retrieval_search/ports/__init__.py",
+        "src/contexts/retrieval_search/domain/__init__.py",
+        "src/contexts/retrieval_search/infrastructure/__init__.py",
+        "src/contexts/retrieval_search/adapters/__init__.py",
+        "src/contexts/retrieval_search/infrastructure/service.py",
+        "src/contexts/retrieval_search/infrastructure/service_optimized.py",
+        "src/contexts/retrieval_search/infrastructure/fake_search_engine.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/query-and-retrieval.md",
+      "doc_src_paths": [
+        "src/contexts/retrieval_search/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "security_analysis",
+      "kind": "context",
+      "root": "src/contexts/security_analysis",
+      "role_hints": [
+        "DDD(application)",
+        "DDD(domain)",
+        "ports"
+      ],
+      "python_loc": 2071,
+      "recommended_entry_files": [
+        "src/contexts/security_analysis/ports/__init__.py",
+        "src/contexts/security_analysis/application/__init__.py",
+        "src/contexts/security_analysis/domain/__init__.py",
+        "src/contexts/security_analysis/infrastructure/__init__.py",
+        "src/contexts/security_analysis/adapters/__init__.py",
+        "src/contexts/security_analysis/domain/services/query_engine.py",
+        "src/contexts/security_analysis/domain/models/security_rule.py",
+        "src/contexts/security_analysis/domain/models/vulnerability.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/security-analysis.md",
+      "doc_src_paths": [
+        "src/contexts/security_analysis/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "session_memory",
+      "kind": "context",
+      "root": "src/contexts/session_memory",
+      "role_hints": [
+        "DDD(application)",
+        "DDD(domain)",
+        "ports"
+      ],
+      "python_loc": 21504,
+      "recommended_entry_files": [
+        "src/contexts/session_memory/ports/__init__.py",
+        "src/contexts/session_memory/application/__init__.py",
+        "src/contexts/session_memory/domain/__init__.py",
+        "src/contexts/session_memory/infrastructure/__init__.py",
+        "src/contexts/session_memory/adapters/__init__.py",
+        "src/contexts/session_memory/application/session_consolidation_service.py",
+        "src/contexts/session_memory/application/memory_retrieval_service.py",
+        "src/contexts/session_memory/infrastructure/write_pipeline.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/session-memory.md",
+      "doc_src_paths": [
+        "src/contexts/session_memory/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "shared_kernel",
+      "kind": "context",
+      "root": "src/contexts/shared_kernel",
+      "role_hints": [],
+      "python_loc": 4649,
+      "recommended_entry_files": [
+        "src/contexts/shared_kernel/infrastructure/workspace_repository.py",
+        "src/contexts/shared_kernel/contracts/specs.py",
+        "src/contexts/shared_kernel/infrastructure/execution_repository.py",
+        "src/contexts/shared_kernel/contracts/evidence.py",
+        "src/contexts/shared_kernel/contracts/envelope.py",
+        "src/contexts/shared_kernel/contracts/claim.py",
+        "src/contexts/shared_kernel/contracts/pagination.py",
+        "src/contexts/shared_kernel/infrastructure/snapshot_factory.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/shared-kernel.md",
+      "doc_src_paths": [
+        "src/contexts/shared_kernel/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "verification",
+      "kind": "context",
+      "root": "src/contexts/verification",
+      "role_hints": [],
+      "python_loc": 1082,
+      "recommended_entry_files": [
+        "src/contexts/verification/repair_ranking/application/ranking_service.py",
+        "src/contexts/verification/repair_ranking/domain/repair_ranker.py",
+        "src/contexts/verification/repair_ranking/infrastructure/scorers/taint_scorer.py",
+        "src/contexts/verification/repair_ranking/infrastructure/scorers/complexity_scorer.py",
+        "src/contexts/verification/repair_ranking/infrastructure/scorers/style_scorer.py",
+        "src/contexts/verification/repair_ranking/domain/ports.py",
+        "src/contexts/verification/repair_ranking/domain/models.py",
+        "src/contexts/verification/repair_ranking/infrastructure/scorers/__init__.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/verification.md",
+      "doc_src_paths": [
+        "src/contexts/verification/"
+      ],
+      "doc_src_paths_missing": []
+    },
+    {
+      "name": "infra",
+      "kind": "infra",
+      "root": "src/infra",
+      "role_hints": [
+        "config",
+        "jobs",
+        "llm/vector",
+        "observability",
+        "storage"
+      ],
+      "python_loc": 14329,
+      "recommended_entry_files": [
+        "src/infra/di.py",
+        "src/infra/graph/memgraph.py",
+        "src/infra/metadata/indexing_metadata_store.py",
+        "src/infra/llm/local_llm.py",
+        "src/infra/observability/cost_tracking.py",
+        "src/infra/observability/alerting.py",
+        "src/infra/observability/metrics.py",
+        "src/infra/config/settings.py"
+      ],
+      "expected_doc": "_docs/system-handbook/modules/infra.md",
+      "doc_src_paths": [
+        "src/infra/"
+      ],
+      "doc_src_paths_missing": []
+    }
+  ]
+}

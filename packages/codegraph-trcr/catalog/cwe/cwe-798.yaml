@@ -1,0 +1,146 @@
+# CWE-798: Use of Hard-coded Credentials
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/798.html
+
+metadata:
+  cwe_id: CWE-798
+  name: "Use of Hard-coded Credentials"
+  severity: high
+  owasp: "A07:2021-Identification and Authentication Failures"
+  category: "InfoLeak"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  mitre_abstraction: base
+  likelihood_of_exploit: medium
+
+  references:
+    - https://cwe.mitre.org/data/definitions/798.html
+    - https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/
+
+description: |
+  The software contains hard-coded credentials, such as a password or cryptographic key,
+  which it uses for its own inbound authentication, outbound communication to external
+  components, or encryption of internal data.
+
+sources:
+  - id: source.hardcoded.password
+    description: "Hardcoded password string"
+    patterns:
+      - variable: PASSWORD
+      - variable: password
+      - literal: string (password-like)
+
+  - id: source.hardcoded.apikey
+    description: "Hardcoded API key"
+    patterns:
+      - variable: API_KEY
+      - variable: SECRET_KEY
+      - variable: TOKEN
+
+sinks:
+  - id: sink.auth.database
+    description: "Database connection with password"
+    patterns:
+      - call: mysql.connector.connect
+        kwargs: [password]
+      - call: psycopg2.connect
+        kwargs: [password]
+
+  - id: sink.auth.api
+    description: "API authentication"
+    patterns:
+      - call: requests.get
+        kwargs: [headers]
+      - call: requests.post
+        kwargs: [headers, auth]
+
+  - id: sink.crypto.key
+    description: "Encryption with hardcoded key"
+    patterns:
+      - call: Crypto.Cipher.AES.new
+        args: [0]
+
+sanitizers:
+  - id: barrier.env.variable
+    description: "Environment variable"
+    patterns:
+      - os.getenv
+      - os.environ.get
+
+  - id: barrier.config.file
+    description: "Config file"
+    patterns:
+      - configparser.read
+      - yaml.safe_load
+      - json.load
+
+policy:
+  grammar:
+    WHEN:
+      tag: hardcoded_credential
+    FLOWS:
+      - id: sink.auth.database
+      - id: sink.auth.api
+      - id: sink.crypto.key
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: external_config
+
+validation:
+  min_test_cases: 2
+  required_scenarios:
+    - hardcoded_password
+    - env_variable_safe
+
+  min_precision: 0.85
+  min_recall: 0.80
+  max_false_positive_rate: 0.15
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE798_Hardcoded_Credentials"
+    cases:
+      - bad_01.py
+      - good_01.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: Hardcoded password
+      PASSWORD = "admin123"
+      conn = mysql.connector.connect(
+          host="localhost",
+          user="admin",
+          password=PASSWORD
+      )
+
+  safe:
+    - |
+      # GOOD: Environment variable
+      password = os.getenv("DB_PASSWORD")
+      conn = mysql.connector.connect(
+          host="localhost",
+          user="admin",
+          password=password
+      )
+
+fix:
+  priority: 2
+  effort: low
+
+  recommendations:
+    - title: "Use environment variables"
+      severity: best
+      example: |
+        password = os.getenv("DB_PASSWORD")
+
+    - title: "Use secret management"
+      severity: recommended
+      example: |
+        from vault import get_secret
+        password = get_secret("db_password")

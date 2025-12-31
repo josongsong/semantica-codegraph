@@ -1,0 +1,787 @@
+# Rust Taint Analysis Atoms
+# Language: Rust
+# Framework: Actix-web, Rocket, Axum, Tokio, etc.
+
+atoms:
+# ============================================================================
+# Sources - Untrusted Input
+# ============================================================================
+- id: input.http.actix
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - actix
+  severity: high
+  description: Actix-web HTTP request input
+  match:
+  - base_type: HttpRequest
+    call: query_string
+  - base_type: HttpRequest
+    call: headers
+  - base_type: HttpRequest
+    call: cookies
+  - base_type: HttpRequest
+    call: match_info
+  - base_type: web::Query
+    call: into_inner
+  - base_type: web::Path
+    call: into_inner
+  - base_type: web::Json
+    call: into_inner
+  - base_type: web::Form
+    call: into_inner
+  - base_type: Payload
+    call: to_bytes
+
+- id: input.http.axum
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - axum
+  severity: high
+  description: Axum HTTP request input
+  match:
+  - base_type: axum::extract::Query
+    read: inner
+  - base_type: axum::extract::Path
+    read: inner
+  - base_type: axum::extract::Json
+    read: inner
+  - base_type: axum::extract::Form
+    read: inner
+  - base_type: axum::http::HeaderMap
+    call: get
+  - base_type: axum::http::Request
+    call: body
+  - base_type: axum::extract::Extension
+    read: inner
+
+- id: input.http.rocket
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - rocket
+  severity: high
+  description: Rocket HTTP request input
+  match:
+  - base_type: Form
+    call: into_inner
+  - base_type: Json
+    call: into_inner
+  - base_type: Data
+    call: open
+  - base_type: Cookies
+    call: get
+  - base_type: Request
+    call: headers
+  - base_type: Request
+    call: query_value
+
+- id: input.http.hyper
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - hyper
+  severity: high
+  description: Hyper HTTP request input
+  match:
+  - base_type: Request
+    call: uri
+  - base_type: Request
+    call: headers
+  - base_type: Body
+    call: to_bytes
+  - base_type: Request
+    call: body
+
+- id: input.file.rust
+  kind: source
+  tags:
+  - untrusted
+  - file
+  - io
+  severity: medium
+  description: Rust file read operations
+  match:
+  - call: std::fs::read
+  - call: std::fs::read_to_string
+  - base_type: File
+    call: read
+  - base_type: File
+    call: read_to_string
+  - base_type: BufReader
+    call: read_line
+  - base_type: BufReader
+    call: lines
+
+- id: input.env.rust
+  kind: source
+  tags:
+  - untrusted
+  - env
+  - config
+  severity: medium
+  description: Environment variables
+  match:
+  - call: std::env::var
+  - call: std::env::var_os
+  - call: std::env::args
+  - call: std::env::args_os
+
+- id: input.stdin.rust
+  kind: source
+  tags:
+  - untrusted
+  - stdin
+  severity: high
+  description: Standard input
+  match:
+  - call: std::io::stdin
+  - base_type: Stdin
+    call: read_line
+  - base_type: Stdin
+    call: lines
+
+# ============================================================================
+# Sinks - SQL Injection (CWE-89)
+# ============================================================================
+- id: sink.sql.diesel
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - diesel
+  severity: critical
+  description: Diesel raw SQL
+  match:
+  - call: diesel::sql_query
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: SqlQuery
+    call: sql
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-89
+  owasp: "A03:2021-Injection"
+
+- id: sink.sql.sqlx
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - sqlx
+  severity: critical
+  description: SQLx raw query
+  match:
+  - call: sqlx::query
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: sqlx::raw_sql
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Pool
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Connection
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-89
+  owasp: "A03:2021-Injection"
+
+- id: sink.sql.rusqlite
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - sqlite
+  severity: critical
+  description: Rusqlite raw SQL
+  match:
+  - base_type: Connection
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Connection
+    call: prepare
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Connection
+    call: query_row
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-89
+  owasp: "A03:2021-Injection"
+
+- id: sink.sql.tokio_postgres
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - postgres
+  severity: critical
+  description: Tokio-postgres raw SQL
+  match:
+  - base_type: Client
+    call: query
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Client
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Client
+    call: query_one
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-89
+  owasp: "A03:2021-Injection"
+
+# ============================================================================
+# Sinks - Command Injection (CWE-78)
+# ============================================================================
+- id: sink.command.rust
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: critical
+  description: Rust command execution
+  match:
+  - base_type: Command
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Command
+    call: arg
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Command
+    call: args
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: std::process::Command::new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-78
+  owasp: "A03:2021-Injection"
+
+# ============================================================================
+# Sinks - XSS (CWE-79)
+# ============================================================================
+- id: sink.xss.actix
+  kind: sink
+  tags:
+  - xss
+  - web
+  - html
+  - actix
+  severity: high
+  description: Actix-web HTML response
+  match:
+  - base_type: HttpResponse
+    call: body
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: HttpResponseBuilder
+    call: body
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: Html
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-79
+  owasp: "A03:2021-Injection"
+
+- id: sink.xss.axum
+  kind: sink
+  tags:
+  - xss
+  - web
+  - html
+  - axum
+  severity: high
+  description: Axum HTML response
+  match:
+  - base_type: Html
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Response
+    call: body
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-79
+  owasp: "A03:2021-Injection"
+
+# ============================================================================
+# Sinks - Path Traversal (CWE-22)
+# ============================================================================
+- id: sink.path.rust
+  kind: sink
+  tags:
+  - traversal
+  - file
+  - path
+  severity: high
+  description: File path operations
+  match:
+  - call: std::fs::read
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: std::fs::write
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: std::fs::remove_file
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: std::fs::create_dir
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: std::fs::remove_dir
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: std::fs::copy
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: std::fs::rename
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: File
+    call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: File
+    call: create
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: OpenOptions
+    call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-22
+  owasp: "A01:2021-Broken Access Control"
+
+# ============================================================================
+# Sinks - SSRF (CWE-918)
+# ============================================================================
+- id: sink.ssrf.reqwest
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  description: Reqwest SSRF
+  match:
+  - base_type: Client
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Client
+    call: post
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Client
+    call: request
+    args: [1]
+    constraints:
+      arg_type: not_const
+  - call: reqwest::get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-918
+  owasp: "A10:2021-Server-Side Request Forgery"
+
+- id: sink.ssrf.hyper
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  description: Hyper SSRF
+  match:
+  - base_type: Client
+    call: request
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Client
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-918
+  owasp: "A10:2021-Server-Side Request Forgery"
+
+# ============================================================================
+# Sinks - Insecure Deserialization (CWE-502)
+# ============================================================================
+- id: sink.deserialize.serde
+  kind: sink
+  tags:
+  - deserialize
+  - dangerous
+  severity: critical
+  description: Serde deserialization
+  match:
+  - call: serde_json::from_str
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: serde_json::from_slice
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: serde_yaml::from_str
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: toml::from_str
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: bincode::deserialize
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-502
+  owasp: "A08:2021-Software and Data Integrity Failures"
+
+# ============================================================================
+# Sinks - Unsafe Code (CWE-119)
+# ============================================================================
+- id: sink.unsafe.rust
+  kind: sink
+  tags:
+  - unsafe
+  - memory
+  - dangerous
+  severity: critical
+  description: Unsafe memory operations with user input
+  match:
+  - call: std::ptr::read
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: std::ptr::write
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: std::slice::from_raw_parts
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: std::mem::transmute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-119
+  owasp: "A03:2021-Injection"
+
+# ============================================================================
+# Sinks - Format String (CWE-134)
+# ============================================================================
+- id: sink.format.rust
+  kind: sink
+  tags:
+  - format
+  - injection
+  severity: medium
+  description: Format string with user input
+  match:
+  - call: format!
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: println!
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: eprintln!
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: log::info!
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: log::error!
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: tracing::info!
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-134
+  owasp: "A03:2021-Injection"
+
+# ============================================================================
+# Sinks - Regex DoS (CWE-1333)
+# ============================================================================
+- id: sink.redos.rust
+  kind: sink
+  tags:
+  - redos
+  - dos
+  - regex
+  severity: medium
+  description: User-controlled regex (ReDoS)
+  match:
+  - call: Regex::new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: regex::Regex::new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-1333
+  owasp: "A05:2021-Security Misconfiguration"
+
+# ============================================================================
+# Sanitizers
+# ============================================================================
+- id: barrier.sql.parameterized
+  kind: sanitizer
+  tags:
+  - safety
+  - db
+  - sql
+  description: Parameterized queries
+  scope: return
+  match:
+  - call: sqlx::query!
+    scope: return
+  - call: sqlx::query_as!
+    scope: return
+  - base_type: Statement
+    call: bind
+    scope: return
+  - base_type: Query
+    call: bind
+    scope: return
+
+- id: barrier.xss.escape
+  kind: sanitizer
+  tags:
+  - safety
+  - web
+  - html
+  description: HTML escaping
+  scope: return
+  match:
+  - call: html_escape::encode_text
+    scope: return
+  - call: askama_escape::escape
+    scope: return
+  - call: ammonia::clean
+    scope: return
+
+- id: barrier.path.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - path
+  - file
+  description: Path validation
+  scope: return
+  match:
+  - base_type: Path
+    call: canonicalize
+    scope: return
+  - base_type: PathBuf
+    call: canonicalize
+    scope: return
+  - call: std::fs::canonicalize
+    scope: return
+
+- id: barrier.command.escape
+  kind: sanitizer
+  tags:
+  - safety
+  - os
+  - command
+  description: Command argument escaping
+  scope: return
+  match:
+  - call: shell_escape::escape
+    scope: return
+  - call: shlex::quote
+    scope: return
+
+# ============================================================================
+# Propagators
+# ============================================================================
+- id: prop.string.rust
+  kind: propagator
+  tags:
+  - flow
+  - string
+  description: String operations propagate taint
+  match:
+  - base_type: String
+    call: push_str
+    from_args: [0]
+    to: base
+  - base_type: String
+    call: push
+    from_args: [0]
+    to: base
+  - base_type: str
+    call: to_string
+    from_args: [0]
+    to: return
+  - base_type: str
+    call: to_lowercase
+    from_args: [0]
+    to: return
+  - base_type: str
+    call: to_uppercase
+    from_args: [0]
+    to: return
+  - base_type: str
+    call: trim
+    from_args: [0]
+    to: return
+  - base_type: str
+    call: replace
+    from_args: [0]
+    to: return
+  - call: format!
+    from_args: [0]
+    to: return
+
+- id: prop.collection.rust
+  kind: propagator
+  tags:
+  - flow
+  - collection
+  description: Collection operations propagate taint
+  match:
+  - base_type: Vec
+    call: push
+    from_args: [0]
+    to: base
+  - base_type: Vec
+    call: extend
+    from_args: [0]
+    to: base
+  - base_type: HashMap
+    call: insert
+    from_args: [1]
+    to: base
+  - base_type: Vec
+    call: join
+    from_args: [0]
+    to: return
+  - base_type: Iterator
+    call: collect
+    from_args: [0]
+    to: return
+
+- id: prop.bytes.rust
+  kind: propagator
+  tags:
+  - flow
+  - bytes
+  description: Bytes operations propagate taint
+  match:
+  - base_type: Bytes
+    call: from
+    from_args: [0]
+    to: return
+  - base_type: BytesMut
+    call: extend_from_slice
+    from_args: [0]
+    to: base
+  - call: String::from_utf8
+    from_args: [0]
+    to: return
+  - call: String::from_utf8_lossy
+    from_args: [0]
+    to: return
+
+- id: prop.json.rust
+  kind: propagator
+  tags:
+  - flow
+  - json
+  description: JSON operations propagate taint
+  match:
+  - call: serde_json::to_string
+    from_args: [0]
+    to: return
+  - call: serde_json::to_vec
+    from_args: [0]
+    to: return
+  - call: serde_json::from_str
+    from_args: [0]
+    to: return
+  - call: serde_json::from_slice
+    from_args: [0]
+    to: return

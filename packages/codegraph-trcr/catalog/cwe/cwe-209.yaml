@@ -1,0 +1,108 @@
+# CWE-209: Generation of Error Message Containing Sensitive Information
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/209.html
+
+metadata:
+  cwe_id: CWE-209
+  name: "Information Exposure Through Error Message"
+  severity: medium
+  owasp: "A01:2021-Broken Access Control"
+  category: "Information Disclosure"
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+  mitre_abstraction: base
+  likelihood_of_exploit: medium
+  references:
+    - https://cwe.mitre.org/data/definitions/209.html
+    - https://owasp.org/www-community/Improper_Error_Handling
+
+description: |
+  The software generates an error message that includes sensitive information
+  about its environment, users, or associated data.
+
+sources:
+  - id: source.sensitive_data
+    description: "Sensitive information in errors"
+    patterns:
+      - exception: DatabaseError
+      - exception: OperationalError
+      - variable: password
+      - variable: api_key
+      - variable: connection_string
+
+sinks:
+  - id: sink.error.response
+    description: "Error messages exposed to users"
+    patterns:
+      - call: str
+        args: [exception]
+      - call: repr
+        args: [exception]
+      - call: traceback.format_exc
+      - attribute: exception.__str__
+
+  - id: sink.error.logging
+    description: "Detailed errors in responses"
+    patterns:
+      - "flask.Response with exception details"
+      - "return f\"Error: {exception}\""
+
+sanitizers:
+  - id: barrier.error.generic
+    description: "Generic error messages"
+    patterns:
+      - return "An error occurred"
+      - return "Internal server error"
+      - call: log_exception_securely
+
+policy:
+  grammar:
+    WHEN:
+      tag: exception_handler
+    FLOWS:
+      - id: sink.error.response
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: generic_error
+
+validation:
+  min_test_cases: 6
+  min_precision: 0.80
+  min_recall: 0.75
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE209_Error_Information"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: Exposing database error details
+      except DatabaseError as e:
+          return f"Database error: {str(e)}"
+
+  safe:
+    - |
+      # GOOD: Generic error message
+      except DatabaseError as e:
+          logger.error(f"DB error: {e}")
+          return "An error occurred. Please try again."
+
+fix:
+  priority: 2
+  effort: low
+  recommendations:
+    - title: "Return generic error messages"
+      severity: best
+      example: |
+        except Exception as e:
+            logger.exception("Internal error")
+            return "An error occurred", 500

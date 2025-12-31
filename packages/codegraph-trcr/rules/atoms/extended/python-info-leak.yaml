@@ -1,0 +1,431 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.info_leak.stack_trace
+  kind: sink
+  tags: ['info_leak', 'stack_trace', 'vulnerability']
+  severity: high
+  cwe: ["CWE-209"]
+  owasp: "A09:2021-Security Logging and Monitoring Failures"
+  description: Info Leak Stack Trace
+  match:
+  -     base_type: traceback
+        call: format_exc
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: traceback
+        call: print_exc
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: sys
+        call: exc_info
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.debug_info
+  kind: sink
+  tags: ['info_leak', 'debug_info', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-200"]
+  description: Info Leak Debug Info
+  match:
+  -     base_type: pprint
+        call: pprint
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: print
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.sql_error
+  kind: sink
+  tags: ['info_leak', 'sql_error', 'vulnerability']
+  severity: high
+  cwe: ["CWE-209"]
+  description: Info Leak Sql Error
+  match:
+  -     base_type: sqlite3
+        call: Error
+  -     base_type: psycopg2
+        call: Error
+
+- id: sink.info_leak.path_disclosure
+  kind: sink
+  tags: ['info_leak', 'path_disclosure', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-200"]
+  description: Info Leak Path Disclosure
+  match:
+  -     call: __file__
+  -     base_type: os
+        call: getcwd
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.config_exposure
+  kind: sink
+  tags: ['info_leak', 'config_exposure', 'vulnerability']
+  severity: high
+  cwe: ["CWE-200"]
+  description: Info Leak Config Exposure
+  match:
+  -     base_type: os
+        call: environ
+  -     base_type: settings
+        read: SECRET_KEY
+
+- id: sink.info_leak.stack_trace
+  kind: sink
+  tags: ['info_leak', 'stack_trace', 'vulnerability']
+  severity: high
+  cwe: ["CWE-209"]
+  owasp: "A09:2021-Security Logging and Monitoring Failures"
+  description: Info Leak Stack Trace
+  match:
+  -     base_type: traceback
+        call: format_exc
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: traceback
+        call: print_exc
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: sys
+        call: exc_info
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.debug_info
+  kind: sink
+  tags: ['info_leak', 'debug_info', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-200"]
+  description: Info Leak Debug Info
+  match:
+  -     base_type: pprint
+        call: pprint
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: pdb
+        call: set_trace
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.error_message
+  kind: sink
+  tags: ['info_leak', 'error_message', 'vulnerability']
+  severity: high
+  cwe: ["CWE-209"]
+  description: Info Leak Error Message
+  match:
+  -     call: Exception
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: ValueError
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: RuntimeError
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.sql_error
+  kind: sink
+  tags: ['info_leak', 'sql_error', 'vulnerability']
+  severity: high
+  cwe: ["CWE-209"]
+  description: Info Leak Sql Error
+  match:
+  -     base_type: sqlite3
+        call: Error
+  -     base_type: psycopg2
+        call: Error
+  -     base_type: pymysql.err
+        call: Error
+
+- id: sink.info_leak.path_disclosure
+  kind: sink
+  tags: ['info_leak', 'path_disclosure', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-200"]
+  description: Info Leak Path Disclosure
+  match:
+  -     call: __file__
+  -     base_type: os
+        call: getcwd
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: os.path
+        call: abspath
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.session_info
+  kind: sink
+  tags: ['info_leak', 'session_info', 'vulnerability']
+  severity: high
+  cwe: ["CWE-532"]
+  description: Info Leak Session Info
+  match:
+  -     base_type: session
+        call: session_key
+  -     base_type: request
+        call: session
+
+- id: sink.info_leak.config_exposure
+  kind: sink
+  tags: ['info_leak', 'config_exposure', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-200"]
+  description: Info Leak Config Exposure
+  match:
+  -     base_type: os
+        call: environ
+  -     base_type: settings
+        read: SECRET_KEY
+  -     base_type: settings
+        read: DATABASE_PASSWORD
+
+- id: sink.info_leak.source_code
+  kind: sink
+  tags: ['info_leak', 'source_code', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-540"]
+  description: Info Leak Source Code
+  match:
+  -     base_type: inspect
+        call: getsource
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: inspect
+        call: getsourcefile
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.user_enumeration
+  kind: sink
+  tags: ['info_leak', 'user_enumeration', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-200"]
+  description: Info Leak User Enumeration
+  match:
+  -     base_type: User.objects
+        call: get
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: User.objects
+        call: filter
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.timing_attack
+  kind: sink
+  tags: ['info_leak', 'timing_attack', 'vulnerability']
+  severity: high
+  cwe: ["CWE-208"]
+  description: Info Leak Timing Attack
+  match:
+  -     base_type: time
+        call: time
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: time
+        call: sleep
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.stack_trace
+  kind: sink
+  tags: ['info_leak', 'stack_trace', 'vulnerability']
+  severity: high
+  cwe: ["CWE-209"]
+  owasp: "A09:2021-Security Logging and Monitoring Failures"
+  description: Info Leak Stack Trace
+  match:
+  -     base_type: traceback
+        call: format_exc
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: traceback
+        call: print_exc
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: sys
+        call: exc_info
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.debug_info
+  kind: sink
+  tags: ['info_leak', 'debug_info', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-200"]
+  description: Info Leak Debug Info
+  match:
+  -     base_type: pprint
+        call: pprint
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: pdb
+        call: set_trace
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.error_message
+  kind: sink
+  tags: ['info_leak', 'error_message', 'vulnerability']
+  severity: high
+  cwe: ["CWE-209"]
+  description: Info Leak Error Message
+  match:
+  -     call: Exception
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: ValueError
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: RuntimeError
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.sql_error
+  kind: sink
+  tags: ['info_leak', 'sql_error', 'vulnerability']
+  severity: high
+  cwe: ["CWE-209"]
+  description: Info Leak Sql Error
+  match:
+  -     base_type: sqlite3
+        call: Error
+  -     base_type: psycopg2
+        call: Error
+  -     base_type: pymysql.err
+        call: Error
+
+- id: sink.info_leak.path_disclosure
+  kind: sink
+  tags: ['info_leak', 'path_disclosure', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-200"]
+  description: Info Leak Path Disclosure
+  match:
+  -     call: __file__
+  -     base_type: os
+        call: getcwd
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: os.path
+        call: abspath
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.session_info
+  kind: sink
+  tags: ['info_leak', 'session_info', 'vulnerability']
+  severity: high
+  cwe: ["CWE-532"]
+  description: Info Leak Session Info
+  match:
+  -     base_type: session
+        call: session_key
+  -     base_type: request
+        call: session
+
+- id: sink.info_leak.config_exposure
+  kind: sink
+  tags: ['info_leak', 'config_exposure', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-200"]
+  description: Info Leak Config Exposure
+  match:
+  -     base_type: os
+        call: environ
+  -     base_type: settings
+        read: SECRET_KEY
+  -     base_type: settings
+        read: DATABASE_PASSWORD
+
+- id: sink.info_leak.source_code
+  kind: sink
+  tags: ['info_leak', 'source_code', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-540"]
+  description: Info Leak Source Code
+  match:
+  -     base_type: inspect
+        call: getsource
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: inspect
+        call: getsourcefile
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.user_enumeration
+  kind: sink
+  tags: ['info_leak', 'user_enumeration', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-200"]
+  description: Info Leak User Enumeration
+  match:
+  -     base_type: User.objects
+        call: get
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: User.objects
+        call: filter
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.timing_attack
+  kind: sink
+  tags: ['info_leak', 'timing_attack', 'vulnerability']
+  severity: high
+  cwe: ["CWE-208"]
+  description: Info Leak Timing Attack
+  match:
+  -     base_type: time
+        call: time
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: time
+        call: sleep
+        args: [0]
+        constraints:
+          arg_type: not_const

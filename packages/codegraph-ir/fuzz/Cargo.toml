@@ -1,0 +1,36 @@
+[package]
+name = "codegraph-ir-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.codegraph-ir]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "fuzz_yaml_parser"
+path = "fuzz_targets/fuzz_yaml_parser.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_config_builder"
+path = "fuzz_targets/fuzz_config_builder.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_taint_config"
+path = "fuzz_targets/fuzz_taint_config.rs"
+test = false
+doc = false

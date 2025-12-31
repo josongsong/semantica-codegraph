@@ -1,0 +1,412 @@
+# Cross-Language CWE Mappings
+# SOTA: Defines vulnerability patterns that apply across all languages
+# Each CWE maps to language-specific implementations
+
+version: "1.0.0"
+
+# =============================================================================
+# CWE-89: SQL Injection
+# =============================================================================
+cwe_89_sql_injection:
+  name: "SQL Injection"
+  severity: critical
+  owasp: "A03:2021-Injection"
+  description: "Untrusted input in SQL query construction"
+
+  pattern:
+    source_tags: [untrusted]
+    sink_tags: [sql, injection]
+    sanitizer_tags: [sql, parameterized]
+
+  languages:
+    python:
+      sinks:
+        - base_type: "sqlite3.Cursor"
+          methods: [execute, executemany, executescript]
+        - base_type: "psycopg2.extensions.cursor"
+          methods: [execute, executemany]
+        - base_type: "pymysql.cursors.Cursor"
+          methods: [execute, executemany]
+        - base_type: "sqlalchemy.engine.Engine"
+          methods: [execute]
+      sanitizers:
+        - pattern: "parameterized query (2 args)"
+        - pattern: "quote()"
+
+    java:
+      sinks:
+        - base_type: "java.sql.Statement"
+          methods: [execute, executeQuery, executeUpdate]
+        - base_type: "java.sql.PreparedStatement"
+          methods: [execute]  # Only if query built dynamically
+      sanitizers:
+        - pattern: "PreparedStatement with ?"
+
+    javascript:
+      sinks:
+        - base_type: "mysql.Connection"
+          methods: [query]
+        - base_type: "pg.Client"
+          methods: [query]
+        - base_type: "sequelize.Sequelize"
+          methods: [query]
+      sanitizers:
+        - pattern: "parameterized query"
+
+    go:
+      sinks:
+        - base_type: "database/sql.DB"
+          methods: [Query, QueryRow, Exec]
+      sanitizers:
+        - pattern: "prepared statement"
+
+    ruby:
+      sinks:
+        - call: "find_by_sql"
+        - call: "execute"
+        - call: "where (string arg)"
+      sanitizers:
+        - pattern: "where with hash"
+        - pattern: "sanitize_sql"
+
+    php:
+      sinks:
+        - call: "mysqli_query"
+        - call: "PDO::query"
+        - call: "mysql_query"
+      sanitizers:
+        - pattern: "prepared statement"
+        - pattern: "mysqli_real_escape_string"
+
+    csharp:
+      sinks:
+        - base_type: "System.Data.SqlClient.SqlCommand"
+          methods: [ExecuteReader, ExecuteNonQuery, ExecuteScalar]
+      sanitizers:
+        - pattern: "SqlParameter"
+
+    kotlin:
+      sinks:
+        - base_type: "java.sql.Statement"
+          methods: [execute, executeQuery]
+        - call: "createStatement().execute"
+      sanitizers:
+        - pattern: "PreparedStatement"
+
+# =============================================================================
+# CWE-78: OS Command Injection
+# =============================================================================
+cwe_78_command_injection:
+  name: "OS Command Injection"
+  severity: critical
+  owasp: "A03:2021-Injection"
+  description: "Untrusted input in OS command execution"
+
+  pattern:
+    source_tags: [untrusted]
+    sink_tags: [command, os]
+    sanitizer_tags: [command, escape]
+
+  languages:
+    python:
+      sinks:
+        - call: "os.system"
+        - call: "os.popen"
+        - call: "subprocess.call"
+          constraint: "shell=True or string arg"
+        - call: "subprocess.run"
+          constraint: "shell=True or string arg"
+        - call: "subprocess.Popen"
+          constraint: "shell=True or string arg"
+      sanitizers:
+        - pattern: "shlex.quote()"
+        - pattern: "list args without shell=True"
+
+    java:
+      sinks:
+        - call: "Runtime.getRuntime().exec"
+        - base_type: "ProcessBuilder"
+          methods: [start]
+      sanitizers:
+        - pattern: "array args"
+
+    javascript:
+      sinks:
+        - call: "child_process.exec"
+        - call: "child_process.execSync"
+        - call: "child_process.spawn"
+          constraint: "shell=true"
+      sanitizers:
+        - pattern: "spawn with array"
+
+    go:
+      sinks:
+        - call: "exec.Command"
+        - call: "os/exec.Command"
+      sanitizers:
+        - pattern: "CommandContext with args"
+
+    ruby:
+      sinks:
+        - call: "system"
+        - call: "exec"
+        - call: "`backticks`"
+        - call: "IO.popen"
+      sanitizers:
+        - pattern: "Shellwords.escape"
+
+    php:
+      sinks:
+        - call: "exec"
+        - call: "shell_exec"
+        - call: "system"
+        - call: "passthru"
+        - call: "proc_open"
+      sanitizers:
+        - pattern: "escapeshellarg"
+        - pattern: "escapeshellcmd"
+
+    csharp:
+      sinks:
+        - call: "Process.Start"
+        - base_type: "System.Diagnostics.Process"
+          methods: [Start]
+      sanitizers:
+        - pattern: "ProcessStartInfo with args array"
+
+    kotlin:
+      sinks:
+        - call: "Runtime.getRuntime().exec"
+        - call: "ProcessBuilder"
+      sanitizers:
+        - pattern: "array args"
+
+# =============================================================================
+# CWE-79: Cross-Site Scripting (XSS)
+# =============================================================================
+cwe_79_xss:
+  name: "Cross-Site Scripting"
+  severity: high
+  owasp: "A03:2021-Injection"
+  description: "Untrusted input in HTML/JavaScript output"
+
+  pattern:
+    source_tags: [untrusted, web]
+    sink_tags: [xss, html]
+    sanitizer_tags: [html, escape]
+
+  languages:
+    python:
+      sinks:
+        - call: "render_template_string"
+        - call: "Markup()"
+        - call: "mark_safe"
+        - call: "format_html"
+          constraint: "user input in format"
+      sanitizers:
+        - call: "escape"
+        - call: "html.escape"
+        - pattern: "Jinja2 autoescape=True"
+
+    java:
+      sinks:
+        - call: "response.getWriter().write"
+        - call: "PrintWriter.println"
+        - call: "out.print"
+      sanitizers:
+        - call: "ESAPI.encoder().encodeForHTML"
+        - call: "StringEscapeUtils.escapeHtml"
+
+    javascript:
+      sinks:
+        - call: "innerHTML"
+        - call: "document.write"
+        - call: "outerHTML"
+        - call: "insertAdjacentHTML"
+      sanitizers:
+        - call: "textContent"
+        - call: "DOMPurify.sanitize"
+
+    ruby:
+      sinks:
+        - call: "raw"
+        - call: "html_safe"
+        - call: "safe_concat"
+      sanitizers:
+        - call: "h()"
+        - call: "html_escape"
+        - call: "sanitize"
+
+    php:
+      sinks:
+        - call: "echo"
+          constraint: "without escaping"
+        - call: "print"
+      sanitizers:
+        - call: "htmlspecialchars"
+        - call: "htmlentities"
+
+    csharp:
+      sinks:
+        - call: "Response.Write"
+        - call: "Html.Raw"
+      sanitizers:
+        - call: "HtmlEncode"
+        - call: "HttpUtility.HtmlEncode"
+
+    kotlin:
+      sinks:
+        - call: "response.writer.write"
+      sanitizers:
+        - call: "escapeHtml"
+
+# =============================================================================
+# CWE-22: Path Traversal
+# =============================================================================
+cwe_22_path_traversal:
+  name: "Path Traversal"
+  severity: high
+  owasp: "A01:2021-Broken Access Control"
+  description: "Untrusted input in file path construction"
+
+  languages:
+    python:
+      sinks:
+        - call: "open"
+        - call: "Path.read_text"
+        - call: "os.path.join"
+          constraint: "user input"
+        - call: "send_file"
+      sanitizers:
+        - call: "os.path.realpath"
+        - call: "Path.resolve"
+        - pattern: "check against allowed paths"
+
+    java:
+      sinks:
+        - call: "new File"
+        - call: "Paths.get"
+        - call: "FileInputStream"
+      sanitizers:
+        - call: "getCanonicalPath"
+
+    javascript:
+      sinks:
+        - call: "fs.readFile"
+        - call: "fs.writeFile"
+        - call: "path.join"
+      sanitizers:
+        - call: "path.resolve"
+        - pattern: "check for .."
+
+# =============================================================================
+# CWE-502: Deserialization
+# =============================================================================
+cwe_502_deserialization:
+  name: "Insecure Deserialization"
+  severity: critical
+  owasp: "A08:2021-Software and Data Integrity Failures"
+  description: "Untrusted input to deserialization functions"
+
+  languages:
+    python:
+      sinks:
+        - call: "pickle.load"
+        - call: "pickle.loads"
+        - call: "yaml.load"
+          constraint: "without Loader=SafeLoader"
+        - call: "marshal.load"
+        - call: "dill.load"
+        - call: "shelve.open"
+      sanitizers:
+        - call: "yaml.safe_load"
+
+    java:
+      sinks:
+        - call: "ObjectInputStream.readObject"
+        - call: "XMLDecoder.readObject"
+      sanitizers:
+        - pattern: "whitelist classes"
+
+    ruby:
+      sinks:
+        - call: "Marshal.load"
+        - call: "YAML.load"
+      sanitizers:
+        - call: "YAML.safe_load"
+
+    php:
+      sinks:
+        - call: "unserialize"
+      sanitizers:
+        - pattern: "allowed_classes option"
+
+# =============================================================================
+# CWE-918: SSRF
+# =============================================================================
+cwe_918_ssrf:
+  name: "Server-Side Request Forgery"
+  severity: critical
+  owasp: "A10:2021-Server-Side Request Forgery"
+  description: "Untrusted input in URL for server-side requests"
+
+  languages:
+    python:
+      sinks:
+        - call: "requests.get"
+        - call: "requests.post"
+        - call: "urllib.request.urlopen"
+        - call: "httpx.get"
+        - call: "aiohttp.ClientSession.get"
+      sanitizers:
+        - pattern: "URL allowlist"
+        - pattern: "urlparse + host validation"
+
+    java:
+      sinks:
+        - call: "URL.openConnection"
+        - call: "HttpClient.send"
+      sanitizers:
+        - pattern: "host allowlist"
+
+    javascript:
+      sinks:
+        - call: "fetch"
+        - call: "axios.get"
+        - call: "http.request"
+      sanitizers:
+        - pattern: "URL validation"
+
+# =============================================================================
+# CWE-1336: SSTI (Server-Side Template Injection)
+# =============================================================================
+cwe_1336_ssti:
+  name: "Server-Side Template Injection"
+  severity: critical
+  owasp: "A03:2021-Injection"
+  description: "Untrusted input in template rendering"
+
+  languages:
+    python:
+      sinks:
+        - call: "jinja2.Template"
+        - call: "render_template_string"
+        - call: "mako.template.Template"
+        - call: "Environment.from_string"
+      sanitizers:
+        - pattern: "autoescape=True"
+        - pattern: "sandboxed environment"
+
+    java:
+      sinks:
+        - call: "Velocity.evaluate"
+        - call: "FreemarkerTemplate.process"
+      sanitizers:
+        - pattern: "sandbox mode"
+
+    ruby:
+      sinks:
+        - call: "ERB.new"
+        - call: "Haml::Engine.new"
+      sanitizers:
+        - pattern: "escape helpers"

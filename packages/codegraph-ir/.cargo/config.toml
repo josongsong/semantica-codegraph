@@ -1,0 +1,20 @@
+# Cargo configuration for faster builds and tests
+
+[build]
+# Parallel compilation
+jobs = 8  # Use 8 cores for compilation
+
+# Incremental compilation (faster rebuilds)
+incremental = true
+
+# Use faster linker (macOS)
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-fuse-ld=/usr/bin/ld"]
+
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-fuse-ld=/usr/bin/ld"]
+
+# Test configuration
+[test]
+# Run tests in parallel by default
+# nextest will override this

@@ -1,0 +1,943 @@
+atoms:
+- id: input.superglobal.php
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  severity: high
+  description: PHP superglobal input
+  match:
+  - call: $_GET
+  - call: $_POST
+  - call: $_REQUEST
+  - call: $_COOKIE
+  - call: $_FILES
+  - call: $_SERVER
+  - call: $_ENV
+  - call: $HTTP_GET_VARS
+  - call: $HTTP_POST_VARS
+  - call: $HTTP_COOKIE_VARS
+  - base_type: $_GET
+    call: '[]'
+  - base_type: $_POST
+    call: '[]'
+  - base_type: $_REQUEST
+    call: '[]'
+- id: input.function.php
+  kind: source
+  tags:
+  - untrusted
+  - input
+  severity: high
+  description: PHP input functions
+  match:
+  - call: file_get_contents
+    args:
+    - 0
+    constraints:
+      arg_value:
+      - php://input
+  - call: fgets
+  - call: fread
+  - call: fgetc
+  - call: fgetss
+  - call: fscanf
+  - call: getenv
+- id: input.http.laravel
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - laravel
+  severity: high
+  description: Laravel HTTP request input
+  match:
+  - base_type: Illuminate\\Http\\Request
+    call: input
+  - base_type: Illuminate\\Http\\Request
+    call: get
+  - base_type: Illuminate\\Http\\Request
+    call: query
+  - base_type: Illuminate\\Http\\Request
+    call: post
+  - base_type: Illuminate\\Http\\Request
+    call: all
+  - base_type: Illuminate\\Http\\Request
+    call: only
+  - base_type: Illuminate\\Http\\Request
+    call: except
+  - base_type: Illuminate\\Http\\Request
+    call: header
+  - base_type: Illuminate\\Http\\Request
+    call: cookie
+  - base_type: Illuminate\\Http\\Request
+    call: file
+  - call: request
+  - call: Request::input
+  - call: Request::get
+  - call: Request::query
+  - call: Request::all
+- id: input.http.symfony
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - symfony
+  severity: high
+  description: Symfony HTTP request input
+  match:
+  - base_type: Symfony\\Component\\HttpFoundation\\Request
+    call: get
+  - base_type: Symfony\\Component\\HttpFoundation\\Request
+    call: query
+  - base_type: Symfony\\Component\\HttpFoundation\\Request
+    call: request
+  - base_type: Symfony\\Component\\HttpFoundation\\Request
+    call: getContent
+  - base_type: Symfony\\Component\\HttpFoundation\\ParameterBag
+    call: get
+  - base_type: Symfony\\Component\\HttpFoundation\\ParameterBag
+    call: all
+- id: input.file.upload
+  kind: source
+  tags:
+  - untrusted
+  - file
+  - upload
+  severity: high
+  description: File upload input
+  match:
+  - call: $_FILES
+  - call: move_uploaded_file
+  - base_type: Illuminate\\Http\\UploadedFile
+    call: getClientOriginalName
+  - base_type: Illuminate\\Http\\UploadedFile
+    call: getClientOriginalExtension
+- id: input.db.result
+  kind: source
+  tags:
+  - db
+  - stored
+  severity: medium
+  description: Database query results
+  match:
+  - call: mysqli_fetch_assoc
+  - call: mysqli_fetch_array
+  - call: mysqli_fetch_row
+  - base_type: PDOStatement
+    call: fetch
+  - base_type: PDOStatement
+    call: fetchAll
+  - base_type: PDOStatement
+    call: fetchColumn
+- id: sink.sql.mysqli
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - mysqli
+  severity: critical
+  description: MySQLi SQL injection
+  match:
+  - call: mysqli_query
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  - call: mysqli_multi_query
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  - base_type: mysqli
+    call: query
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: mysqli
+    call: multi_query
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: &id001
+  - CWE-89
+  owasp: A03:2021-Injection
+- id: sink.sql.pdo
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - pdo
+  severity: critical
+  description: PDO SQL injection
+  match:
+  - base_type: PDO
+    call: query
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: PDO
+    call: exec
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: PDO
+    call: prepare
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+- id: sink.sql.mysql_legacy
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - deprecated
+  severity: critical
+  description: Legacy mysql_* functions (deprecated)
+  match:
+  - call: mysql_query
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: mysql_db_query
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+- id: sink.sql.laravel
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - laravel
+  severity: critical
+  description: Laravel raw SQL
+  match:
+  - call: DB::raw
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: DB::statement
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: DB::select
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: whereRaw
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: selectRaw
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: havingRaw
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: orderByRaw
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+- id: sink.sql.doctrine
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - doctrine
+  severity: critical
+  description: Doctrine DBAL SQL injection
+  match:
+  - base_type: Doctrine\\DBAL\\Connection
+    call: executeQuery
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Doctrine\\ORM\\EntityManager
+    call: createQuery
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+- id: sink.command.php
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: critical
+  description: PHP command execution
+  match:
+  - call: exec
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: shell_exec
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: system
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: passthru
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: popen
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: proc_open
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: pcntl_exec
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: '`'
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-78
+  owasp: A03:2021-Injection
+- id: sink.xss.echo
+  kind: sink
+  tags:
+  - xss
+  - web
+  - html
+  severity: high
+  description: PHP output functions
+  match:
+  - call: echo
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: print
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: printf
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: vprintf
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: &id002
+  - CWE-79
+  owasp: A03:2021-Injection
+- id: sink.xss.laravel
+  kind: sink
+  tags:
+  - xss
+  - web
+  - html
+  - laravel
+  severity: high
+  description: Laravel Blade unescaped output
+  match:
+  - call: '{!!'
+    constraints:
+      arg_type: not_const
+  cwe: *id002
+  owasp: A03:2021-Injection
+- id: sink.code.eval
+  kind: sink
+  tags:
+  - injection
+  - code
+  - dangerous
+  severity: critical
+  description: PHP code evaluation
+  match:
+  - call: eval
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: assert
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: create_function
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  - call: preg_replace
+    args:
+    - 0
+    constraints:
+      arg_value:
+      - /e
+  cwe: &id003
+  - CWE-94
+  owasp: A03:2021-Injection
+- id: sink.code.include
+  kind: sink
+  tags:
+  - injection
+  - file
+  - lfi
+  - rfi
+  severity: critical
+  description: PHP file inclusion
+  match:
+  - call: include
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: include_once
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: require
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: require_once
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id003
+  owasp: A03:2021-Injection
+- id: sink.path.php
+  kind: sink
+  tags:
+  - traversal
+  - file
+  - path
+  severity: high
+  description: PHP file operations
+  match:
+  - call: file_get_contents
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: file_put_contents
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: fopen
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: readfile
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: file
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: copy
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: rename
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: unlink
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: mkdir
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: rmdir
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: glob
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-22
+  owasp: A01:2021-Broken Access Control
+- id: sink.ssrf.php
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  description: PHP SSRF via HTTP requests
+  match:
+  - call: file_get_contents
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: curl_init
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: curl_setopt
+    args:
+    - 2
+    constraints:
+      arg_type: not_const
+  - call: curl_exec
+  - base_type: GuzzleHttp\\Client
+    call: get
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: GuzzleHttp\\Client
+    call: post
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: GuzzleHttp\\Client
+    call: request
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  - call: Http::get
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Http::post
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-918
+  owasp: A10:2021-Server-Side Request Forgery
+- id: sink.deserialize.php
+  kind: sink
+  tags:
+  - deserialize
+  - rce
+  - dangerous
+  severity: critical
+  description: PHP insecure deserialization
+  match:
+  - call: unserialize
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: json_decode
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-502
+  owasp: A08:2021-Software and Data Integrity Failures
+- id: sink.xxe.php
+  kind: sink
+  tags:
+  - xxe
+  - xml
+  severity: critical
+  description: PHP XXE via XML parsing
+  match:
+  - call: simplexml_load_string
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: simplexml_load_file
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: DOMDocument
+    call: loadXML
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: DOMDocument
+    call: load
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: XMLReader
+    call: open
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: XMLReader
+    call: xml
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-611
+  owasp: A05:2021-Security Misconfiguration
+- id: sink.ldap.php
+  kind: sink
+  tags:
+  - injection
+  - ldap
+  severity: critical
+  description: PHP LDAP injection
+  match:
+  - call: ldap_search
+    args:
+    - 2
+    constraints:
+      arg_type: not_const
+  - call: ldap_list
+    args:
+    - 2
+    constraints:
+      arg_type: not_const
+  - call: ldap_read
+    args:
+    - 2
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-90
+  owasp: A03:2021-Injection
+- id: sink.redirect.php
+  kind: sink
+  tags:
+  - redirect
+  - web
+  severity: high
+  description: PHP open redirect
+  match:
+  - call: header
+    args:
+    - 0
+    constraints:
+      arg_value:
+      - 'Location:'
+      arg_type: not_const
+  - call: redirect
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Redirect::to
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-601
+  owasp: A01:2021-Broken Access Control
+- id: sink.info_leak.php
+  kind: sink
+  tags:
+  - info_leak
+  - error
+  severity: medium
+  description: PHP information disclosure
+  match:
+  - call: var_dump
+  - call: print_r
+  - call: phpinfo
+  - call: debug_print_backtrace
+  - call: debug_backtrace
+  cwe:
+  - CWE-532
+  owasp: A09:2021-Security Logging and Monitoring Failures
+- id: barrier.sql.prepared
+  kind: sanitizer
+  tags:
+  - safety
+  - db
+  - sql
+  description: Prepared statements
+  scope: return
+  match:
+  - call: mysqli_prepare
+    scope: return
+  - call: mysqli_real_escape_string
+    scope: return
+  - base_type: mysqli
+    call: prepare
+    scope: return
+  - base_type: mysqli
+    call: real_escape_string
+    scope: return
+  - base_type: PDO
+    call: prepare
+    scope: return
+  - base_type: PDO
+    call: quote
+    scope: return
+  - base_type: PDOStatement
+    call: bindParam
+    scope: return
+  - base_type: PDOStatement
+    call: bindValue
+    scope: return
+- id: barrier.xss.escape
+  kind: sanitizer
+  tags:
+  - safety
+  - web
+  - html
+  description: HTML escaping
+  scope: return
+  match:
+  - call: htmlspecialchars
+    scope: return
+  - call: htmlentities
+    scope: return
+  - call: strip_tags
+    scope: return
+  - call: e
+    scope: return
+  - call: '{{ }}'
+    scope: return
+- id: barrier.command.escape
+  kind: sanitizer
+  tags:
+  - safety
+  - os
+  - command
+  description: Command argument escaping
+  scope: return
+  match:
+  - call: escapeshellarg
+    scope: return
+  - call: escapeshellcmd
+    scope: return
+- id: barrier.path.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - path
+  - file
+  description: Path validation
+  scope: return
+  match:
+  - call: realpath
+    scope: return
+  - call: basename
+    scope: return
+- id: barrier.url.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - url
+  - validation
+  description: URL validation
+  scope: return
+  match:
+  - call: filter_var
+    args:
+    - 1
+    constraints:
+      arg_value:
+      - FILTER_VALIDATE_URL
+    scope: return
+  - call: parse_url
+    scope: return
+- id: barrier.xxe.disable
+  kind: sanitizer
+  tags:
+  - safety
+  - xxe
+  - xml
+  description: XXE prevention
+  scope: return
+  match:
+  - call: libxml_disable_entity_loader
+    args:
+    - 0
+    constraints:
+      arg_value:
+      - 'true'
+    scope: return
+- id: prop.string.php
+  kind: propagator
+  tags:
+  - flow
+  - string
+  description: String operations propagate taint
+  match:
+  - call: sprintf
+    from_args:
+    - 1
+    to: return
+  - call: vsprintf
+    from_args:
+    - 1
+    to: return
+  - call: implode
+    from_args:
+    - 1
+    to: return
+  - call: join
+    from_args:
+    - 1
+    to: return
+  - call: str_replace
+    from_args:
+    - 2
+    to: return
+  - call: preg_replace
+    from_args:
+    - 2
+    to: return
+  - call: substr
+    from_args:
+    - 0
+    to: return
+  - call: trim
+    from_args:
+    - 0
+    to: return
+  - call: strtolower
+    from_args:
+    - 0
+    to: return
+  - call: strtoupper
+    from_args:
+    - 0
+    to: return
+  - call: ucfirst
+    from_args:
+    - 0
+    to: return
+  - call: ucwords
+    from_args:
+    - 0
+    to: return
+- id: prop.array.php
+  kind: propagator
+  tags:
+  - flow
+  - collection
+  description: Array operations propagate taint
+  match:
+  - call: array_push
+    from_args:
+    - 1
+    to: return
+  - call: array_merge
+    from_args:
+    - 0
+    to: return
+  - call: array_map
+    from_args:
+    - 1
+    to: return
+  - call: array_filter
+    from_args:
+    - 0
+    to: return
+  - call: array_values
+    from_args:
+    - 0
+    to: return
+  - call: array_keys
+    from_args:
+    - 0
+    to: return
+- id: prop.json.php
+  kind: propagator
+  tags:
+  - flow
+  - json
+  description: JSON operations propagate taint
+  match:
+  - call: json_encode
+    from_args:
+    - 0
+    to: return
+  - call: json_decode
+    from_args:
+    - 0
+    to: return
+- id: prop.base64.php
+  kind: propagator
+  tags:
+  - flow
+  - encoding
+  description: Base64 operations propagate taint
+  match:
+  - call: base64_encode
+    from_args:
+    - 0
+    to: return
+  - call: base64_decode
+    from_args:
+    - 0
+    to: return

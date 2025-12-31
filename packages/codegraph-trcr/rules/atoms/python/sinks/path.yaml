@@ -1,0 +1,35 @@
+# Python Path Traversal Sinks
+# CWE-22: Path Traversal
+# OWASP: A01:2021-Broken Access Control
+
+atoms:
+# =============================================================================
+# File Operations
+# =============================================================================
+- id: sink.path.traversal
+  kind: sink
+  tags: [traversal, file, path]
+  severity: high
+  cwe: ["CWE-22"]
+  description: File path operations
+  match:
+  - call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: pathlib.Path
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: os.path.join
+    constraints:
+      arg_type: not_const
+  # Flask send_file
+  - call: send_file
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: flask.send_file
+    args: [0]
+    constraints:
+      arg_type: not_const

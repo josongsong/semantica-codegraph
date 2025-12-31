@@ -1,0 +1,38 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_295.MissingHostKeyValidation
+  kind: sink
+  tags: ['cwe_295', 'MissingHostKeyValidation', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-295"]
+  description: Accepting unknown host keys can allow man-in-the-middle attacks.
+  match:
+  -     call: MissingHostKeyValidation
+
+- id: sink.cwe_295.RequestWithoutValidation
+  kind: sink
+  tags: ['cwe_295', 'RequestWithoutValidation', 'vulnerability']
+  severity: high
+  cwe: ["CWE-295"]
+  description: Making a request without certificate validation can allow man-in-the-middle attacks.
+  match:
+  -     call: RequestWithoutValidation
+
+- id: sink.cwe_295.MissingHostKeyValidation
+  kind: sink
+  tags: ['cwe_295', 'MissingHostKeyValidation', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-295"]
+  description: Accepting unknown host keys can allow man-in-the-middle attacks.
+  match:
+  -     call: MissingHostKeyValidation
+
+- id: sink.cwe_295.RequestWithoutValidation
+  kind: sink
+  tags: ['cwe_295', 'RequestWithoutValidation', 'vulnerability']
+  severity: high
+  cwe: ["CWE-295"]
+  description: Making a request without certificate validation can allow man-in-the-middle attacks.
+  match:
+  -     call: RequestWithoutValidation

@@ -1,0 +1,74 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_327.InsecureDefaultProtocol
+  kind: sink
+  tags: ['cwe_327', 'InsecureDefaultProtocol', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  description: Leaving the SSL/TLS version unspecified may result in an insecure
+  match:
+  -     call: InsecureDefaultProtocol
+
+- id: sink.cwe_327.BrokenCryptoAlgorithm
+  kind: sink
+  tags: ['cwe_327', 'BrokenCryptoAlgorithm', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  description: Using broken or weak cryptographic algorithms can compromise security.
+  match:
+  -     call: BrokenCryptoAlgorithm
+
+- id: sink.cwe_327.InsecureProtocol
+  kind: sink
+  tags: ['cwe_327', 'InsecureProtocol', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  description: Using an insecure SSL/TLS version may leave the connection vulnerable to attacks.
+  match:
+  -     call: InsecureProtocol
+
+- id: sink.cwe_327.WeakSensitiveDataHashing
+  kind: sink
+  tags: ['cwe_327', 'WeakSensitiveDataHashing', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  description: Using broken or weak cryptographic hashing algorithms can compromise security.
+  match:
+  -     call: WeakSensitiveDataHashing
+
+- id: sink.cwe_327.InsecureDefaultProtocol
+  kind: sink
+  tags: ['cwe_327', 'InsecureDefaultProtocol', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  description: Leaving the SSL/TLS version unspecified may result in an insecure
+  match:
+  -     call: InsecureDefaultProtocol
+
+- id: sink.cwe_327.BrokenCryptoAlgorithm
+  kind: sink
+  tags: ['cwe_327', 'BrokenCryptoAlgorithm', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  description: Using broken or weak cryptographic algorithms can compromise security.
+  match:
+  -     call: BrokenCryptoAlgorithm
+
+- id: sink.cwe_327.InsecureProtocol
+  kind: sink
+  tags: ['cwe_327', 'InsecureProtocol', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  description: Using an insecure SSL/TLS version may leave the connection vulnerable to attacks.
+  match:
+  -     call: InsecureProtocol
+
+- id: sink.cwe_327.WeakSensitiveDataHashing
+  kind: sink
+  tags: ['cwe_327', 'WeakSensitiveDataHashing', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  description: Using broken or weak cryptographic hashing algorithms can compromise security.
+  match:
+  -     call: WeakSensitiveDataHashing

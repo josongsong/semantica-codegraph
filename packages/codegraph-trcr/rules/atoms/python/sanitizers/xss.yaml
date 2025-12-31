@@ -1,0 +1,24 @@
+# Python XSS Sanitizers
+# CWE-79: XSS Prevention
+
+atoms:
+# =============================================================================
+# HTML Escaping
+# =============================================================================
+- id: barrier.html.escape
+  kind: sanitizer
+  tags: [safety, web, html]
+  description: HTML escaping functions
+  scope: return
+  match:
+  - call: html.escape
+    scope: return
+  - call: cgi.escape
+    scope: return
+  - base_type: markupsafe.Markup
+    call: escape
+    scope: return
+  - call: escape
+    scope: return
+  - call: markupsafe.escape
+    scope: return

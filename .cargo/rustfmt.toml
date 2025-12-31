@@ -1,0 +1,88 @@
+# Rustfmt Configuration for Semantica Codegraph
+# Stable-only features (compatible with stable Rust toolchain)
+
+# ═══════════════════════════════════════════════════════════════
+# Basic Configuration
+# ═══════════════════════════════════════════════════════════════
+
+edition = "2021"
+max_width = 100
+hard_tabs = false
+tab_spaces = 4
+newline_style = "Unix"
+
+# ═══════════════════════════════════════════════════════════════
+# Function and Call Formatting
+# ═══════════════════════════════════════════════════════════════
+
+fn_call_width = 80
+
+# Use small heuristics for better readability
+use_small_heuristics = "Default"
+
+# ═══════════════════════════════════════════════════════════════
+# Import Formatting (Stable)
+# ═══════════════════════════════════════════════════════════════
+
+reorder_imports = true
+reorder_modules = true
+
+# ═══════════════════════════════════════════════════════════════
+# Code Style
+# ═══════════════════════════════════════════════════════════════
+
+# Use field init shorthand (e.g., `MyStruct { x }` instead of `MyStruct { x: x }`)
+use_field_init_shorthand = true
+
+# Use try shorthand (e.g., `?` instead of `try!`)
+use_try_shorthand = true
+
+# Force explicit types for integer literals
+force_explicit_abi = true
+
+# ═══════════════════════════════════════════════════════════════
+# Match Formatting
+# ═══════════════════════════════════════════════════════════════
+
+# Match block trailing comma
+match_block_trailing_comma = false
+
+# ═══════════════════════════════════════════════════════════════
+# Chain Formatting
+# ═══════════════════════════════════════════════════════════════
+
+# Chain formatting width
+chain_width = 60
+
+# ═══════════════════════════════════════════════════════════════
+# Advanced Options (Stable)
+# ═══════════════════════════════════════════════════════════════
+
+# Merge derives
+merge_derives = true
+
+# ═══════════════════════════════════════════════════════════════
+# Nightly-Only Features (Commented Out)
+# ═══════════════════════════════════════════════════════════════
+# Uncomment these if using rustfmt nightly (rustup default nightly)
+#
+# unstable_features = true
+# imports_granularity = "Crate"
+# group_imports = "StdExternalCrate"
+# normalize_comments = true
+# normalize_doc_attributes = true
+# wrap_comments = true
+# comment_width = 80
+# format_code_in_doc_comments = true
+# format_strings = true
+# format_macro_matchers = true
+# format_macro_bodies = true
+# control_brace_style = "AlwaysSameLine"
+# blank_lines_upper_bound = 1
+# blank_lines_lower_bound = 0
+# combine_control_expr = true
+# overflow_delimited_expr = false
+# struct_lit_single_line = true
+# fn_single_line = false
+# where_single_line = false
+# enum_discrim_align_threshold = 0

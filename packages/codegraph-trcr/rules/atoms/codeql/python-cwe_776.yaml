@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_776.XmlBomb
+  kind: sink
+  tags: ['cwe_776', 'XmlBomb', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-776"]
+  description: Parsing user input as an XML document with arbitrary internal
+  match:
+  -     call: XmlBomb
+
+- id: sink.cwe_776.XmlBomb
+  kind: sink
+  tags: ['cwe_776', 'XmlBomb', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-776"]
+  description: Parsing user input as an XML document with arbitrary internal
+  match:
+  -     call: XmlBomb

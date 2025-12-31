@@ -1,0 +1,54 @@
+# Python SSRF (Server-Side Request Forgery) Sinks
+# CWE-918: SSRF
+# OWASP: A10:2021-Server-Side Request Forgery
+
+atoms:
+# =============================================================================
+# Requests Library
+# =============================================================================
+- id: sink.ssrf.requests
+  kind: sink
+  tags: [ssrf, http, network]
+  severity: critical
+  cwe: ["CWE-918"]
+  description: SSRF via requests library
+  match:
+  - call: requests.get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: requests.post
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: requests.put
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: requests.delete
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: requests.request
+    args: [1]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# urllib
+# =============================================================================
+- id: sink.ssrf.urllib
+  kind: sink
+  tags: [ssrf, http, network]
+  severity: critical
+  cwe: ["CWE-918"]
+  description: SSRF via urllib
+  match:
+  - call: urllib.request.urlopen
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: urllib.request.urlretrieve
+    args: [0]
+    constraints:
+      arg_type: not_const

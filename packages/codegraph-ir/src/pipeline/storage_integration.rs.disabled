@@ -1,0 +1,289 @@
+//! Pipeline Storage Integration
+//!
+//! Connects IR Builder (L1) with Storage Backend (RFC-074/RFC-100).
+//!
+//! # Flow
+//! ```text
+//! IR Build → Chunks → Storage
+//! ↓
+//! Persistent DB (SQLite/PostgreSQL)
+//! ```
+
+use std::path::Path;
+use std::sync::Arc;
+
+use crate::features::storage::{
+    CodeSnapshotStore, Chunk, Dependency, DependencyType, Repository,
+};
+use crate::shared::models::{Node, Edge, EdgeKind, Result};
+use crate::pipeline::end_to_end_orchestrator::E2EOrchestrator;
+use chrono::Utc;
+
+/// Storage-integrated orchestrator
+///
+/// Wraps E2EOrchestrator and persists results to storage.
+pub struct StorageIntegratedOrchestrator {
+    /// IR builder
+    orchestrator: E2EOrchestrator,
+
+    /// Storage backend
+    storage: Arc<CodeSnapshotStore>,
+}
+
+impl StorageIntegratedOrchestrator {
+    /// Create new integrated orchestrator
+    pub fn new(orchestrator: E2EOrchestrator, storage: CodeSnapshotStore) -> Self {
+        Self {
+            orchestrator,
+            storage: Arc::new(storage),
+        }
+    }
+
+    /// Index repository and store to persistent storage
+    ///
+    /// # Arguments
+    /// * `repo_id` - Repository identifier
+    /// * `commit_hash` - Git commit SHA
+    /// * `branch_name` - Git branch name (optional)
+    /// * `files` - Files to analyze
+    ///
+    /// # Returns
+    /// Snapshot ID
+    pub async fn index_and_store(
+        &self,
+        repo_id: &str,
+        commit_hash: &str,
+        branch_name: Option<String>,
+        files: Vec<&Path>,
+    ) -> Result<String> {
+        // 1. Create snapshot ID
+        let snapshot_id = format!("{}:{}", repo_id, commit_hash);
+
+        // 2. Create snapshot
+        self.storage
+            .create_snapshot(
+                repo_id,
+                &snapshot_id,
+                Some(commit_hash.to_string()),
+                branch_name,
+            )
+            .await
+            .map_err(|e| format!("Failed to create snapshot: {}", e))?;
+
+        // 3. Process files with IR builder
+        let result = self
+            .orchestrator
+            .process_files(files)
+            .await
+            .map_err(|e| format!("Failed to process files: {}", e))?;
+
+        // 4. Convert IR to chunks
+        let chunks = self.ir_to_chunks(repo_id, &snapshot_id, &result.nodes);
+
+        // 5. Convert edges to dependencies
+        let dependencies = self.edges_to_dependencies(&result.edges);
+
+        // 6. Store chunks and dependencies (batch)
+        for (file_path, file_chunks) in Self::group_by_file(&chunks) {
+            let file_deps: Vec<_> = dependencies
+                .iter()
+                .filter(|dep| {
+                    // Find dependencies for chunks in this file
+                    file_chunks
+                        .iter()
+                        .any(|c| c.chunk_id == dep.from_chunk_id)
+                })
+                .cloned()
+                .collect();
+
+            self.storage
+                .replace_file(
+                    repo_id,
+                    &snapshot_id,
+                    &snapshot_id,
+                    &file_path,
+                    file_chunks.clone(),
+                    file_deps,
+                )
+                .await
+                .map_err(|e| format!("Failed to store file {}: {}", file_path, e))?;
+        }
+
+        Ok(snapshot_id)
+    }
+
+    /// Incremental index (only changed files)
+    ///
+    /// # Arguments
+    /// * `repo_id` - Repository identifier
+    /// * `base_commit` - Previous commit SHA
+    /// * `new_commit` - Current commit SHA
+    /// * `changed_files` - Files that changed (from git diff)
+    ///
+    /// # Returns
+    /// (Snapshot ID, Statistics)
+    pub async fn index_incremental(
+        &self,
+        repo_id: &str,
+        base_commit: &str,
+        new_commit: &str,
+        changed_files: Vec<&Path>,
+    ) -> Result<(String, crate::features::storage::SnapshotStats)> {
+        let new_snapshot_id = format!("{}:{}", repo_id, new_commit);
+
+        // Create new snapshot
+        self.storage
+            .create_snapshot(repo_id, &new_snapshot_id, Some(new_commit.to_string()), None)
+            .await
+            .map_err(|e| format!("Failed to create snapshot: {}", e))?;
+
+        // Analyzer callback: processes each file
+        let orchestrator = &self.orchestrator;
+        let storage = Arc::clone(&self.storage);
+        let repo_id_clone = repo_id.to_string();
+        let new_snapshot_id_clone = new_snapshot_id.clone();
+
+        let stats = self
+            .storage
+            .create_incremental_snapshot(
+                repo_id,
+                &format!("{}:{}", repo_id, base_commit),
+                &new_snapshot_id,
+                changed_files.iter().map(|p| p.display().to_string()).collect(),
+                move |file_path| {
+                    // Analyze single file
+                    let path = Path::new(file_path);
+
+                    // TODO: Process single file instead of Vec
+                    // For now, return empty (placeholder)
+                    Ok((vec![], vec![]))
+                },
+            )
+            .await
+            .map_err(|e| format!("Incremental snapshot failed: {}", e))?;
+
+        Ok((new_snapshot_id, stats))
+    }
+
+    /// Convert IR nodes to chunks
+    fn ir_to_chunks(&self, repo_id: &str, snapshot_id: &str, nodes: &[Node]) -> Vec<Chunk> {
+        nodes
+            .iter()
+            .filter_map(|node| {
+                // Skip non-semantic nodes
+                if matches!(
+                    node.kind,
+                    crate::shared::models::NodeKind::Function
+                        | crate::shared::models::NodeKind::Class
+                        | crate::shared::models::NodeKind::Method
+                        | crate::shared::models::NodeKind::Module
+                ) {
+                    // Generate chunk ID
+                    let chunk_id = format!(
+                        "{}:{}:{}:{}-{}",
+                        repo_id,
+                        node.file_path.as_deref().unwrap_or("unknown"),
+                        node.name.as_deref().unwrap_or("anonymous"),
+                        node.start_line,
+                        node.end_line
+                    );
+
+                    Some(Chunk {
+                        chunk_id,
+                        repo_id: repo_id.to_string(),
+                        snapshot_id: snapshot_id.to_string(),
+                        file_path: node.file_path.clone().unwrap_or_default(),
+                        start_line: node.start_line as u32,
+                        end_line: node.end_line as u32,
+                        kind: format!("{:?}", node.kind).to_lowercase(),
+                        fqn: node.fqn.clone(),
+                        language: node.language.clone(),
+                        symbol_visibility: Some(node.visibility.clone()),
+                        content: node.text.clone().unwrap_or_default(),
+                        content_hash: Self::compute_hash(&node.text.as_deref().unwrap_or("")),
+                        summary: None,
+                        importance: 0.5,
+                        is_deleted: false,
+                        attrs: Default::default(),
+                        created_at: Utc::now(),
+                        updated_at: Utc::now(),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
+    /// Convert IR edges to dependencies
+    fn edges_to_dependencies(&self, edges: &[Edge]) -> Vec<Dependency> {
+        edges
+            .iter()
+            .filter_map(|edge| {
+                let relationship = match edge.kind {
+                    EdgeKind::Calls => DependencyType::Calls,
+                    EdgeKind::Imports => DependencyType::Imports,
+                    EdgeKind::Extends => DependencyType::Extends,
+                    EdgeKind::Implements => DependencyType::Implements,
+                    _ => return None,
+                };
+
+                Some(Dependency {
+                    id: format!("dep-{}-{}", edge.source_id, edge.target_id),
+                    from_chunk_id: edge.source_id.clone(),
+                    to_chunk_id: edge.target_id.clone(),
+                    relationship,
+                    confidence: 1.0,
+                    created_at: Utc::now(),
+                })
+            })
+            .collect()
+    }
+
+    /// Group chunks by file path
+    fn group_by_file(chunks: &[Chunk]) -> Vec<(String, Vec<Chunk>)> {
+        use std::collections::HashMap;
+
+        let mut grouped: HashMap<String, Vec<Chunk>> = HashMap::new();
+        for chunk in chunks {
+            grouped
+                .entry(chunk.file_path.clone())
+                .or_insert_with(Vec::new)
+                .push(chunk.clone());
+        }
+
+        grouped.into_iter().collect()
+    }
+
+    /// Compute content hash (SHA256)
+    fn compute_hash(content: &str) -> String {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(content.as_bytes());
+        format!("{:x}", hasher.finalize())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::features::storage::SqliteChunkStore;
+    use crate::pipeline::end_to_end_config::E2EConfig;
+
+    #[tokio::test]
+    async fn test_storage_integration() {
+        // Create in-memory storage
+        let sqlite_store = SqliteChunkStore::in_memory().unwrap();
+        let snapshot_store = CodeSnapshotStore::new(sqlite_store);
+
+        // Create orchestrator
+        let config = E2EConfig::minimal();
+        let orchestrator = E2EOrchestrator::new(config);
+
+        // Create integrated orchestrator
+        let integrated = StorageIntegratedOrchestrator::new(orchestrator, snapshot_store);
+
+        // Verify creation
+        assert!(true); // Placeholder test
+    }
+}

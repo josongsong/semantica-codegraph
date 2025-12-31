@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_611.Xxe
+  kind: sink
+  tags: ['cwe_611', 'Xxe', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-611"]
+  description: Parsing user input as an XML document with external
+  match:
+  -     call: Xxe
+
+- id: sink.cwe_611.Xxe
+  kind: sink
+  tags: ['cwe_611', 'Xxe', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-611"]
+  description: Parsing user input as an XML document with external
+  match:
+  -     call: Xxe

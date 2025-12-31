@@ -1,0 +1,84 @@
+[importlinter]
+root_package = packages
+include_external_packages = True
+
+# ============================================================================
+# Clean Architecture 경계 강제 (ADR-072: Rust=Engine, Python=Consumer)
+# ============================================================================
+
+[importlinter:contract:1]
+name = "Orchestration Layer: Python → Rust만 허용 (역방향 금지)"
+type = layers
+layers =
+    apps.orchestrator  # Application Layer
+    |
+    packages.codegraph-engine  # Python Engine Wrapper
+    |
+    packages.codegraph-ir  # Rust Core (PyO3 bindings only)
+
+[importlinter:contract:2]
+name = "Analysis는 Storage에 의존 가능, 역은 불가"
+type = independence
+modules =
+    packages.codegraph-storage
+source_modules =
+    packages.codegraph-analysis
+
+[importlinter:contract:3]
+name = "Search는 Analysis에 의존 금지 (공통 Shared 사용)"
+type = forbidden
+source_modules =
+    packages.codegraph-search
+forbidden_modules =
+    packages.codegraph-analysis
+
+[importlinter:contract:4]
+name = "Shared는 아무것도 의존하지 않음 (Leaf Node)"
+type = independence
+modules =
+    packages.codegraph-shared
+
+[importlinter:contract:5]
+name = "Apps는 Packages에만 의존 (Apps 간 의존 금지)"
+type = layers
+layers =
+    apps.api
+    apps.mcp
+    apps.cli
+    |
+    packages.codegraph-engine
+    packages.codegraph-search
+    packages.codegraph-analysis
+
+[importlinter:contract:6]
+name = "Rust Core로의 직접 의존 금지 (Engine Wrapper 경유 필수)"
+type = forbidden
+source_modules =
+    apps
+    packages.codegraph-search
+    packages.codegraph-analysis
+forbidden_modules =
+    packages.codegraph-ir
+
+# ============================================================================
+# SOLID 원칙 관련 규칙
+# ============================================================================
+
+[importlinter:contract:7]
+name = "Dependency Inversion: 구체 클래스 직접 의존 금지"
+type = forbidden
+source_modules =
+    apps.orchestrator
+forbidden_modules =
+    packages.codegraph-search.search_impl.tantivy_search  # 구체 클래스
+    packages.codegraph-storage.storage_impl.sqlite_store  # 구체 클래스
+# ✅ 대신 Abstract Protocol/ABC 사용
+
+[importlinter:contract:8]
+name = "Single Responsibility: Feature 모듈 간 독립성"
+type = independence
+modules =
+    packages.codegraph-ir.features.taint
+    packages.codegraph-ir.features.pta
+    packages.codegraph-ir.features.clone_detection
+    packages.codegraph-ir.features.graph

@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_094.CodeInjection
+  kind: sink
+  tags: ['cwe_094', 'CodeInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: Interpreting unsanitized user input as code allows a malicious user to perform arbitrary
+  match:
+  -     call: CodeInjection
+
+- id: sink.cwe_094.CodeInjection
+  kind: sink
+  tags: ['cwe_094', 'CodeInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: Interpreting unsanitized user input as code allows a malicious user to perform arbitrary
+  match:
+  -     call: CodeInjection

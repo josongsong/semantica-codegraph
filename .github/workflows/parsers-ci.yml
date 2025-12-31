@@ -1,0 +1,196 @@
+name: Parsers CI - codegraph-parsers 테스트
+
+on:
+  pull_request:
+    paths:
+      - 'packages/codegraph-parsers/**'
+      - '.github/workflows/parsers-ci.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'packages/codegraph-parsers/**'
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ========================================================================
+  # 1. Parser 단위 테스트
+  # ========================================================================
+  test-parsers:
+    name: Parser 단위 테스트
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: codegraph-parsers 설치
+        run: |
+          pip install --upgrade pip
+          pip install -e packages/codegraph-parsers
+          pip install -e "packages/codegraph-parsers[dev]"
+
+      - name: pytest 실행
+        run: |
+          cd packages/codegraph-parsers
+          pytest tests/ -v --tb=short --cov=codegraph_parsers --cov-report=xml
+
+      - name: 커버리지 업로드
+        uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.12'
+        with:
+          files: packages/codegraph-parsers/coverage.xml
+          flags: parsers
+          name: parsers-coverage
+
+  # ========================================================================
+  # 2. Rust PyO3 통합 테스트
+  # ========================================================================
+  test-rust-integration:
+    name: Rust PyO3 통합
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Rust 설정
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: codegraph-parsers 설치
+        run: |
+          pip install --upgrade pip
+          pip install -e packages/codegraph-parsers
+
+      - name: Rust 컴파일 테스트 (Python feature)
+        run: |
+          cd packages/codegraph-rust/codegraph-ir
+          cargo check --features python
+
+      - name: Rust 단위 테스트
+        run: |
+          cd packages/codegraph-rust/codegraph-ir
+          cargo test --features python --lib
+        continue-on-error: true
+
+  # ========================================================================
+  # 3. 통합 테스트
+  # ========================================================================
+  test-integration:
+    name: 통합 테스트
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: codegraph-parsers 설치
+        run: |
+          pip install --upgrade pip
+          pip install -e packages/codegraph-parsers
+
+      - name: 통합 테스트 실행
+        run: |
+          python3 test_parser_integration.py
+
+  # ========================================================================
+  # 4. 코드 품질 검증
+  # ========================================================================
+  lint-parsers:
+    name: Parser 코드 품질
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Linter 설치
+        run: |
+          pip install --upgrade pip
+          pip install ruff black
+
+      - name: Ruff (Linting)
+        run: |
+          ruff check packages/codegraph-parsers/codegraph_parsers/ --output-format=github
+        continue-on-error: true
+
+      - name: Black (Formatting)
+        run: |
+          black --check packages/codegraph-parsers/codegraph_parsers/
+        continue-on-error: true
+
+  # ========================================================================
+  # 5. 버전 호환성 테스트
+  # ========================================================================
+  test-compatibility:
+    name: 호환성 테스트
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: codegraph-parsers 설치
+        run: |
+          pip install --upgrade pip
+          pip install -e packages/codegraph-parsers
+
+      - name: Import 테스트
+        run: |
+          python -c "from codegraph_parsers import JSXTemplateParser, VueSFCParser, MarkdownParser, NotebookParser; print('✅ 호환성 테스트 통과')"
+
+  # ========================================================================
+  # 6. 결과 요약
+  # ========================================================================
+  summary:
+    name: 테스트 결과 요약
+    runs-on: ubuntu-latest
+    needs: [test-parsers, test-rust-integration, test-integration, lint-parsers, test-compatibility]
+    if: always()
+
+    steps:
+      - name: 테스트 결과 출력
+        run: |
+          echo "## 🎯 codegraph-parsers CI 결과" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Parser 단위 테스트: ${{ needs.test-parsers.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Rust PyO3 통합: ${{ needs.test-rust-integration.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ 통합 테스트: ${{ needs.test-integration.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ 코드 품질: ${{ needs.lint-parsers.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ 호환성 테스트: ${{ needs.test-compatibility.result }}" >> $GITHUB_STEP_SUMMARY

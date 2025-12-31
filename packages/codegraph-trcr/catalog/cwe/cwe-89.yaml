@@ -1,0 +1,236 @@
+# CWE-89: SQL Injection
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/89.html
+
+metadata:
+  cwe_id: CWE-89
+  name: "Improper Neutralization of Special Elements used in an SQL Command"
+  severity: critical
+  owasp: "A03:2021-Injection"
+  category: "Injection"
+
+  # Status
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-17"
+
+  # Classification
+  mitre_abstraction: base
+  likelihood_of_exploit: high
+
+  # References
+  references:
+    - https://cwe.mitre.org/data/definitions/89.html
+    - https://owasp.org/www-community/attacks/SQL_Injection
+    - https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html
+
+description: |
+  The software constructs all or part of an SQL command using externally-influenced
+  input from an upstream component, but it does not neutralize or incorrectly neutralizes
+  special elements that could modify the intended SQL command when it is sent to a
+  downstream component.
+
+# ============================================================================
+# Detection Pattern
+# ============================================================================
+
+sources:
+  - id: input.user
+    description: "Direct user input"
+    patterns:
+      - call: input
+      - call: builtins.input
+
+  - id: input.http.flask
+    description: "Flask HTTP request parameters"
+    patterns:
+      - flask.Request.args
+      - flask.Request.form
+      - flask.Request.values
+
+  - id: input.http.django
+    description: "Django HTTP request parameters"
+    patterns:
+      - django.http.HttpRequest.GET
+      - django.http.HttpRequest.POST
+
+  - id: input.http.fastapi
+    description: "FastAPI request parameters"
+    patterns:
+      - fastapi.Request.query_params
+      - starlette.datastructures.QueryParams
+
+sinks:
+  - id: sink.sql.sqlite3
+    description: "SQLite3 cursor.execute() and Connection.execute()"
+    patterns:
+      - base_type: sqlite3.Cursor
+        call: execute
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - base_type: sqlite3.Cursor
+        call: executemany
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - base_type: sqlite3.Connection
+        call: execute
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - base_type: sqlite3.Connection
+        call: executemany
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+  - id: sink.sql.psycopg2
+    description: "PostgreSQL cursor.execute()"
+    patterns:
+      - base_type: psycopg2.extensions.cursor
+        call: execute
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+  - id: sink.sql.sqlalchemy
+    description: "SQLAlchemy text() execution"
+    patterns:
+      - call: sqlalchemy.text
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - base_type: sqlalchemy.engine.Connection
+        call: execute
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+sanitizers:
+  - id: barrier.sql.parameterized
+    description: "Parameterized queries (BEST)"
+    patterns:
+      - cursor.execute("... ?", [params])
+      - cursor.execute("... %s", (params,))
+
+  - id: barrier.sql.orm
+    description: "ORM methods (Safe)"
+    patterns:
+      - Model.objects.filter()
+      - session.query().filter()
+
+  - id: barrier.sql.escape
+    description: "SQL escaping functions"
+    patterns:
+      - escape_sql()
+      - sql_escape()
+
+# ============================================================================
+# Taint Flow Policy
+# ============================================================================
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.sql.sqlite3
+      - id: sink.sql.psycopg2
+      - id: sink.sql.sqlalchemy
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: sql
+
+# ============================================================================
+# Validation Requirements
+# ============================================================================
+
+validation:
+  # Minimum test coverage
+  min_test_cases: 10
+  required_scenarios:
+    - string_concatenation
+    - f_string
+    - format_method
+    - parameterized_safe
+    - orm_safe
+    - escape_safe
+
+  # Acceptance criteria
+  min_precision: 0.90
+  min_recall: 0.85
+  max_false_positive_rate: 0.10
+
+# ============================================================================
+# Test Suite Mapping
+# ============================================================================
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE89_SQL_Injection"
+    cases:
+      - bad_01.py  # String concatenation
+      - bad_02.py  # f-string
+      - bad_03.py  # format()
+      - good_01.py # Parameterized
+      - good_02.py # ORM
+
+  owasp:
+    directory: "test-suite/owasp/sql"
+    cases:
+      - BenchmarkTest00001.py
+      - BenchmarkTest00002.py
+
+# ============================================================================
+# Examples
+# ============================================================================
+
+examples:
+  vulnerable:
+    - |
+      # BAD: String concatenation
+      user_id = request.args.get("id")
+      cursor.execute(f"SELECT * FROM users WHERE id={user_id}")
+
+    - |
+      # BAD: f-string
+      query = f"SELECT * FROM users WHERE name='{name}'"
+      cursor.execute(query)
+
+  safe:
+    - |
+      # GOOD: Parameterized query
+      user_id = request.args.get("id")
+      cursor.execute("SELECT * FROM users WHERE id=?", [user_id])
+
+    - |
+      # GOOD: ORM
+      user_id = request.args.get("id")
+      user = User.objects.filter(id=user_id).first()
+
+# ============================================================================
+# Fix Recommendations
+# ============================================================================
+
+fix:
+  priority: 1
+  effort: low
+
+  recommendations:
+    - title: "Use parameterized queries"
+      severity: best
+      example: |
+        cursor.execute("SELECT * FROM users WHERE id=?", [user_id])
+
+    - title: "Use ORM methods"
+      severity: recommended
+      example: |
+        User.objects.filter(id=user_id)
+
+    - title: "Validate input"
+      severity: fallback
+      example: |
+        user_id = int(request.args.get("id"))

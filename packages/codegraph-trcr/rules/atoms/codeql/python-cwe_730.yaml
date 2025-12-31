@@ -1,0 +1,56 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_730.RegexInjection
+  kind: sink
+  tags: ['cwe_730', 'RegexInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-730"]
+  description: User input should not be used in regular expressions without first being escaped,
+  match:
+  -     call: RegexInjection
+
+- id: sink.cwe_730.ReDoS
+  kind: sink
+  tags: ['cwe_730', 'ReDoS', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1333"]
+  description: A regular expression that requires exponential time to match certain inputs
+  match:
+  -     call: ReDoS
+
+- id: sink.cwe_730.PolynomialReDoS
+  kind: sink
+  tags: ['cwe_730', 'PolynomialReDoS', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1333"]
+  description: A regular expression that can require polynomial time
+  match:
+  -     call: PolynomialReDoS
+
+- id: sink.cwe_730.RegexInjection
+  kind: sink
+  tags: ['cwe_730', 'RegexInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-730"]
+  description: User input should not be used in regular expressions without first being escaped,
+  match:
+  -     call: RegexInjection
+
+- id: sink.cwe_730.ReDoS
+  kind: sink
+  tags: ['cwe_730', 'ReDoS', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1333"]
+  description: A regular expression that requires exponential time to match certain inputs
+  match:
+  -     call: ReDoS
+
+- id: sink.cwe_730.PolynomialReDoS
+  kind: sink
+  tags: ['cwe_730', 'PolynomialReDoS', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1333"]
+  description: A regular expression that can require polynomial time
+  match:
+  -     call: PolynomialReDoS

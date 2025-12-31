@@ -1,0 +1,44 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.info_leak.stack_trace
+  kind: sink
+  tags: ['info_leak', 'stack_trace', 'vulnerability']
+  severity: high
+  cwe: ["CWE-209"]
+  owasp: "A09:2021-Security Logging and Monitoring Failures"
+  description: Stack trace information disclosure
+  match:
+  -     base_type: traceback
+        call: format_exc
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: traceback
+        call: print_exc
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: sys
+        call: exc_info
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.info_leak.debug_info
+  kind: sink
+  tags: ['info_leak', 'debug_info', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-200"]
+  description: Debug information exposure
+  match:
+  -     base_type: pprint
+        call: pprint
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: pdb
+        call: set_trace
+        args: [0]
+        constraints:
+          arg_type: not_const

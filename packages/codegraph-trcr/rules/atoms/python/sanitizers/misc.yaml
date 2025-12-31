@@ -1,0 +1,214 @@
+# Python Miscellaneous Sanitizers
+# Various Security Controls
+
+atoms:
+# =============================================================================
+# Code Execution Sandbox
+# =============================================================================
+- id: barrier.code.restricted
+  kind: sanitizer
+  tags: [safety, code, sandbox]
+  description: Code injection prevention via RestrictedPython
+  scope: return
+  match:
+  - call: compile_restricted
+    scope: return
+  - call: RestrictedPython.compile_restricted
+    scope: return
+
+# =============================================================================
+# XXE Prevention
+# =============================================================================
+- id: barrier.xxe
+  kind: sanitizer
+  tags: [safety, xxe, xml]
+  description: XXE prevention via defusedxml
+  scope: return
+  match:
+  - call: defusedxml.parse
+    scope: return
+  - call: defusedxml.fromstring
+    scope: return
+  - call: defusedxml.ElementTree.parse
+    scope: return
+
+# =============================================================================
+# XPath Escaping
+# =============================================================================
+- id: barrier.xpath.escape
+  kind: sanitizer
+  tags: [safety, xpath, xml]
+  description: XPath escaping
+  scope: return
+  match:
+  - call: xml.sax.saxutils.escape
+    scope: return
+
+# =============================================================================
+# LDAP Escaping
+# =============================================================================
+- id: barrier.ldap
+  kind: sanitizer
+  tags: [safety, ldap, escape]
+  description: LDAP Injection prevention
+  scope: return
+  match:
+  - call: escape_rdn
+    scope: return
+  - call: escape_filter_chars
+    scope: return
+
+# =============================================================================
+# NoSQL Injection Prevention
+# =============================================================================
+- id: barrier.nosql
+  kind: sanitizer
+  tags: [safety, nosql, escape]
+  description: NoSQL injection prevention via ObjectId
+  scope: return
+  match:
+  - call: bson.ObjectId
+    scope: return
+  - call: ObjectId
+    scope: return
+
+# =============================================================================
+# SSRF Prevention
+# =============================================================================
+- id: barrier.ssrf
+  kind: sanitizer
+  tags: [safety, ssrf, validation]
+  description: SSRF prevention via URL validation
+  scope: return
+  match:
+  - call: urllib.parse.urlparse
+    scope: return
+
+# =============================================================================
+# SSTI Prevention
+# =============================================================================
+- id: barrier.ssti.autoescape
+  kind: sanitizer
+  tags: [safety, ssti, template]
+  description: Template autoescape enabled
+  scope: return
+  match:
+  - call: jinja2.Environment
+    kwargs: [autoescape]
+    scope: return
+
+# =============================================================================
+# JWT Security
+# =============================================================================
+- id: barrier.jwt.algorithm_whitelist
+  kind: sanitizer
+  tags: [safety, jwt, authentication]
+  description: JWT with explicit algorithm whitelist
+  scope: return
+  match:
+  - call: jwt.decode
+    kwargs: [algorithms]
+    scope: return
+
+# =============================================================================
+# Access Control
+# =============================================================================
+- id: barrier.authorization
+  kind: sanitizer
+  tags: [safety, authorization, access_control]
+  description: Authorization checks
+  scope: guard
+  match:
+  - call: check_permission
+    scope: guard
+  - call: require_permission
+    scope: guard
+  - call: has_permission
+    scope: guard
+
+- id: barrier.authentication
+  kind: sanitizer
+  tags: [safety, authentication, access_control]
+  description: Authentication checks
+  scope: guard
+  match:
+  - call: is_authenticated
+    scope: guard
+  - call: require_login
+    scope: guard
+  - call: check_auth
+    scope: guard
+
+# =============================================================================
+# Strong Cryptography
+# =============================================================================
+- id: barrier.strong_crypto
+  kind: sanitizer
+  tags: [safety, crypto, strong]
+  description: Strong cryptographic algorithms
+  scope: return
+  match:
+  - call: hashlib.sha256
+    scope: return
+  - call: hashlib.sha512
+    scope: return
+  - call: hashlib.blake2b
+    scope: return
+
+- id: barrier.crypto_random
+  kind: sanitizer
+  tags: [safety, random, crypto]
+  description: Cryptographically secure random
+  scope: return
+  match:
+  - call: secrets.token_bytes
+    scope: return
+  - call: secrets.token_hex
+    scope: return
+  - call: secrets.choice
+    scope: return
+  - call: os.urandom
+    scope: return
+
+# =============================================================================
+# Configuration Security
+# =============================================================================
+- id: barrier.config_file
+  kind: sanitizer
+  tags: [safety, config, env]
+  description: Load from config instead of hardcoding
+  scope: return
+  match:
+  - call: os.getenv
+    scope: return
+  - call: config.get
+    scope: return
+  - call: settings.get
+    scope: return
+
+# =============================================================================
+# Logging Security
+# =============================================================================
+- id: barrier.redaction
+  kind: sanitizer
+  tags: [safety, redaction, privacy]
+  description: Sensitive data redaction
+  scope: return
+  match:
+  - call: redact
+    scope: return
+  - call: mask
+    scope: return
+  - call: sanitize_log
+    scope: return
+
+- id: barrier.error_sanitizer
+  kind: sanitizer
+  tags: [safety, error, sanitize]
+  description: Error message sanitization
+  scope: return
+  match:
+  - call: sanitize_error
+    scope: return
+  - call: safe_error_message
+    scope: return

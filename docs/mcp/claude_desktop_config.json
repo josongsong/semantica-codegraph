@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "codegraph": {
+      "command": "/Users/songmin/Documents/code-jo/semantica-v2/codegraph/.venv/bin/python",
+      "args": [
+        "/Users/songmin/Documents/code-jo/semantica-v2/codegraph/apps/mcp/mcp/main.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/Users/songmin/Documents/code-jo/semantica-v2/codegraph",
+        "CODEGRAPH_REPO_PATH": "/Users/songmin/Documents/code-jo/semantica-v2/codegraph",
+        "CODEGRAPH_WATCH": "true",
+        "SEMANTICA_LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}

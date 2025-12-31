@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_601.UrlRedirect
+  kind: sink
+  tags: ['cwe_601', 'UrlRedirect', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-601"]
+  description: URL redirection based on unvalidated user input
+  match:
+  -     call: UrlRedirect
+
+- id: sink.cwe_601.UrlRedirect
+  kind: sink
+  tags: ['cwe_601', 'UrlRedirect', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-601"]
+  description: URL redirection based on unvalidated user input
+  match:
+  -     call: UrlRedirect

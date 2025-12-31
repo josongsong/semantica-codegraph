@@ -1,0 +1,62 @@
+Granian API Server 사용법
+===========================
+
+## ✅ 설치 완료
+Granian v2.6.0 설치됨
+의존성: pyproject.toml에 추가됨
+
+## 실행 방법
+
+### 1. Production 실행
+./scripts/start_api_granian.sh
+
+### 2. 커스텀 설정
+PORT=9000 WORKERS=4 LOG_LEVEL=info ./scripts/start_api_granian.sh
+
+### 3. 개발 모드 (Auto-reload)
+RELOAD=true ./scripts/start_api_granian.sh
+
+## 환경 변수 (모두 optional)
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| HOST | 0.0.0.0 | 바인드 주소 |
+| PORT | 8000 | 포트 |
+| WORKERS | CPU * 0.75 | 워커 프로세스 수 |
+| BLOCKING_THREADS | 1 | 블로킹 스레드 수 |
+| RUNTIME_MODE | auto | 런타임 모드 (auto\|mt\|st) |
+| HTTP | auto | HTTP 버전 (auto\|1\|2) |
+| BACKLOG | 2048 | 연결 backlog |
+| LOG_LEVEL | info | 로그 레벨 |
+| ACCESS_LOG | false | 액세스 로그 활성화 |
+| RELOAD | false | Auto-reload (개발용) |
+
+## 테스트
+
+### 통합 테스트
+pytest tests/integration/api/test_granian_server.py -v
+
+### 성능 벤치마크
+pytest tests/benchmark/test_granian_vs_uvicorn.py -v --benchmark
+
+## ✅ 검증 완료
+- 기본 작동: ✓
+- Health check: ✓  
+- 동시 요청 처리: ✓
+- Graceful shutdown: ✓
+
+## 예상 성능 향상
+- Throughput: 2-3x (Uvicorn 대비)
+- Latency: -30~50%
+- CPU 효율: +20~40%
+- 동시 연결: 5-10x
+
+## 주의사항
+- 전체 API 서버(apps.api.api.main:app) 실행 시 모든 패키지 설치 필요:
+  - codegraph-shared
+  - codegraph-engine  
+  - codegraph-runtime
+  - codegraph-analysis
+  
+- 간단한 테스트는 scripts/test_minimal_api.py 사용
+

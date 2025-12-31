@@ -1,0 +1,1175 @@
+//! Node types for IR
+//!
+//! Represents code elements (functions, classes, variables, etc.)
+//! Matches Python Node dataclass.
+
+use serde::{Deserialize, Serialize};
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+use super::span::Span;
+
+/// Node kind (matches Python NodeKind enum exactly)
+///
+/// PyO3-enabled: Can be created directly from Python
+/// SYNC: packages/codegraph-engine/.../ir/models/kinds.py::NodeKind
+///
+/// SOTA Multi-Language Support:
+/// - Base structural types (File, Module, Class, Function, etc.)
+/// - Type system types (Interface, Enum, TypeAlias, TypeParameter)
+/// - Language-specific types (Trait, DataClass, Goroutine, etc.)
+#[cfg_attr(feature = "python", pyclass(get_all, set_all))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub enum NodeKind {
+    // ═══════════════════════════════════════════════════════════════════
+    // Base Structural (all languages)
+    // ═══════════════════════════════════════════════════════════════════
+    File,
+    Module,
+    Class,
+    Function,
+    Method,
+    Variable,
+    Parameter,
+    Field,
+    Lambda,
+    Import,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Type System (Java, TypeScript, Kotlin, Rust, Go)
+    // ═══════════════════════════════════════════════════════════════════
+    /// Interface definition (Java, TypeScript, Go)
+    Interface,
+    /// Enum type (all languages)
+    Enum,
+    /// Enum variant/member
+    EnumMember,
+    /// Type alias (TypeScript: type X = Y, Rust: type X = Y, Kotlin: typealias)
+    TypeAlias,
+    /// Generic type parameter (Java <T>, TypeScript <T>, Rust <T>, Kotlin <T>)
+    TypeParameter,
+    /// Constant value (const, final, val)
+    Constant,
+    /// Property (TypeScript, Kotlin val/var)
+    Property,
+    /// Export statement (TypeScript/JavaScript ESM)
+    Export,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Rust-specific
+    // ═══════════════════════════════════════════════════════════════════
+    /// Rust trait definition
+    Trait,
+    /// Rust impl block (impl Trait for Type)
+    TraitImpl,
+    /// Rust lifetime parameter ('a, 'static)
+    Lifetime,
+    /// Rust macro definition (macro_rules!)
+    Macro,
+    /// Rust macro invocation (macro!())
+    MacroInvocation,
+    /// Rust associated type in trait
+    AssociatedType,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Kotlin-specific
+    // ═══════════════════════════════════════════════════════════════════
+    /// Kotlin data class
+    DataClass,
+    /// Kotlin sealed class
+    SealedClass,
+    /// Kotlin companion object
+    CompanionObject,
+    /// Kotlin extension function
+    ExtensionFunction,
+    /// Kotlin suspend function (coroutine)
+    SuspendFunction,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Go-specific
+    // ═══════════════════════════════════════════════════════════════════
+    /// Go struct type
+    Struct,
+    /// Go channel type
+    Channel,
+    /// Go goroutine (go func())
+    Goroutine,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Java-specific
+    // ═══════════════════════════════════════════════════════════════════
+    /// Java annotation usage (@Override, @Entity)
+    Annotation,
+    /// Java annotation declaration (@interface)
+    AnnotationDecl,
+    /// Java record type (Java 14+)
+    Record,
+    /// Java inner class
+    InnerClass,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Control Flow (CFG nodes)
+    // ═══════════════════════════════════════════════════════════════════
+    /// Code block
+    Block,
+    /// Conditional (if/else, switch)
+    Condition,
+    /// Loop (for, while, do-while)
+    Loop,
+    /// Exception handling (try/catch/finally)
+    TryCatch,
+    /// Try block
+    Try,
+    /// Catch/except handler
+    Catch,
+    /// Finally block
+    Finally,
+    /// Raise/throw statement
+    Raise,
+    /// Throw statement (Java, TypeScript, Kotlin)
+    Throw,
+    /// Assert statement
+    Assert,
+    /// General expression
+    Expression,
+    /// Call expression (function call)
+    Call,
+    /// Index expression (array/dict access)
+    Index,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Semantic/Graph nodes
+    // ═══════════════════════════════════════════════════════════════════
+    /// Type reference
+    Type,
+    /// Function/method signature
+    Signature,
+    /// CFG basic block
+    CfgBlock,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // External References
+    // ═══════════════════════════════════════════════════════════════════
+    /// External module reference
+    ExternalModule,
+    /// External function reference
+    ExternalFunction,
+    /// External type reference
+    ExternalType,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Web/Framework-specific
+    // ═══════════════════════════════════════════════════════════════════
+    /// HTTP route/endpoint
+    Route,
+    /// Service class (business logic)
+    Service,
+    /// Repository class (data access)
+    Repository,
+    /// Configuration class
+    Config,
+    /// Background job/task
+    Job,
+    /// Middleware component
+    Middleware,
+}
+
+impl NodeKind {
+    /// Returns PascalCase string matching Python NodeKind.value
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            // Base Structural
+            NodeKind::File => "File",
+            NodeKind::Module => "Module",
+            NodeKind::Class => "Class",
+            NodeKind::Function => "Function",
+            NodeKind::Method => "Method",
+            NodeKind::Variable => "Variable",
+            NodeKind::Parameter => "Parameter",
+            NodeKind::Field => "Field",
+            NodeKind::Lambda => "Lambda",
+            NodeKind::Import => "Import",
+            // Type System
+            NodeKind::Interface => "Interface",
+            NodeKind::Enum => "Enum",
+            NodeKind::EnumMember => "EnumMember",
+            NodeKind::TypeAlias => "TypeAlias",
+            NodeKind::TypeParameter => "TypeParameter",
+            NodeKind::Constant => "Constant",
+            NodeKind::Property => "Property",
+            NodeKind::Export => "Export",
+            // Rust-specific
+            NodeKind::Trait => "Trait",
+            NodeKind::TraitImpl => "TraitImpl",
+            NodeKind::Lifetime => "Lifetime",
+            NodeKind::Macro => "Macro",
+            NodeKind::MacroInvocation => "MacroInvocation",
+            NodeKind::AssociatedType => "AssociatedType",
+            // Kotlin-specific
+            NodeKind::DataClass => "DataClass",
+            NodeKind::SealedClass => "SealedClass",
+            NodeKind::CompanionObject => "CompanionObject",
+            NodeKind::ExtensionFunction => "ExtensionFunction",
+            NodeKind::SuspendFunction => "SuspendFunction",
+            // Go-specific
+            NodeKind::Struct => "Struct",
+            NodeKind::Channel => "Channel",
+            NodeKind::Goroutine => "Goroutine",
+            // Java-specific
+            NodeKind::Annotation => "Annotation",
+            NodeKind::AnnotationDecl => "AnnotationDecl",
+            NodeKind::Record => "Record",
+            NodeKind::InnerClass => "InnerClass",
+            // Control Flow
+            NodeKind::Block => "Block",
+            NodeKind::Condition => "Condition",
+            NodeKind::Loop => "Loop",
+            NodeKind::TryCatch => "TryCatch",
+            NodeKind::Try => "Try",
+            NodeKind::Catch => "Catch",
+            NodeKind::Finally => "Finally",
+            NodeKind::Raise => "Raise",
+            NodeKind::Throw => "Throw",
+            NodeKind::Assert => "Assert",
+            NodeKind::Expression => "Expression",
+            // Semantic/Graph
+            NodeKind::Type => "Type",
+            NodeKind::Signature => "Signature",
+            NodeKind::CfgBlock => "CfgBlock",
+            // External References
+            NodeKind::ExternalModule => "ExternalModule",
+            NodeKind::ExternalFunction => "ExternalFunction",
+            NodeKind::ExternalType => "ExternalType",
+            // Expression nodes
+            NodeKind::Call => "Call",
+            NodeKind::Index => "Index",
+            // Web/Framework
+            NodeKind::Route => "Route",
+            NodeKind::Service => "Service",
+            NodeKind::Repository => "Repository",
+            NodeKind::Config => "Config",
+            NodeKind::Job => "Job",
+            NodeKind::Middleware => "Middleware",
+        }
+    }
+
+    /// Check if this node kind represents a callable entity
+    pub fn is_callable(&self) -> bool {
+        matches!(
+            self,
+            NodeKind::Function
+                | NodeKind::Method
+                | NodeKind::Lambda
+                | NodeKind::ExtensionFunction
+                | NodeKind::SuspendFunction
+                | NodeKind::Macro
+        )
+    }
+
+    /// Check if this node kind is a container that can hold other nodes
+    pub fn is_container(&self) -> bool {
+        matches!(
+            self,
+            NodeKind::File
+                | NodeKind::Module
+                | NodeKind::Class
+                | NodeKind::Function
+                | NodeKind::Method
+                | NodeKind::Interface
+                | NodeKind::Trait
+                | NodeKind::TraitImpl
+                | NodeKind::Struct
+                | NodeKind::Enum
+                | NodeKind::DataClass
+                | NodeKind::SealedClass
+                | NodeKind::Record
+                | NodeKind::InnerClass
+                | NodeKind::CompanionObject
+        )
+    }
+
+    /// Check if this node kind is language-specific
+    pub fn is_language_specific(&self) -> bool {
+        matches!(
+            self,
+            // Rust
+            NodeKind::Trait
+                | NodeKind::TraitImpl
+                | NodeKind::Lifetime
+                | NodeKind::Macro
+                | NodeKind::MacroInvocation
+                | NodeKind::AssociatedType
+            // Kotlin
+                | NodeKind::DataClass
+                | NodeKind::SealedClass
+                | NodeKind::CompanionObject
+                | NodeKind::ExtensionFunction
+                | NodeKind::SuspendFunction
+            // Go
+                | NodeKind::Struct
+                | NodeKind::Channel
+                | NodeKind::Goroutine
+            // Java
+                | NodeKind::Annotation
+                | NodeKind::AnnotationDecl
+                | NodeKind::Record
+                | NodeKind::InnerClass
+        )
+    }
+
+    /// Parse from string (for deserialization)
+    pub fn from_str(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "file" => NodeKind::File,
+            "module" => NodeKind::Module,
+            "class" => NodeKind::Class,
+            "function" => NodeKind::Function,
+            "method" => NodeKind::Method,
+            "variable" => NodeKind::Variable,
+            "parameter" => NodeKind::Parameter,
+            "field" => NodeKind::Field,
+            "lambda" => NodeKind::Lambda,
+            "import" => NodeKind::Import,
+            "interface" => NodeKind::Interface,
+            "enum" => NodeKind::Enum,
+            "enummember" | "enum_member" => NodeKind::EnumMember,
+            "typealias" | "type_alias" => NodeKind::TypeAlias,
+            "typeparameter" | "type_parameter" => NodeKind::TypeParameter,
+            "constant" => NodeKind::Constant,
+            "property" => NodeKind::Property,
+            "export" => NodeKind::Export,
+            "trait" => NodeKind::Trait,
+            "traitimpl" | "trait_impl" => NodeKind::TraitImpl,
+            "lifetime" => NodeKind::Lifetime,
+            "macro" => NodeKind::Macro,
+            "macroinvocation" | "macro_invocation" => NodeKind::MacroInvocation,
+            "associatedtype" | "associated_type" => NodeKind::AssociatedType,
+            "dataclass" | "data_class" => NodeKind::DataClass,
+            "sealedclass" | "sealed_class" => NodeKind::SealedClass,
+            "companionobject" | "companion_object" => NodeKind::CompanionObject,
+            "extensionfunction" | "extension_function" => NodeKind::ExtensionFunction,
+            "suspendfunction" | "suspend_function" => NodeKind::SuspendFunction,
+            "struct" => NodeKind::Struct,
+            "channel" => NodeKind::Channel,
+            "goroutine" => NodeKind::Goroutine,
+            "annotation" => NodeKind::Annotation,
+            "annotationdecl" | "annotation_decl" => NodeKind::AnnotationDecl,
+            "record" => NodeKind::Record,
+            "innerclass" | "inner_class" => NodeKind::InnerClass,
+            "block" => NodeKind::Block,
+            "condition" => NodeKind::Condition,
+            "loop" => NodeKind::Loop,
+            "trycatch" | "try_catch" => NodeKind::TryCatch,
+            "expression" => NodeKind::Expression,
+            "type" => NodeKind::Type,
+            "signature" => NodeKind::Signature,
+            "cfgblock" | "cfg_block" => NodeKind::CfgBlock,
+            "externalmodule" | "external_module" => NodeKind::ExternalModule,
+            "externalfunction" | "external_function" => NodeKind::ExternalFunction,
+            "externaltype" | "external_type" => NodeKind::ExternalType,
+            _ => NodeKind::Expression, // Default fallback
+        }
+    }
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl NodeKind {
+    pub fn __str__(&self) -> String {
+        self.as_str().to_string()
+    }
+
+    pub fn __repr__(&self) -> String {
+        format!("NodeKind.{}", self.as_str())
+    }
+}
+
+/// Control flow summary
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct ControlFlowSummary {
+    pub cyclomatic_complexity: u32,
+    pub has_loop: bool,
+    pub has_try: bool,
+    pub branch_count: u32,
+}
+
+/// IR Node (matches Python Node dataclass)
+///
+/// PyO3-enabled: Can be created directly from Python
+#[cfg_attr(feature = "python", pyclass)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Node {
+    // ═══ Required: Identity ═══
+    pub id: String,
+    pub kind: NodeKind,
+    pub fqn: String,
+
+    // ═══ Required: Location ═══
+    pub file_path: String,
+    pub span: Span,
+    pub language: String,
+
+    // ═══ Optional: Identity ═══
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stable_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content_hash: Option<String>,
+
+    // ═══ Optional: Structure ═══
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub module_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub body_span: Option<Span>,
+
+    // ═══ Optional: Metadata ═══
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub docstring: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub decorators: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub annotations: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modifiers: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_async: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_generator: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_static: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_abstract: Option<bool>,
+
+    // ═══ Optional: Function-specific ═══
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parameters: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub return_type: Option<String>,
+
+    // ═══ Optional: Class-specific ═══
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_classes: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metaclass: Option<String>,
+
+    // ═══ Optional: Variable-specific ═══
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_annotation: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub initial_value: Option<String>,
+
+    // ═══ Optional: Generic metadata ═══
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<String>,  // Changed from Value to String for PyO3 compat
+
+    // ═══ Optional: Additional fields for compatibility ═══
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub role: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_test_file: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signature_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub declared_type_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attrs: Option<String>,  // Changed from HashMap to String for PyO3 compat
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub raw: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub flavor: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_nullable: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub owner_node_id: Option<String>,
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl Node {
+    /// Create a new Node from Python
+    #[new]
+    #[pyo3(signature = (id, kind, fqn, file_path, span, language="python".to_string()))]
+    fn py_new(
+        id: String,
+        kind: NodeKind,
+        fqn: String,
+        file_path: String,
+        span: Span,
+        language: String,
+    ) -> Self {
+        Self::new(id, kind, fqn, file_path, span).with_language(language)
+    }
+
+    pub fn __repr__(&self) -> String {
+        format!(
+            "Node(id={}, kind={:?}, fqn={})",
+            self.id, self.kind, self.fqn
+        )
+    }
+}
+
+// Rust-only methods (not exposed to Python)
+impl Node {
+    /// Create a minimal node (for Rust usage)
+    pub fn new(id: String, kind: NodeKind, fqn: String, file_path: String, span: Span) -> Self {
+        Self {
+            id,
+            kind,
+            fqn,
+            file_path,
+            span,
+            language: "python".to_string(),
+            stable_id: None,
+            content_hash: None,
+            name: None,
+            module_path: None,
+            parent_id: None,
+            body_span: None,
+            docstring: None,
+            decorators: None,
+            annotations: None,
+            modifiers: None,
+            is_async: None,
+            is_generator: None,
+            is_static: None,
+            is_abstract: None,
+            parameters: None,
+            return_type: None,
+            base_classes: None,
+            metaclass: None,
+            type_annotation: None,
+            initial_value: None,
+            metadata: None,
+            role: None,
+            is_test_file: None,
+            signature_id: None,
+            declared_type_id: None,
+            attrs: None,
+            raw: None,
+            flavor: None,
+            is_nullable: None,
+            owner_node_id: None,
+        }
+    }
+
+    pub fn with_language(mut self, language: impl Into<String>) -> Self {
+        self.language = language.into();
+        self
+    }
+
+    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
+        self
+    }
+
+    pub fn with_parent(mut self, parent_id: impl Into<String>) -> Self {
+        self.parent_id = Some(parent_id.into());
+        self
+    }
+
+    pub fn with_module_path(mut self, module_path: impl Into<String>) -> Self {
+        self.module_path = Some(module_path.into());
+        self
+    }
+
+    pub fn with_docstring(mut self, docstring: impl Into<String>) -> Self {
+        self.docstring = Some(docstring.into());
+        self
+    }
+
+    pub fn with_decorators(mut self, decorators: Vec<String>) -> Self {
+        self.decorators = Some(decorators);
+        self
+    }
+
+    pub fn with_annotations(mut self, annotations: Vec<String>) -> Self {
+        self.annotations = Some(annotations);
+        self
+    }
+
+    pub fn with_body_span(mut self, body_span: Span) -> Self {
+        self.body_span = Some(body_span);
+        self
+    }
+
+    /// Create a builder for type-safe Node construction
+    pub fn builder() -> NodeBuilder {
+        NodeBuilder::new()
+    }
+}
+
+/// Type-safe builder for Node construction with validation
+///
+/// Example:
+/// ```
+/// use codegraph_ir::shared::models::{Node, NodeKind, Span};
+///
+/// let node = Node::builder()
+///     .id("func1")
+///     .kind(NodeKind::Function)
+///     .fqn("mymodule.func1")
+///     .file_path("/path/to/file.py")
+///     .span(Span::new(1, 0, 10, 0))
+///     .with_name("func1")
+///     .with_parameters(vec!["x".to_string(), "y".to_string()])
+///     .build()
+///     .expect("Failed to build node");
+/// ```
+pub struct NodeBuilder {
+    id: Option<String>,
+    kind: Option<NodeKind>,
+    fqn: Option<String>,
+    file_path: Option<String>,
+    span: Option<Span>,
+    language: String,
+    stable_id: Option<String>,
+    content_hash: Option<String>,
+    name: Option<String>,
+    module_path: Option<String>,
+    parent_id: Option<String>,
+    body_span: Option<Span>,
+    docstring: Option<String>,
+    decorators: Option<Vec<String>>,
+    annotations: Option<Vec<String>>,
+    modifiers: Option<Vec<String>>,
+    is_async: Option<bool>,
+    is_generator: Option<bool>,
+    is_static: Option<bool>,
+    is_abstract: Option<bool>,
+    parameters: Option<Vec<String>>,
+    return_type: Option<String>,
+    base_classes: Option<Vec<String>>,
+    metaclass: Option<String>,
+    type_annotation: Option<String>,
+    initial_value: Option<String>,
+    metadata: Option<String>,
+    role: Option<String>,
+    is_test_file: Option<bool>,
+    signature_id: Option<String>,
+    declared_type_id: Option<String>,
+    attrs: Option<String>,
+    raw: Option<String>,
+    flavor: Option<String>,
+    is_nullable: Option<bool>,
+    owner_node_id: Option<String>,
+}
+
+impl NodeBuilder {
+    pub fn new() -> Self {
+        Self {
+            id: None,
+            kind: None,
+            fqn: None,
+            file_path: None,
+            span: None,
+            language: "python".to_string(),
+            stable_id: None,
+            content_hash: None,
+            name: None,
+            module_path: None,
+            parent_id: None,
+            body_span: None,
+            docstring: None,
+            decorators: None,
+            annotations: None,
+            modifiers: None,
+            is_async: None,
+            is_generator: None,
+            is_static: None,
+            is_abstract: None,
+            parameters: None,
+            return_type: None,
+            base_classes: None,
+            metaclass: None,
+            type_annotation: None,
+            initial_value: None,
+            metadata: None,
+            role: None,
+            is_test_file: None,
+            signature_id: None,
+            declared_type_id: None,
+            attrs: None,
+            raw: None,
+            flavor: None,
+            is_nullable: None,
+            owner_node_id: None,
+        }
+    }
+
+    // Required fields
+    pub fn id(mut self, id: impl Into<String>) -> Self {
+        self.id = Some(id.into());
+        self
+    }
+
+    pub fn kind(mut self, kind: NodeKind) -> Self {
+        self.kind = Some(kind);
+        self
+    }
+
+    pub fn fqn(mut self, fqn: impl Into<String>) -> Self {
+        self.fqn = Some(fqn.into());
+        self
+    }
+
+    pub fn file_path(mut self, file_path: impl Into<String>) -> Self {
+        self.file_path = Some(file_path.into());
+        self
+    }
+
+    pub fn span(mut self, span: Span) -> Self {
+        self.span = Some(span);
+        self
+    }
+
+    pub fn language(mut self, language: impl Into<String>) -> Self {
+        self.language = language.into();
+        self
+    }
+
+    // Optional fields
+    pub fn with_stable_id(mut self, stable_id: impl Into<String>) -> Self {
+        self.stable_id = Some(stable_id.into());
+        self
+    }
+
+    pub fn with_content_hash(mut self, content_hash: impl Into<String>) -> Self {
+        self.content_hash = Some(content_hash.into());
+        self
+    }
+
+    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
+        self
+    }
+
+    pub fn with_module_path(mut self, module_path: impl Into<String>) -> Self {
+        self.module_path = Some(module_path.into());
+        self
+    }
+
+    pub fn with_parent(mut self, parent_id: impl Into<String>) -> Self {
+        self.parent_id = Some(parent_id.into());
+        self
+    }
+
+    pub fn with_body_span(mut self, body_span: Span) -> Self {
+        self.body_span = Some(body_span);
+        self
+    }
+
+    pub fn with_docstring(mut self, docstring: impl Into<String>) -> Self {
+        self.docstring = Some(docstring.into());
+        self
+    }
+
+    pub fn with_decorators(mut self, decorators: Vec<String>) -> Self {
+        self.decorators = Some(decorators);
+        self
+    }
+
+    pub fn with_annotations(mut self, annotations: Vec<String>) -> Self {
+        self.annotations = Some(annotations);
+        self
+    }
+
+    pub fn with_modifiers(mut self, modifiers: Vec<String>) -> Self {
+        self.modifiers = Some(modifiers);
+        self
+    }
+
+    pub fn with_is_async(mut self, is_async: bool) -> Self {
+        self.is_async = Some(is_async);
+        self
+    }
+
+    pub fn with_is_generator(mut self, is_generator: bool) -> Self {
+        self.is_generator = Some(is_generator);
+        self
+    }
+
+    pub fn with_is_static(mut self, is_static: bool) -> Self {
+        self.is_static = Some(is_static);
+        self
+    }
+
+    pub fn with_is_abstract(mut self, is_abstract: bool) -> Self {
+        self.is_abstract = Some(is_abstract);
+        self
+    }
+
+    pub fn with_parameters(mut self, parameters: Vec<String>) -> Self {
+        self.parameters = Some(parameters);
+        self
+    }
+
+    pub fn with_return_type(mut self, return_type: impl Into<String>) -> Self {
+        self.return_type = Some(return_type.into());
+        self
+    }
+
+    pub fn with_base_classes(mut self, base_classes: Vec<String>) -> Self {
+        self.base_classes = Some(base_classes);
+        self
+    }
+
+    pub fn with_metaclass(mut self, metaclass: impl Into<String>) -> Self {
+        self.metaclass = Some(metaclass.into());
+        self
+    }
+
+    pub fn with_type_annotation(mut self, type_annotation: impl Into<String>) -> Self {
+        self.type_annotation = Some(type_annotation.into());
+        self
+    }
+
+    pub fn with_initial_value(mut self, initial_value: impl Into<String>) -> Self {
+        self.initial_value = Some(initial_value.into());
+        self
+    }
+
+    /// Validate and build the Node
+    ///
+    /// Returns error if required fields are missing or validation fails
+    pub fn build(self) -> Result<Node, String> {
+        // Validate required fields exist
+        let kind = self.kind.ok_or("Missing required field: kind")?;
+
+        // Validate field constraints before extraction
+        self.validate_callable_fields(&kind)?;
+        self.validate_class_fields(&kind)?;
+        self.validate_span_ordering(
+            self.span.as_ref().ok_or("Missing required field: span")?,
+            self.body_span.as_ref()
+        )?;
+
+        // Extract required fields after validation
+        let id = self.id.ok_or("Missing required field: id")?;
+        let fqn = self.fqn.ok_or("Missing required field: fqn")?;
+        let file_path = self.file_path.ok_or("Missing required field: file_path")?;
+        let span = self.span.ok_or("Missing required field: span")?;
+
+        Ok(Node {
+            id,
+            kind,
+            fqn,
+            file_path,
+            span,
+            language: self.language,
+            stable_id: self.stable_id,
+            content_hash: self.content_hash,
+            name: self.name,
+            module_path: self.module_path,
+            parent_id: self.parent_id,
+            body_span: self.body_span,
+            docstring: self.docstring,
+            decorators: self.decorators,
+            annotations: self.annotations,
+            modifiers: self.modifiers,
+            is_async: self.is_async,
+            is_generator: self.is_generator,
+            is_static: self.is_static,
+            is_abstract: self.is_abstract,
+            parameters: self.parameters,
+            return_type: self.return_type,
+            base_classes: self.base_classes,
+            metaclass: self.metaclass,
+            type_annotation: self.type_annotation,
+            initial_value: self.initial_value,
+            metadata: self.metadata,
+            role: self.role,
+            is_test_file: self.is_test_file,
+            signature_id: self.signature_id,
+            declared_type_id: self.declared_type_id,
+            attrs: self.attrs,
+            raw: self.raw,
+            flavor: self.flavor,
+            is_nullable: self.is_nullable,
+            owner_node_id: self.owner_node_id,
+        })
+    }
+
+    /// Validate callable-specific fields
+    fn validate_callable_fields(&self, kind: &NodeKind) -> Result<(), String> {
+        if kind.is_callable() {
+            // Callable nodes should have parameters
+            if self.parameters.is_none() {
+                // Warning: not an error, but could log
+            }
+        } else {
+            // Non-callable nodes shouldn't have parameters or return_type
+            if self.parameters.is_some() {
+                return Err(format!(
+                    "Non-callable node kind {:?} should not have parameters",
+                    kind
+                ));
+            }
+            if self.return_type.is_some() {
+                return Err(format!(
+                    "Non-callable node kind {:?} should not have return_type",
+                    kind
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    /// Validate class-specific fields
+    fn validate_class_fields(&self, kind: &NodeKind) -> Result<(), String> {
+        let is_class_like = matches!(
+            kind,
+            NodeKind::Class
+                | NodeKind::Interface
+                | NodeKind::DataClass
+                | NodeKind::SealedClass
+                | NodeKind::Struct
+        );
+
+        if !is_class_like {
+            if self.base_classes.is_some() {
+                return Err(format!(
+                    "Non-class node kind {:?} should not have base_classes",
+                    kind
+                ));
+            }
+            if self.metaclass.is_some() {
+                return Err(format!(
+                    "Non-class node kind {:?} should not have metaclass",
+                    kind
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    /// Validate span ordering
+    fn validate_span_ordering(&self, span: &Span, body_span: Option<&Span>) -> Result<(), String> {
+        if let Some(body) = body_span {
+            // Body span should be within or equal to the full span
+            if body.start_line < span.start_line || body.end_line > span.end_line {
+                return Err(format!(
+                    "body_span ({}-{}) must be within span ({}-{})",
+                    body.start_line, body.end_line, span.start_line, span.end_line
+                ));
+            }
+        }
+        Ok(())
+    }
+}
+
+impl Default for NodeBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_node_kind_as_str() {
+        // PascalCase to match Python NodeKind.value
+        assert_eq!(NodeKind::Function.as_str(), "Function");
+        assert_eq!(NodeKind::Class.as_str(), "Class");
+    }
+
+    #[test]
+    fn test_node_kind_serde() {
+        // Verify serde serializes as PascalCase
+        let kind = NodeKind::Function;
+        let json = serde_json::to_string(&kind).unwrap();
+        assert_eq!(json, r#""Function""#);
+        
+        // Verify deserialization
+        let parsed: NodeKind = serde_json::from_str(r#""Function""#).unwrap();
+        assert_eq!(parsed, NodeKind::Function);
+    }
+
+    #[test]
+    fn test_node_kind_is_callable() {
+        assert!(NodeKind::Function.is_callable());
+        assert!(NodeKind::Method.is_callable());
+        assert!(!NodeKind::Class.is_callable());
+    }
+
+    // Builder tests
+    #[test]
+    fn test_builder_basic() {
+        let node = Node::builder()
+            .id("func1")
+            .kind(NodeKind::Function)
+            .fqn("mymodule.func1")
+            .file_path("/path/to/file.py")
+            .span(Span::new(1, 0, 10, 0))
+            .build()
+            .expect("Failed to build node");
+
+        assert_eq!(node.id, "func1");
+        assert_eq!(node.kind, NodeKind::Function);
+        assert_eq!(node.fqn, "mymodule.func1");
+        assert_eq!(node.file_path, "/path/to/file.py");
+    }
+
+    #[test]
+    fn test_builder_with_optional_fields() {
+        let node = Node::builder()
+            .id("func1")
+            .kind(NodeKind::Function)
+            .fqn("mymodule.func1")
+            .file_path("/path/to/file.py")
+            .span(Span::new(1, 0, 10, 0))
+            .with_name("func1")
+            .with_parameters(vec!["x".to_string(), "y".to_string()])
+            .with_return_type("int")
+            .with_is_async(true)
+            .build()
+            .expect("Failed to build node");
+
+        assert_eq!(node.name, Some("func1".to_string()));
+        assert_eq!(
+            node.parameters,
+            Some(vec!["x".to_string(), "y".to_string()])
+        );
+        assert_eq!(node.return_type, Some("int".to_string()));
+        assert_eq!(node.is_async, Some(true));
+    }
+
+    #[test]
+    fn test_builder_missing_required_field() {
+        let result = Node::builder()
+            .id("func1")
+            .kind(NodeKind::Function)
+            // Missing fqn
+            .file_path("/path/to/file.py")
+            .span(Span::new(1, 0, 10, 0))
+            .build();
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Missing required field: fqn");
+    }
+
+    #[test]
+    fn test_builder_validation_non_callable_with_parameters() {
+        let result = Node::builder()
+            .id("var1")
+            .kind(NodeKind::Variable)
+            .fqn("mymodule.var1")
+            .file_path("/path/to/file.py")
+            .span(Span::new(1, 0, 1, 10))
+            .with_parameters(vec!["x".to_string()]) // Invalid for Variable
+            .build();
+
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("should not have parameters"));
+    }
+
+    #[test]
+    fn test_builder_validation_non_callable_with_return_type() {
+        let result = Node::builder()
+            .id("var1")
+            .kind(NodeKind::Variable)
+            .fqn("mymodule.var1")
+            .file_path("/path/to/file.py")
+            .span(Span::new(1, 0, 1, 10))
+            .with_return_type("int") // Invalid for Variable
+            .build();
+
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("should not have return_type"));
+    }
+
+    #[test]
+    fn test_builder_validation_non_class_with_base_classes() {
+        let result = Node::builder()
+            .id("func1")
+            .kind(NodeKind::Function)
+            .fqn("mymodule.func1")
+            .file_path("/path/to/file.py")
+            .span(Span::new(1, 0, 10, 0))
+            .with_base_classes(vec!["Base".to_string()]) // Invalid for Function
+            .build();
+
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("should not have base_classes"));
+    }
+
+    #[test]
+    fn test_builder_validation_span_ordering() {
+        let result = Node::builder()
+            .id("func1")
+            .kind(NodeKind::Function)
+            .fqn("mymodule.func1")
+            .file_path("/path/to/file.py")
+            .span(Span::new(1, 0, 10, 0))
+            .with_body_span(Span::new(15, 0, 20, 0)) // Body outside full span
+            .build();
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("must be within span"));
+    }
+
+    #[test]
+    fn test_builder_valid_class() {
+        let node = Node::builder()
+            .id("class1")
+            .kind(NodeKind::Class)
+            .fqn("mymodule.MyClass")
+            .file_path("/path/to/file.py")
+            .span(Span::new(1, 0, 20, 0))
+            .with_name("MyClass")
+            .with_base_classes(vec!["BaseClass".to_string(), "Mixin".to_string()])
+            .with_metaclass("ABCMeta")
+            .build()
+            .expect("Failed to build class node");
+
+        assert_eq!(node.kind, NodeKind::Class);
+        assert_eq!(
+            node.base_classes,
+            Some(vec!["BaseClass".to_string(), "Mixin".to_string()])
+        );
+        assert_eq!(node.metaclass, Some("ABCMeta".to_string()));
+    }
+
+    #[test]
+    fn test_builder_valid_body_span() {
+        let node = Node::builder()
+            .id("func1")
+            .kind(NodeKind::Function)
+            .fqn("mymodule.func1")
+            .file_path("/path/to/file.py")
+            .span(Span::new(1, 0, 10, 0))
+            .with_body_span(Span::new(2, 4, 9, 20)) // Valid: within full span
+            .build()
+            .expect("Failed to build node");
+
+        assert!(node.body_span.is_some());
+        let body = node.body_span.unwrap();
+        assert_eq!(body.start_line, 2);
+        assert_eq!(body.end_line, 9);
+    }
+
+    #[test]
+    fn test_builder_language_override() {
+        let node = Node::builder()
+            .id("func1")
+            .kind(NodeKind::Function)
+            .fqn("mymodule.func1")
+            .file_path("/path/to/file.ts")
+            .span(Span::new(1, 0, 10, 0))
+            .language("typescript")
+            .build()
+            .expect("Failed to build node");
+
+        assert_eq!(node.language, "typescript");
+    }
+}

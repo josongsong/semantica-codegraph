@@ -1,0 +1,22 @@
+{
+  "cwe_id": "CWE-89",
+  "timestamp": "2025-12-19T02:15:24.372037",
+  "test_cases": {
+    "bad": 4,
+    "good": 4,
+    "total": 8
+  },
+  "results": {
+    "true_positive": 4,
+    "false_positive": 0,
+    "true_negative": 4,
+    "false_negative": 0,
+    "analysis_errors": 0
+  },
+  "metrics": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "calculable": true
+  }
+}

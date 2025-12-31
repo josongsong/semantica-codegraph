@@ -1,0 +1,91 @@
+# Python Deserialization Sinks
+# CWE-502: Deserialization of Untrusted Data
+# OWASP: A08:2021-Software and Data Integrity Failures
+
+atoms:
+# =============================================================================
+# Pickle
+# =============================================================================
+- id: sink.deserialize.pickle
+  kind: sink
+  tags: [deserialize, rce, dangerous]
+  severity: critical
+  cwe: ["CWE-502"]
+  description: Insecure pickle deserialization
+  match:
+  - call: pickle.loads
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: pickle.load
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# YAML (unsafe_load)
+# =============================================================================
+- id: sink.deserialize.yaml
+  kind: sink
+  tags: [deserialize, rce, dangerous]
+  severity: critical
+  cwe: ["CWE-502"]
+  description: Insecure YAML deserialization
+  match:
+  - call: yaml.load
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: yaml.unsafe_load
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# jsonpickle
+# =============================================================================
+- id: sink.deserialize.jsonpickle
+  kind: sink
+  tags: [deserialize, rce, dangerous]
+  severity: critical
+  cwe: ["CWE-502"]
+  description: Insecure jsonpickle deserialization
+  match:
+  - call: jsonpickle.decode
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# Dill
+# =============================================================================
+- id: sink.deserialize.dill
+  kind: sink
+  tags: [deserialize, rce, dangerous]
+  severity: critical
+  cwe: ["CWE-502"]
+  description: Dill deserialization (pickle-compatible)
+  match:
+  - call: dill.load
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: dill.loads
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# Shelve
+# =============================================================================
+- id: sink.deserialize.shelve
+  kind: sink
+  tags: [deserialize, rce, dangerous]
+  severity: critical
+  cwe: ["CWE-502"]
+  description: Shelve deserialization (pickle-based)
+  match:
+  - call: shelve.open
+    args: [0]
+    constraints:
+      arg_type: not_const

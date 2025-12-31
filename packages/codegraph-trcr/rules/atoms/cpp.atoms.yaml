@@ -1,0 +1,451 @@
+# C++ Taint Analysis Atoms
+# Language: C++ (C++11, C++14, C++17, C++20, C++23)
+# Focus: STL, modern C++, smart pointers, templates
+
+atoms:
+# ============================================================================
+# Sources - Untrusted Input (C++ specific)
+# ============================================================================
+- id: input.user.iostream
+  kind: source
+  tags: [untrusted, user, stdin, iostream]
+  severity: high
+  description: C++ iostream input
+  match:
+  - call: std::cin
+  - call: std::getline
+  - call: std::cin.getline
+  - call: std::cin.get
+  - call: std::cin.read
+
+- id: input.user.string.stream
+  kind: source
+  tags: [untrusted, stream, string]
+  severity: medium
+  description: String stream input
+  match:
+  - base_type: std::istringstream
+    call: str
+  - base_type: std::stringstream
+    call: str
+
+- id: input.http.boost
+  kind: source
+  tags: [untrusted, web, http, boost]
+  severity: high
+  frameworks: [boost]
+  description: Boost.Beast HTTP input
+  match:
+  - base_type: boost::beast::http::request
+    call: body
+  - base_type: boost::asio::streambuf
+    call: data
+
+- id: input.http.cpp-httplib
+  kind: source
+  tags: [untrusted, web, http, httplib]
+  severity: high
+  frameworks: [cpp-httplib]
+  description: cpp-httplib request input
+  match:
+  - base_type: httplib::Request
+    read: params
+  - base_type: httplib::Request
+    read: body
+
+# ============================================================================
+# Sinks - Buffer Overflow (STL)
+# ============================================================================
+- id: sink.buffer.overflow.string.copy
+  kind: sink
+  tags: [buffer-overflow, memory-safety, stl]
+  severity: high
+  cwe: [CWE-119, CWE-120]
+  owasp: A04:2021-Insecure Design
+  description: Unsafe string copy operations
+  match:
+  - base_type: std::string
+    call: copy
+  - call: std::copy
+  - call: std::copy_n
+  - call: std::copy_backward
+
+# ============================================================================
+# Sinks - Command Injection (C++)
+# ============================================================================
+- id: sink.command.injection.popen
+  kind: sink
+  tags: [injection, command, os]
+  severity: critical
+  cwe: [CWE-78]
+  owasp: A03:2021-Injection
+  description: C++ process execution
+  match:
+  - call: std::system
+  - call: popen
+  - call: _popen
+  - base_type: boost::process::child
+  - base_type: boost::process::system
+  - call: boost::process::execute
+
+# ============================================================================
+# Sinks - SQL Injection (C++ DB libraries)
+# ============================================================================
+- id: sink.sql.injection.odbc
+  kind: sink
+  tags: [injection, sql, database, odbc]
+  severity: critical
+  cwe: [CWE-89]
+  owasp: A03:2021-Injection
+  description: ODBC query execution
+  match:
+  - call: SQLExecDirect
+  - call: SQLExecute
+  - call: SQLPrepare
+
+- id: sink.sql.injection.mysql-cpp
+  kind: sink
+  tags: [injection, sql, database, mysql]
+  severity: critical
+  cwe: [CWE-89]
+  owasp: A03:2021-Injection
+  description: MySQL C++ connector
+  match:
+  - base_type: sql::Statement
+    call: execute
+  - base_type: sql::Statement
+    call: executeQuery
+
+- id: sink.sql.injection.sqlite-cpp
+  kind: sink
+  tags: [injection, sql, database, sqlite]
+  severity: critical
+  cwe: [CWE-89]
+  owasp: A03:2021-Injection
+  description: SQLite C++ wrapper
+  match:
+  - base_type: sqlite3pp::command
+    call: execute
+  - base_type: sqlite3pp::query
+    call: execute
+
+- id: sink.sql.injection.postgresql-cpp
+  kind: sink
+  tags: [injection, sql, database, postgres]
+  severity: critical
+  cwe: [CWE-89]
+  owasp: A03:2021-Injection
+  description: PostgreSQL C++ interface
+  match:
+  - base_type: pqxx::work
+    call: exec
+  - base_type: pqxx::connection
+    call: exec
+
+# ============================================================================
+# Sinks - Path Traversal (C++ filesystem)
+# ============================================================================
+- id: sink.path.traversal.filesystem
+  kind: sink
+  tags: [path, traversal, file, filesystem]
+  severity: high
+  cwe: [CWE-22]
+  owasp: A01:2021-Broken Access Control
+  description: C++17 filesystem operations
+  match:
+  - call: std::filesystem::remove
+  - call: std::filesystem::remove_all
+  - call: std::filesystem::copy
+  - call: std::filesystem::copy_file
+  - call: std::filesystem::create_directory
+  - base_type: std::fstream
+  - base_type: std::ifstream
+  - base_type: std::ofstream
+
+# ============================================================================
+# Sinks - XSS (C++ web frameworks)
+# ============================================================================
+- id: sink.xss.html.output
+  kind: sink
+  tags: [xss, html, injection, web]
+  severity: high
+  cwe: [CWE-79]
+  owasp: A03:2021-Injection
+  description: HTML output in C++ web frameworks
+  match:
+  - call: std::cout
+  - base_type: std::ostream
+    call: operator<<
+  - base_type: httplib::Response
+    call: set_content
+  - base_type: boost::beast::http::response
+    call: body
+
+# ============================================================================
+# Sinks - Memory Safety (C++ specific)
+# ============================================================================
+- id: sink.memory.use_after_free
+  kind: sink
+  tags: [memory-safety, use-after-free, uaf]
+  severity: critical
+  cwe: [CWE-416]
+  owasp: A04:2021-Insecure Design
+  description: Use of freed memory in C++
+  match:
+  - call: delete
+  - call: delete[]
+  - base_type: std::unique_ptr
+    call: release
+  - base_type: std::shared_ptr
+    call: reset
+
+- id: sink.memory.double_free
+  kind: sink
+  tags: [memory-safety, double-free]
+  severity: critical
+  cwe: [CWE-415]
+  owasp: A04:2021-Insecure Design
+  description: Double delete vulnerability
+  match:
+  - call: delete
+  - call: delete[]
+
+- id: sink.memory.dangling_pointer
+  kind: sink
+  tags: [memory-safety, dangling-pointer]
+  severity: critical
+  cwe: [CWE-825]
+  owasp: A04:2021-Insecure Design
+  description: Use of dangling pointer/reference
+  match:
+  - base_type: std::weak_ptr
+    call: lock
+  - base_type: std::optional
+    call: value
+
+- id: sink.memory.uninitialized
+  kind: sink
+  tags: [memory-safety, uninitialized]
+  severity: high
+  cwe: [CWE-908]
+  owasp: A04:2021-Insecure Design
+  description: Use of uninitialized memory
+  match:
+  - call: malloc
+  - call: alloca
+  - call: new
+
+- id: sink.memory.out_of_bounds
+  kind: sink
+  tags: [memory-safety, out-of-bounds]
+  severity: critical
+  cwe: [CWE-125, CWE-787]
+  owasp: A04:2021-Insecure Design
+  description: Out of bounds read/write
+  match:
+  - base_type: std::vector
+    call: operator[]
+  - base_type: std::array
+    call: operator[]
+  - base_type: std::string
+    call: operator[]
+
+# ============================================================================
+# Sinks - Race Condition (CWE-362)
+# ============================================================================
+- id: sink.concurrency.race_condition
+  kind: sink
+  tags: [concurrency, race-condition, threading]
+  severity: high
+  cwe: [CWE-362]
+  owasp: A04:2021-Insecure Design
+  description: Potential race condition in multi-threaded code
+  match:
+  - call: std::thread
+  - base_type: std::shared_ptr
+    call: operator->
+  - call: std::async
+
+- id: sink.concurrency.deadlock
+  kind: sink
+  tags: [concurrency, deadlock, threading]
+  severity: high
+  cwe: [CWE-833]
+  owasp: A04:2021-Insecure Design
+  description: Potential deadlock situation
+  match:
+  - base_type: std::mutex
+    call: lock
+  - base_type: std::recursive_mutex
+    call: lock
+
+# ============================================================================
+# Sinks - Deserialization (CWE-502)
+# ============================================================================
+- id: sink.deserialize.boost
+  kind: sink
+  tags: [deserialize, injection, boost]
+  severity: critical
+  cwe: [CWE-502]
+  owasp: A08:2021-Software and Data Integrity
+  description: Boost serialization
+  match:
+  - base_type: boost::archive::text_iarchive
+  - base_type: boost::archive::binary_iarchive
+  - base_type: boost::archive::xml_iarchive
+
+# ============================================================================
+# Sanitizers - Modern C++ Safety
+# ============================================================================
+- id: sanitizer.buffer.string.assign
+  kind: sanitizer
+  tags: [buffer-safe, stl, string]
+  description: Safe STL string operations
+  match:
+  - base_type: std::string
+    call: assign
+  - base_type: std::string
+    call: append
+  - base_type: std::string
+    call: push_back
+
+- id: sanitizer.buffer.vector
+  kind: sanitizer
+  tags: [buffer-safe, stl, vector]
+  description: STL vector (bounds-checked)
+  match:
+  - base_type: std::vector
+    call: at
+  - base_type: std::vector
+    call: push_back
+  - base_type: std::vector
+    call: emplace_back
+
+- id: sanitizer.buffer.array
+  kind: sanitizer
+  tags: [buffer-safe, stl, array]
+  description: STL array (bounds-checked)
+  match:
+  - base_type: std::array
+    call: at
+  - base_type: std::array
+    call: fill
+
+- id: sanitizer.validation.regex
+  kind: sanitizer
+  tags: [validation, regex, pattern]
+  description: C++ regex validation
+  match:
+  - call: std::regex_match
+  - call: std::regex_search
+  - base_type: std::regex
+    call: match
+
+- id: sanitizer.sql.prepared
+  kind: sanitizer
+  tags: [sql, prepared-statement]
+  description: Prepared statements (parameterized)
+  match:
+  - base_type: sql::PreparedStatement
+  - base_type: pqxx::prepare::invocation
+  - base_type: sqlite3pp::command
+    call: bind
+
+- id: sanitizer.path.canonical
+  kind: sanitizer
+  tags: [path-safe, canonicalization, filesystem]
+  description: Path canonicalization
+  match:
+  - call: std::filesystem::canonical
+  - call: std::filesystem::weakly_canonical
+  - call: std::filesystem::absolute
+
+- id: sanitizer.html.escape
+  kind: sanitizer
+  tags: [escape, html, xss]
+  description: HTML escaping
+  match:
+  - call: htmlspecialchars
+  - call: cgiHtmlEscape
+
+# ============================================================================
+# Propagators - STL Algorithms
+# ============================================================================
+- id: propagator.stl.transform
+  kind: propagator
+  tags: [stl, algorithm, transform]
+  description: STL transform propagates taint
+  match:
+  - call: std::transform
+  - call: std::for_each
+  - call: std::accumulate
+
+- id: propagator.string.operations
+  kind: propagator
+  tags: [string, stl]
+  description: String operations propagate taint
+  match:
+  - base_type: std::string
+    call: substr
+  - base_type: std::string
+    call: c_str
+  - base_type: std::string
+    call: data
+  - call: std::to_string
+
+- id: propagator.string.stream
+  kind: propagator
+  tags: [string, stream, stl]
+  description: String stream operations
+  match:
+  - base_type: std::stringstream
+    call: str
+  - base_type: std::ostringstream
+    call: str
+
+- id: propagator.container.access
+  kind: propagator
+  tags: [container, stl]
+  description: Container element access
+  match:
+  - base_type: std::vector
+    call: operator[]
+  - base_type: std::map
+    call: operator[]
+  - base_type: std::unordered_map
+    call: operator[]
+
+# ============================================================================
+# Metadata
+# ============================================================================
+metadata:
+  language: cpp
+  supported_versions: ["C++11", "C++14", "C++17", "C++20", "C++23"]
+  total_atoms: 29
+  frameworks:
+    - STL
+    - Boost
+    - cpp-httplib
+    - MySQL Connector/C++
+    - pqxx (PostgreSQL)
+    - sqlite3pp
+  coverage:
+    cwe:
+      - CWE-78   # Command Injection
+      - CWE-89   # SQL Injection
+      - CWE-119  # Buffer Errors
+      - CWE-120  # Buffer Copy without Size Check
+      - CWE-125  # Out-of-bounds Read
+      - CWE-79   # XSS
+      - CWE-22   # Path Traversal
+      - CWE-362  # Race Condition
+      - CWE-415  # Double Free
+      - CWE-416  # Use After Free
+      - CWE-502  # Deserialization
+      - CWE-787  # Out-of-bounds Write
+      - CWE-825  # Dangling Pointer
+      - CWE-833  # Deadlock
+      - CWE-908  # Uninitialized Memory
+  last_updated: "2025-12-24"
+  maintainer: "Semantica Security Team"
+

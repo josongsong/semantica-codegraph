@@ -1,0 +1,893 @@
+# Swift Taint Analysis Atoms
+# Language: Swift
+# Framework: iOS/macOS, Vapor, SwiftNIO, etc.
+
+atoms:
+# ============================================================================
+# Sources - Untrusted Input
+# ============================================================================
+- id: input.http.vapor
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - vapor
+  severity: high
+  description: Vapor framework HTTP request input
+  match:
+  - base_type: Request
+    read: query
+  - base_type: Request
+    read: content
+  - base_type: Request
+    read: parameters
+  - base_type: Request
+    read: headers
+  - base_type: Request
+    read: cookies
+  - base_type: Request
+    read: body
+  - base_type: Request
+    call: query.get
+  - base_type: Request
+    call: content.decode
+  - base_type: Parameters
+    call: get
+
+- id: input.http.urlsession
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - ios
+  severity: high
+  description: URLSession response data
+  match:
+  - base_type: URLSession
+    call: data
+  - base_type: URLSession
+    call: dataTask
+  - base_type: URLSessionDataTask
+    call: resume
+  - base_type: URLResponse
+    read: data
+
+- id: input.ui.ios
+  kind: source
+  tags:
+  - untrusted
+  - ios
+  - mobile
+  severity: high
+  description: iOS UI input
+  match:
+  - base_type: UITextField
+    read: text
+  - base_type: UITextView
+    read: text
+  - base_type: UISearchBar
+    read: text
+  - base_type: UIWebView
+    call: loadHTMLString
+  - base_type: WKWebView
+    call: loadHTMLString
+
+- id: input.file.swift
+  kind: source
+  tags:
+  - untrusted
+  - file
+  - io
+  severity: medium
+  description: Swift file read operations
+  match:
+  - base_type: FileManager
+    call: contents
+  - base_type: String
+    call: init(contentsOfFile:)
+  - base_type: String
+    call: init(contentsOf:)
+  - base_type: Data
+    call: init(contentsOf:)
+  - call: FileHandle.readDataToEndOfFile
+
+- id: input.userdefaults
+  kind: source
+  tags:
+  - untrusted
+  - storage
+  - ios
+  severity: medium
+  description: UserDefaults storage
+  match:
+  - base_type: UserDefaults
+    call: string
+  - base_type: UserDefaults
+    call: object
+  - base_type: UserDefaults
+    call: data
+  - base_type: UserDefaults
+    call: value
+
+- id: input.env.swift
+  kind: source
+  tags:
+  - untrusted
+  - env
+  - config
+  severity: medium
+  description: Environment variables
+  match:
+  - call: ProcessInfo.processInfo.environment
+  - base_type: ProcessInfo
+    read: environment
+
+- id: input.deeplink
+  kind: source
+  tags:
+  - untrusted
+  - ios
+  - deeplink
+  severity: high
+  description: Deep link URL input
+  match:
+  - base_type: URL
+    read: query
+  - base_type: URLComponents
+    read: queryItems
+  - base_type: UIApplication
+    call: open
+  - call: application(_:open:options:)
+
+- id: input.clipboard
+  kind: source
+  tags:
+  - untrusted
+  - ios
+  - clipboard
+  severity: high
+  description: Clipboard/Pasteboard input
+  match:
+  - base_type: UIPasteboard
+    read: string
+  - base_type: UIPasteboard
+    read: strings
+  - base_type: UIPasteboard
+    read: data
+  - base_type: NSPasteboard
+    call: string
+
+# ============================================================================
+# Sinks - SQL Injection (CWE-89)
+# ============================================================================
+- id: sink.sql.sqlite
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - sqlite
+  severity: critical
+  description: SQLite SQL injection
+  match:
+  - base_type: Connection
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Connection
+    call: prepare
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Connection
+    call: run
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: sqlite3_exec
+    args: [1]
+    constraints:
+      arg_type: not_const
+  - call: sqlite3_prepare_v2
+    args: [1]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-89
+  owasp: "A03:2021-Injection"
+
+- id: sink.sql.fluent
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - vapor
+  severity: critical
+  description: Fluent ORM raw SQL
+  match:
+  - base_type: Database
+    call: raw
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: SQLDatabase
+    call: raw
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-89
+  owasp: "A03:2021-Injection"
+
+- id: sink.sql.grdb
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - grdb
+  severity: critical
+  description: GRDB raw SQL
+  match:
+  - base_type: DatabaseQueue
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Database
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-89
+  owasp: "A03:2021-Injection"
+
+# ============================================================================
+# Sinks - Command Injection (CWE-78)
+# ============================================================================
+- id: sink.command.process
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: critical
+  description: Process command execution
+  match:
+  - base_type: Process
+    write: launchPath
+    constraints:
+      arg_type: not_const
+  - base_type: Process
+    write: arguments
+    constraints:
+      arg_type: not_const
+  - base_type: Process
+    call: run
+  - call: Process.launchedProcess
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: shell
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-78
+  owasp: "A03:2021-Injection"
+
+# ============================================================================
+# Sinks - XSS (CWE-79)
+# ============================================================================
+- id: sink.xss.webview
+  kind: sink
+  tags:
+  - xss
+  - web
+  - ios
+  severity: high
+  description: WebView XSS
+  match:
+  - base_type: WKWebView
+    call: loadHTMLString
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: WKWebView
+    call: evaluateJavaScript
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: UIWebView
+    call: loadHTMLString
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: UIWebView
+    call: stringByEvaluatingJavaScript
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-79
+  owasp: "A03:2021-Injection"
+
+- id: sink.xss.vapor
+  kind: sink
+  tags:
+  - xss
+  - web
+  - vapor
+  severity: high
+  description: Vapor HTML response
+  match:
+  - base_type: Response
+    call: body
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: HTML
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-79
+  owasp: "A03:2021-Injection"
+
+# ============================================================================
+# Sinks - Path Traversal (CWE-22)
+# ============================================================================
+- id: sink.path.swift
+  kind: sink
+  tags:
+  - traversal
+  - file
+  - path
+  severity: high
+  description: File path operations
+  match:
+  - base_type: FileManager
+    call: contentsOfDirectory
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: FileManager
+    call: createFile
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: FileManager
+    call: removeItem
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: FileManager
+    call: copyItem
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: FileManager
+    call: moveItem
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: URL(fileURLWithPath:)
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Data
+    call: write(to:)
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: String
+    call: write(toFile:)
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-22
+  owasp: "A01:2021-Broken Access Control"
+
+# ============================================================================
+# Sinks - SSRF (CWE-918)
+# ============================================================================
+- id: sink.ssrf.urlsession
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  description: URLSession SSRF
+  match:
+  - base_type: URLSession
+    call: dataTask
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: URLSession
+    call: data
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: URLSession
+    call: downloadTask
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: URL(string:)
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-918
+  owasp: "A10:2021-Server-Side Request Forgery"
+
+# ============================================================================
+# Sinks - Insecure Deserialization (CWE-502)
+# ============================================================================
+- id: sink.deserialize.swift
+  kind: sink
+  tags:
+  - deserialize
+  - rce
+  - dangerous
+  severity: critical
+  description: Swift insecure deserialization
+  match:
+  - base_type: JSONDecoder
+    call: decode
+    args: [1]
+    constraints:
+      arg_type: not_const
+  - base_type: PropertyListDecoder
+    call: decode
+    args: [1]
+    constraints:
+      arg_type: not_const
+  - base_type: NSKeyedUnarchiver
+    call: unarchiveObject
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: NSKeyedUnarchiver
+    call: unarchivedObject
+    args: [1]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-502
+  owasp: "A08:2021-Software and Data Integrity Failures"
+
+# ============================================================================
+# Sinks - Keychain Insecure Storage (CWE-312)
+# ============================================================================
+- id: sink.crypto.insecure_storage
+  kind: sink
+  tags:
+  - crypto
+  - storage
+  - ios
+  severity: high
+  description: Insecure data storage
+  match:
+  - base_type: UserDefaults
+    call: set
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: SecItemAdd
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-312
+  owasp: "A02:2021-Cryptographic Failures"
+
+# ============================================================================
+# Sinks - Log Injection (CWE-117)
+# ============================================================================
+- id: sink.log.swift
+  kind: sink
+  tags:
+  - log
+  - injection
+  severity: medium
+  description: Swift log injection
+  match:
+  - call: print
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: NSLog
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Logger
+    call: info
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Logger
+    call: error
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Logger
+    call: debug
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-117
+  owasp: "A09:2021-Security Logging and Monitoring Failures"
+
+# ============================================================================
+# Sinks - Mobile Security (iOS specific)
+# ============================================================================
+- id: sink.mobile.insecure_storage
+  kind: sink
+  tags:
+  - mobile
+  - storage
+  - ios
+  - insecure
+  severity: high
+  description: Insecure data storage on iOS (use Keychain instead)
+  match:
+  - base_type: UserDefaults
+    call: set
+  - base_type: FileManager
+    call: createFile
+  - call: NSKeyedArchiver.archivedData
+  cwe:
+  - CWE-312
+  owasp: "A02:2021-Cryptographic Failures"
+
+- id: sink.mobile.cleartext_storage
+  kind: sink
+  tags:
+  - mobile
+  - storage
+  - cleartext
+  severity: high
+  description: Cleartext storage of sensitive data
+  match:
+  - base_type: UserDefaults
+    call: set
+  - base_type: NSUserDefaults
+    call: setObject
+  cwe:
+  - CWE-312
+  - CWE-922
+  owasp: "A02:2021-Cryptographic Failures"
+
+- id: sink.mobile.weak_crypto
+  kind: sink
+  tags:
+  - mobile
+  - crypto
+  - weak
+  severity: high
+  description: Weak cryptographic algorithm usage
+  match:
+  - call: CC_MD5
+  - call: CC_SHA1
+  - call: CCCrypt
+    constraints:
+      arg_value: ["kCCAlgorithmDES"]
+  cwe:
+  - CWE-327
+  - CWE-328
+  owasp: "A02:2021-Cryptographic Failures"
+
+- id: sink.mobile.insecure_random
+  kind: sink
+  tags:
+  - mobile
+  - crypto
+  - random
+  severity: medium
+  description: Insecure random number generation
+  match:
+  - call: arc4random
+  - call: rand
+  - call: random
+  - call: srand
+  cwe:
+  - CWE-330
+  - CWE-338
+  owasp: "A02:2021-Cryptographic Failures"
+
+- id: sink.mobile.ssl_pinning_bypass
+  kind: sink
+  tags:
+  - mobile
+  - ssl
+  - bypass
+  severity: critical
+  description: SSL certificate validation bypass
+  match:
+  - base_type: URLSessionDelegate
+    call: urlSession(_:didReceive:completionHandler:)
+  - call: SecTrustSetAnchorCertificates
+  - call: ATS
+    constraints:
+      arg_value: ["false"]
+  cwe:
+  - CWE-295
+  - CWE-297
+  owasp: "A07:2021-Identification and Authentication Failures"
+
+- id: sink.mobile.jailbreak_detection_bypass
+  kind: sink
+  tags:
+  - mobile
+  - jailbreak
+  - bypass
+  severity: high
+  description: Jailbreak detection can be bypassed
+  match:
+  - call: FileManager.fileExists
+    args: [0]
+    constraints:
+      arg_value: ["/Applications/Cydia.app"]
+  - call: canOpenURL
+    constraints:
+      arg_value: ["cydia://"]
+  cwe:
+  - CWE-919
+  owasp: "A07:2021-Identification and Authentication Failures"
+
+- id: sink.mobile.clipboard_sensitive
+  kind: sink
+  tags:
+  - mobile
+  - clipboard
+  - sensitive
+  severity: medium
+  description: Sensitive data copied to clipboard
+  match:
+  - base_type: UIPasteboard
+    call: setString
+  - base_type: UIPasteboard
+    call: setValue
+  - base_type: UIPasteboard
+    write: string
+  cwe:
+  - CWE-200
+  - CWE-359
+  owasp: "A01:2021-Broken Access Control"
+
+- id: sink.mobile.screenshot_sensitive
+  kind: sink
+  tags:
+  - mobile
+  - screenshot
+  - sensitive
+  severity: medium
+  description: Sensitive data visible in screenshots
+  match:
+  - base_type: UITextField
+    write: text
+  - base_type: UILabel
+    write: text
+  cwe:
+  - CWE-200
+  owasp: "A01:2021-Broken Access Control"
+
+- id: sink.mobile.biometric_bypass
+  kind: sink
+  tags:
+  - mobile
+  - biometric
+  - authentication
+  severity: high
+  description: Biometric authentication bypass risk
+  match:
+  - base_type: LAContext
+    call: evaluatePolicy
+  cwe:
+  - CWE-287
+  owasp: "A07:2021-Identification and Authentication Failures"
+
+# ============================================================================
+# Sinks - Open Redirect (CWE-601)
+# ============================================================================
+- id: sink.redirect.vapor
+  kind: sink
+  tags:
+  - redirect
+  - web
+  - vapor
+  severity: high
+  description: Vapor open redirect
+  match:
+  - call: Response.redirect
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: req.redirect
+    args: [0]
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-601
+  owasp: "A01:2021-Broken Access Control"
+
+# ============================================================================
+# Sanitizers
+# ============================================================================
+- id: barrier.sql.parameterized
+  kind: sanitizer
+  tags:
+  - safety
+  - db
+  - sql
+  description: Parameterized queries
+  scope: return
+  match:
+  - base_type: Connection
+    call: prepare
+    constraints:
+      arg_count: 2
+    scope: return
+  - call: sqlite3_bind_text
+    scope: return
+  - call: sqlite3_bind_int
+    scope: return
+
+- id: barrier.xss.encode
+  kind: sanitizer
+  tags:
+  - safety
+  - web
+  - html
+  description: HTML encoding
+  scope: return
+  match:
+  - call: escapeHTML
+    scope: return
+  - base_type: String
+    call: addingPercentEncoding
+    scope: return
+
+- id: barrier.path.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - path
+  - file
+  description: Path validation
+  scope: return
+  match:
+  - base_type: URL
+    call: standardized
+    scope: return
+  - base_type: URL
+    call: resolvingSymlinksInPath
+    scope: return
+  - base_type: String
+    call: replacingOccurrences
+    scope: return
+
+- id: barrier.url.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - url
+  - validation
+  description: URL validation
+  scope: return
+  match:
+  - call: URL(string:)
+    scope: return
+  - base_type: URLComponents
+    call: url
+    scope: return
+
+# ============================================================================
+# Propagators
+# ============================================================================
+- id: prop.string.swift
+  kind: propagator
+  tags:
+  - flow
+  - string
+  description: String operations propagate taint
+  match:
+  - base_type: String
+    call: appending
+    from_args: [0]
+    to: return
+  - base_type: String
+    call: replacingOccurrences
+    from_args: [0]
+    to: return
+  - base_type: String
+    call: lowercased
+    from_args: [0]
+    to: return
+  - base_type: String
+    call: uppercased
+    from_args: [0]
+    to: return
+  - base_type: String
+    call: trimmingCharacters
+    from_args: [0]
+    to: return
+  - call: String(describing:)
+    from_args: [0]
+    to: return
+
+- id: prop.collection.swift
+  kind: propagator
+  tags:
+  - flow
+  - collection
+  description: Collection operations propagate taint
+  match:
+  - base_type: Array
+    call: append
+    from_args: [0]
+    to: base
+  - base_type: Array
+    call: joined
+    from_args: [0]
+    to: return
+  - base_type: Dictionary
+    call: updateValue
+    from_args: [0]
+    to: base
+  - base_type: Set
+    call: insert
+    from_args: [0]
+    to: base
+
+- id: prop.json.swift
+  kind: propagator
+  tags:
+  - flow
+  - json
+  description: JSON operations propagate taint
+  match:
+  - base_type: JSONEncoder
+    call: encode
+    from_args: [0]
+    to: return
+  - base_type: JSONDecoder
+    call: decode
+    from_args: [1]
+    to: return
+  - call: JSONSerialization.data
+    from_args: [0]
+    to: return
+  - call: JSONSerialization.jsonObject
+    from_args: [0]
+    to: return
+
+- id: prop.data.swift
+  kind: propagator
+  tags:
+  - flow
+  - data
+  description: Data operations propagate taint
+  match:
+  - base_type: Data
+    call: init
+    from_args: [0]
+    to: return
+  - base_type: String
+    call: data
+    from_args: [0]
+    to: return
+  - base_type: Data
+    call: base64EncodedString
+    from_args: [0]
+    to: return

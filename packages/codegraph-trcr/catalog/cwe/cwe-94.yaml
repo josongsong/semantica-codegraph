@@ -1,0 +1,149 @@
+# CWE-94: Code Injection
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/94.html
+
+metadata:
+  cwe_id: CWE-94
+  name: "Improper Control of Generation of Code"
+  severity: critical
+  owasp: "A03:2021-Injection"
+  category: "Injection"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  mitre_abstraction: class
+  likelihood_of_exploit: high
+
+  references:
+    - https://cwe.mitre.org/data/definitions/94.html
+    - https://owasp.org/Top10/A03_2021-Injection/
+
+description: |
+  The software constructs all or part of a code segment using externally-influenced
+  input from an upstream component, but it does not neutralize or incorrectly neutralizes
+  special elements that could modify the syntax or behavior of the intended code segment.
+
+sources:
+  - id: input.user
+    description: "User input"
+    patterns:
+      - call: input
+      - call: builtins.input
+
+  - id: input.http.flask
+    description: "Flask HTTP request"
+    patterns:
+      - flask.Request.args
+      - flask.Request.form
+      - flask.Request.json
+
+  - id: input.http.django
+    description: "Django HTTP request"
+    patterns:
+      - django.http.HttpRequest.GET
+      - django.http.HttpRequest.POST
+
+sinks:
+  - id: sink.code.eval
+    description: "eval() - arbitrary code execution"
+    patterns:
+      - call: eval
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - call: builtins.eval
+        args: [0]
+
+  - id: sink.code.exec
+    description: "exec() - arbitrary code execution"
+    patterns:
+      - call: exec
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - call: builtins.exec
+        args: [0]
+
+  - id: sink.code.compile
+    description: "compile() - code compilation"
+    patterns:
+      - call: compile
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+sanitizers:
+  - id: barrier.code.ast_literal
+    description: "ast.literal_eval (safe)"
+    patterns:
+      - ast.literal_eval()
+
+  - id: barrier.code.validation
+    description: "Whitelist validation"
+    patterns:
+      - allowlist check
+      - validate_expression()
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.code.eval
+      - id: sink.code.exec
+      - id: sink.code.compile
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: code
+
+validation:
+  min_test_cases: 4
+  required_scenarios:
+    - eval_injection
+    - exec_injection
+    - ast_literal_safe
+
+  min_precision: 0.95
+  min_recall: 0.90
+  max_false_positive_rate: 0.05
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE94_Code_Injection"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: eval with user input
+      expression = input("Enter expression: ")
+      result = eval(expression)
+
+  safe:
+    - |
+      # GOOD: ast.literal_eval (only literals)
+      expression = input("Enter expression: ")
+      result = ast.literal_eval(expression)
+
+fix:
+  priority: 1
+  effort: medium
+
+  recommendations:
+    - title: "Use ast.literal_eval"
+      severity: best
+      example: |
+        result = ast.literal_eval(expression)
+
+    - title: "Remove eval/exec entirely"
+      severity: recommended
+      example: |
+        # Use proper parsing/calculation library

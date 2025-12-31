@@ -1,0 +1,148 @@
+# Atom Schema Definition (Simplified)
+# Version: 2.0.0
+# Only fields that are ACTUALLY USED by the runtime
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://semantica.dev/trcr/atom.schema.yaml"
+
+title: "TRCR Atom Schema"
+description: "Minimal schema for taint analysis atoms"
+
+# =============================================================================
+# REQUIRED FIELDS (enforced by loader)
+# =============================================================================
+required_fields:
+  - id          # Unique identifier (e.g., "sink.sql.sqlite3")
+  - kind        # source | sink | sanitizer | propagator
+  - tags        # Categorization tags (e.g., [injection, sql])
+  - description # Human-readable description
+  - match       # Pattern matching rules
+
+# =============================================================================
+# OPTIONAL FIELDS (actually used)
+# =============================================================================
+optional_fields:
+  severity:
+    type: string
+    enum: [critical, high, medium, low, info]
+    description: "Required for sinks, optional for others"
+    used_by: "TaintRuleCompiler, Match output"
+
+  cwe:
+    type: array
+    items: string
+    description: "CWE identifiers for security mapping"
+    used_by: "Report generation"
+
+  owasp:
+    type: string
+    description: "OWASP category reference"
+    used_by: "Report generation"
+
+  frameworks:
+    type: array
+    items: string
+    description: "Applicable frameworks (django, flask, etc.)"
+    used_by: "Rule filtering"
+
+  scope:
+    type: string
+    enum: [return, base, all]
+    description: "Sanitizer scope - where taint is removed"
+    used_by: "TaintRuleExecutor"
+    required_for: sanitizer
+
+# =============================================================================
+# MATCH CLAUSE STRUCTURE
+# =============================================================================
+match_clause:
+  call:
+    type: string
+    description: "Method name to match"
+
+  base_type:
+    type: string
+    description: "Type for method calls"
+
+  read:
+    type: string
+    description: "Attribute read"
+
+  write:
+    type: string
+    description: "Attribute write"
+
+  args:
+    type: array
+    items: integer
+    description: "Argument indices to track"
+
+  kwargs:
+    type: array
+    items: string
+    description: "Keyword arguments to track"
+
+  constraints:
+    arg_type:
+      enum: [not_const, const, any]
+    arg_value:
+      type: array
+    arg_count:
+      type: integer
+
+  # Propagator-specific
+  from_args:
+    type: array
+    items: integer
+
+  to:
+    type: string
+    enum: [return, base, arg0, arg1, arg2]
+
+  scope:
+    type: string
+    enum: [return, base, all]
+
+# =============================================================================
+# KIND-SPECIFIC REQUIREMENTS
+# =============================================================================
+kind_requirements:
+  source:
+    required: [id, kind, tags, description, match]
+
+  sink:
+    required: [id, kind, tags, description, match, severity]
+
+  sanitizer:
+    required: [id, kind, tags, description, match]
+    recommended: [scope]
+
+  propagator:
+    required: [id, kind, tags, description, match]
+    match_required: [from_args, to]
+
+# =============================================================================
+# NAMING CONVENTIONS
+# =============================================================================
+naming:
+  id_pattern: "^(input|sink|barrier|prop)\\.[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+
+  prefixes:
+    source: "input."
+    sink: "sink."
+    sanitizer: "barrier."
+    propagator: "prop."
+
+# =============================================================================
+# REMOVED FIELDS (were over-engineered)
+# =============================================================================
+# The following were defined but never used:
+#   - version, introduced_in, deprecated_in, removal_date, migration_path
+#   - documentation (summary, examples, remediation, references)
+#   - test_cases
+#   - confidence_boost
+#
+# These can be re-added when:
+#   1. Runtime actually loads and uses them
+#   2. Linter validates them
+#   3. Test runner executes test_cases

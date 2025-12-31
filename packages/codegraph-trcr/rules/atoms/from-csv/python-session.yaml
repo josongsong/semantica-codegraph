@@ -1,0 +1,15 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.session.fixation
+  kind: sink
+  tags: ['session', 'fixation', 'vulnerability']
+  severity: high
+  cwe: ["CWE-384"]
+  owasp: "A07:2021-Identification and Authentication Failures"
+  description: Session fixation vulnerability
+  match:
+  -     base_type: session
+        call: session_key
+  -     base_type: request.session
+        call: cycle_key

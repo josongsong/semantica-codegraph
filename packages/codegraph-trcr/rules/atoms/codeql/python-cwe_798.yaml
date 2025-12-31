@@ -1,0 +1,22 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_798.HardcodedCredentials
+  kind: sink
+  tags: ['cwe_798', 'HardcodedCredentials', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-259"]
+  description: Credentials are hard coded in the source code of the application.
+  match:
+  -     call: HardcodedValue
+  -     call: Credential
+
+- id: sink.cwe_798.HardcodedCredentials
+  kind: sink
+  tags: ['cwe_798', 'HardcodedCredentials', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-259"]
+  description: Credentials are hard coded in the source code of the application.
+  match:
+  -     call: HardcodedValue
+  -     call: Credential

@@ -1,0 +1,38 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_312.CleartextStorage
+  kind: sink
+  tags: ['cwe_312', 'CleartextStorage', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-312"]
+  description: Sensitive information stored without encryption or hashing can expose it to an
+  match:
+  -     call: CleartextStorage
+
+- id: sink.cwe_312.CleartextLogging
+  kind: sink
+  tags: ['cwe_312', 'CleartextLogging', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-312"]
+  description: Logging sensitive information without encryption or hashing can
+  match:
+  -     call: CleartextLogging
+
+- id: sink.cwe_312.CleartextStorage
+  kind: sink
+  tags: ['cwe_312', 'CleartextStorage', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-312"]
+  description: Sensitive information stored without encryption or hashing can expose it to an
+  match:
+  -     call: CleartextStorage
+
+- id: sink.cwe_312.CleartextLogging
+  kind: sink
+  tags: ['cwe_312', 'CleartextLogging', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-312"]
+  description: Logging sensitive information without encryption or hashing can
+  match:
+  -     call: CleartextLogging

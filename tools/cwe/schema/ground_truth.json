@@ -1,0 +1,406 @@
+{
+  "CWE78_OS_Command_Injection": {
+    "bad_01.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-78",
+      "cwe_name": "OS Command Injection",
+      "sink_line": 8,
+      "sink_function": "os.system",
+      "source_line": 5,
+      "source_type": "user_input"
+    },
+    "good_01.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-78",
+      "cwe_name": "OS Command Injection",
+      "mitigation": "subprocess_with_list"
+    },
+    "bad_02.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-78",
+      "cwe_name": "OS Command Injection",
+      "sink_line": 9,
+      "sink_function": "subprocess.call",
+      "source_line": 6,
+      "source_type": "request_param"
+    },
+    "good_02.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-78",
+      "cwe_name": "OS Command Injection",
+      "mitigation": "allowlist_validation"
+    },
+    "bad_03_shell_true.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-78",
+      "cwe_name": "OS Command Injection",
+      "sink_line": 9,
+      "sink_function": "subprocess.run",
+      "source_line": 6,
+      "source_type": "request_param"
+    },
+    "good_03_allowlist.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-78",
+      "cwe_name": "OS Command Injection",
+      "mitigation": "allowlist_with_list_args"
+    }
+  },
+  "CWE89_SQL_Injection": {
+    "bad_01.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-89",
+      "cwe_name": "SQL Injection",
+      "sink_line": 9,
+      "sink_function": "cursor.execute",
+      "source_line": 6,
+      "source_type": "user_input"
+    },
+    "good_01.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-89",
+      "cwe_name": "SQL Injection",
+      "mitigation": "parameterized_query"
+    },
+    "bad_02.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-89",
+      "cwe_name": "SQL Injection",
+      "sink_line": 12,
+      "sink_function": "cursor.execute",
+      "source_line": 8,
+      "source_type": "request_param"
+    },
+    "good_02.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-89",
+      "cwe_name": "SQL Injection",
+      "mitigation": "orm_query"
+    },
+    "bad_03_interprocedural.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-89",
+      "cwe_name": "SQL Injection",
+      "sink_line": 20,
+      "sink_function": "cursor.execute",
+      "source_line": 15,
+      "source_type": "interprocedural"
+    },
+    "bad_04_multi_step.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-89",
+      "cwe_name": "SQL Injection",
+      "sink_line": 15,
+      "sink_function": "cursor.execute",
+      "source_line": 9,
+      "source_type": "multi_step_taint"
+    },
+    "good_03_escaped.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-89",
+      "cwe_name": "SQL Injection",
+      "mitigation": "regex_escape"
+    }
+  },
+  "CWE94_Code_Injection": {
+    "bad_01.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-94",
+      "cwe_name": "Code Injection",
+      "sink_line": 7,
+      "sink_function": "eval",
+      "source_line": 5,
+      "source_type": "user_input"
+    },
+    "good_01.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-94",
+      "cwe_name": "Code Injection",
+      "mitigation": "ast_literal_eval"
+    },
+    "bad_02.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-94",
+      "cwe_name": "Code Injection",
+      "sink_line": 8,
+      "sink_function": "exec",
+      "source_line": 5,
+      "source_type": "request_body"
+    },
+    "good_02.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-94",
+      "cwe_name": "Code Injection",
+      "mitigation": "sandbox"
+    }
+  },
+  "CWE22_Path_Traversal": {
+    "bad_01.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-22",
+      "cwe_name": "Path Traversal",
+      "sink_line": 9,
+      "sink_function": "open",
+      "source_line": 6,
+      "source_type": "user_input"
+    },
+    "good_01.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-22",
+      "cwe_name": "Path Traversal",
+      "mitigation": "path_validation"
+    },
+    "bad_02.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-22",
+      "cwe_name": "Path Traversal",
+      "sink_line": 8,
+      "sink_function": "open",
+      "source_line": 5,
+      "source_type": "request_param"
+    },
+    "good_02.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-22",
+      "cwe_name": "Path Traversal",
+      "mitigation": "allowlist"
+    },
+    "bad_03_join.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-22",
+      "cwe_name": "Path Traversal",
+      "sink_line": 12,
+      "sink_function": "send_file",
+      "source_line": 7,
+      "source_type": "request_param"
+    },
+    "good_03_realpath.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-22",
+      "cwe_name": "Path Traversal",
+      "mitigation": "realpath_check"
+    }
+  },
+  "CWE79_XSS": {
+    "bad_01.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-79",
+      "cwe_name": "Cross-Site Scripting",
+      "sink_line": 8,
+      "sink_function": "render_template_string",
+      "source_line": 5,
+      "source_type": "user_input"
+    },
+    "good_01.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-79",
+      "cwe_name": "Cross-Site Scripting",
+      "mitigation": "auto_escape"
+    },
+    "bad_02.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-79",
+      "cwe_name": "Cross-Site Scripting",
+      "sink_line": 9,
+      "sink_function": "Markup",
+      "source_line": 6,
+      "source_type": "request_param"
+    },
+    "good_02.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-79",
+      "cwe_name": "Cross-Site Scripting",
+      "mitigation": "template_escape"
+    },
+    "bad_03_template.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-79",
+      "cwe_name": "Cross-Site Scripting",
+      "sink_line": 10,
+      "sink_function": "render_template_string",
+      "source_line": 6,
+      "source_type": "request_param"
+    },
+    "good_03_html_escape.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-79",
+      "cwe_name": "Cross-Site Scripting",
+      "mitigation": "html_escape"
+    }
+  },
+  "CWE611_XXE": {
+    "bad_01.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-611",
+      "cwe_name": "XML External Entity",
+      "sink_line": 8,
+      "sink_function": "etree.parse",
+      "source_line": 5,
+      "source_type": "file_input"
+    },
+    "good_01.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-611",
+      "cwe_name": "XML External Entity",
+      "mitigation": "disable_entities"
+    },
+    "bad_02.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-611",
+      "cwe_name": "XML External Entity",
+      "sink_line": 9,
+      "sink_function": "xml.etree.ElementTree.parse",
+      "source_line": 6,
+      "source_type": "request_body"
+    },
+    "good_02.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-611",
+      "cwe_name": "XML External Entity",
+      "mitigation": "defusedxml"
+    }
+  },
+  "CWE918_SSRF": {
+    "bad_01.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-918",
+      "cwe_name": "Server-Side Request Forgery",
+      "sink_line": 8,
+      "sink_function": "requests.get",
+      "source_line": 5,
+      "source_type": "user_input"
+    },
+    "good_01.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-918",
+      "cwe_name": "Server-Side Request Forgery",
+      "mitigation": "url_validation"
+    },
+    "bad_02.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-918",
+      "cwe_name": "Server-Side Request Forgery",
+      "sink_line": 9,
+      "sink_function": "urllib.request.urlopen",
+      "source_line": 6,
+      "source_type": "request_param"
+    },
+    "good_02.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-918",
+      "cwe_name": "Server-Side Request Forgery",
+      "mitigation": "internal_ip_check"
+    },
+    "bad_03_redirect.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-918",
+      "cwe_name": "Server-Side Request Forgery",
+      "sink_line": 10,
+      "sink_function": "requests.get",
+      "source_line": 7,
+      "source_type": "request_param"
+    },
+    "good_03_scheme_check.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-918",
+      "cwe_name": "Server-Side Request Forgery",
+      "mitigation": "scheme_and_host_validation"
+    }
+  },
+  "CWE798_Hardcoded_Credentials": {
+    "bad_01.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-798",
+      "cwe_name": "Hardcoded Credentials",
+      "sink_line": 5,
+      "sink_function": "connect",
+      "source_line": 3,
+      "source_type": "hardcoded"
+    },
+    "good_01.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-798",
+      "cwe_name": "Hardcoded Credentials",
+      "mitigation": "environment_variable"
+    }
+  },
+  "CWE327_Broken_Crypto": {
+    "bad_01.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-327",
+      "cwe_name": "Broken Crypto Algorithm",
+      "sink_line": 6,
+      "sink_function": "MD5",
+      "source_line": 6,
+      "source_type": "crypto_algorithm"
+    },
+    "good_01.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-327",
+      "cwe_name": "Broken Crypto Algorithm",
+      "mitigation": "bcrypt"
+    },
+    "bad_02.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-327",
+      "cwe_name": "Broken Crypto Algorithm",
+      "sink_line": 6,
+      "sink_function": "DES.new",
+      "source_line": 6,
+      "source_type": "crypto_algorithm"
+    },
+    "good_02.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-327",
+      "cwe_name": "Broken Crypto Algorithm",
+      "mitigation": "aes_gcm"
+    }
+  },
+  "CWE502_Insecure_Deserialization": {
+    "bad_01.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-502",
+      "cwe_name": "Insecure Deserialization",
+      "sink_line": 8,
+      "sink_function": "pickle.loads",
+      "source_line": 6,
+      "source_type": "request_body"
+    },
+    "good_01.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-502",
+      "cwe_name": "Insecure Deserialization",
+      "mitigation": "json_serialization"
+    },
+    "bad_02.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-502",
+      "cwe_name": "Insecure Deserialization",
+      "sink_line": 8,
+      "sink_function": "yaml.load",
+      "source_line": 6,
+      "source_type": "file_input"
+    },
+    "good_02.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-502",
+      "cwe_name": "Insecure Deserialization",
+      "mitigation": "safe_load"
+    },
+    "bad_03_jsonpickle.py": {
+      "vulnerable": true,
+      "cwe_id": "CWE-502",
+      "cwe_name": "Insecure Deserialization",
+      "sink_line": 9,
+      "sink_function": "jsonpickle.decode",
+      "source_line": 6,
+      "source_type": "request_body"
+    },
+    "good_03_json.py": {
+      "vulnerable": false,
+      "cwe_id": "CWE-502",
+      "cwe_name": "Insecure Deserialization",
+      "mitigation": "json_loads"
+    }
+  }
+}

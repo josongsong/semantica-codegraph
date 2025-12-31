@@ -1,0 +1,87 @@
+# Security-Focused Configuration
+# Use for: Security audits, vulnerability detection, compliance checks
+# Performance: Extreme cost, >60s latency, >10GB memory
+# Focus: Maximum precision for taint analysis and vulnerability detection
+
+version: 1
+preset: thorough
+
+stages:
+  # Security-relevant stages only
+  parsing: true
+  chunking: true
+  cross_file: true
+  cfg: true
+  dfg: true
+  pdg: true
+  type_inference: true
+
+  # Critical security analyses
+  taint: true
+  pta: true
+  effects: true
+
+  # Disable non-security stages
+  clone: false
+  repomap: false
+
+overrides:
+  # Maximum precision taint analysis
+  taint:
+    max_depth: 100
+    max_paths: 10000
+    use_points_to: true  # Critical for precision
+    field_sensitive: true
+    use_ssa: true
+    detect_sanitizers: true
+    enable_interprocedural: true
+    worklist_max_iterations: 1000
+
+  # Flow-sensitive PTA for maximum precision
+  # WARNING: This is very expensive (O(n⁴))
+  pta:
+    mode: flow_sensitive
+    max_iterations: 1000
+    field_sensitive: true
+    context_sensitive: 3  # 3-CFA for high precision
+    enable_cycle_elimination: true
+    use_cache: true
+
+  # Basic chunking (not focus)
+  chunking:
+    max_chunk_tokens: 512
+    overlap_tokens: 64
+    enable_semantic_split: true
+    min_chunk_tokens: 50
+
+  # Lexical search for source/sink detection
+  lexical:
+    enable_fuzzy: false  # Exact matches only
+    fuzzy_distance: 0
+    enable_ngram: false
+    ngram_size: 3
+    boost_exact_match: 5.0
+
+  # High parallelism for large codebases
+  parallel:
+    workers: 16  # Adjust based on available cores
+    batch_size: 200
+    enable_rayon: true
+
+  # Large caches for security analysis
+  cache:
+    enable_background_l2_writes: true
+    l0:
+      max_entries: 100000
+      enable_bloom_filter: true
+      expected_items: 1000000
+      false_positive_rate: 0.0001
+    l1:
+      max_entries: 10000
+      max_bytes: 4294967296  # 4GB
+      ttl_seconds: 14400  # 4 hours
+    l2:
+      cache_dir: ".cache/codegraph-security"
+      max_disk_bytes: 107374182400  # 100GB
+      enable_compression: true
+      enable_mmap: true

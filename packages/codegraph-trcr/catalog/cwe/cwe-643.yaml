@@ -1,0 +1,103 @@
+# CWE-643: Improper Neutralization of Data within XPath Expressions (XPath Injection)
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/643.html
+
+metadata:
+  cwe_id: CWE-643
+  name: "XPath Injection"
+  severity: high
+  owasp: "A03:2021-Injection"
+  category: "Injection"
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+  mitre_abstraction: base
+  likelihood_of_exploit: medium
+  references:
+    - https://cwe.mitre.org/data/definitions/643.html
+    - https://owasp.org/www-community/attacks/XPATH_Injection
+
+description: |
+  The software uses external input to construct XPath expressions used to
+  retrieve data from XML databases, but does not neutralize or incorrectly
+  neutralizes special characters.
+
+sources:
+  - id: source.user_input
+    description: "User-provided input"
+    patterns:
+      - flask.Request.args
+      - flask.Request.form
+      - django.http.HttpRequest.GET
+      - django.http.HttpRequest.POST
+
+sinks:
+  - id: sink.xpath
+    description: "XPath query execution"
+    patterns:
+      - call: lxml.etree.XPath
+        args: [0]
+      - base_type: lxml.etree._Element
+        call: xpath
+        args: [0]
+      - base_type: xml.etree.ElementTree.Element
+        call: findall
+        args: [0]
+      - base_type: xml.etree.ElementTree.Element
+        call: find
+        args: [0]
+
+sanitizers:
+  - id: barrier.xpath.parameterized
+    description: "Parameterized XPath"
+    patterns:
+      - call: XPath with variables
+      - call: escape_xpath_value
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.xpath
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: xpath
+
+validation:
+  min_test_cases: 6
+  min_precision: 0.90
+  min_recall: 0.85
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE643_XPath_Injection"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: String concatenation in XPath
+      query = f"//user[@name='{username}']"
+      result = root.xpath(query)
+
+  safe:
+    - |
+      # GOOD: Parameterized XPath
+      query = "//user[@name=$name]"
+      result = root.xpath(query, name=username)
+
+fix:
+  priority: 1
+  effort: medium
+  recommendations:
+    - title: "Use parameterized XPath"
+      severity: best
+      example: |
+        result = root.xpath("//user[@name=$n]", n=username)

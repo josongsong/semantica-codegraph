@@ -1,0 +1,38 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_918.PartialServerSideRequestForgery
+  kind: sink
+  tags: ['cwe_918', 'PartialServerSideRequestForgery', 'vulnerability']
+  severity: high
+  cwe: ["CWE-918"]
+  description: Making a network request to a URL that is partially user-controlled allows for request forgery attac
+  match:
+  -     call: PartialServerSideRequestForgery
+
+- id: sink.cwe_918.FullServerSideRequestForgery
+  kind: sink
+  tags: ['cwe_918', 'FullServerSideRequestForgery', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-918"]
+  description: Making a network request to a URL that is fully user-controlled allows for request forgery attacks.
+  match:
+  -     call: FullServerSideRequestForgery
+
+- id: sink.cwe_918.PartialServerSideRequestForgery
+  kind: sink
+  tags: ['cwe_918', 'PartialServerSideRequestForgery', 'vulnerability']
+  severity: high
+  cwe: ["CWE-918"]
+  description: Making a network request to a URL that is partially user-controlled allows for request forgery attac
+  match:
+  -     call: PartialServerSideRequestForgery
+
+- id: sink.cwe_918.FullServerSideRequestForgery
+  kind: sink
+  tags: ['cwe_918', 'FullServerSideRequestForgery', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-918"]
+  description: Making a network request to a URL that is fully user-controlled allows for request forgery attacks.
+  match:
+  -     call: FullServerSideRequestForgery

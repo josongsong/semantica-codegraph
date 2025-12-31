@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cve_2018_1281.BindToAllInterfaces
+  kind: sink
+  tags: ['cve_2018_1281', 'BindToAllInterfaces', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-200"]
+  description: Binding a socket to all interfaces opens it up to traffic from any IPv4 address
+  match:
+  -     call: BindToAllInterfaces
+
+- id: sink.cve_2018_1281.BindToAllInterfaces
+  kind: sink
+  tags: ['cve_2018_1281', 'BindToAllInterfaces', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-200"]
+  description: Binding a socket to all interfaces opens it up to traffic from any IPv4 address
+  match:
+  -     call: BindToAllInterfaces

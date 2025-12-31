@@ -1,0 +1,4049 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.pysa.emailsend.sendmail
+  kind: sink
+  tags: ['pysa', 'emailsend', 'sendmail', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: smtplib.SMTP
+    call: sendmail
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.send_mail
+  kind: sink
+  tags: ['pysa', 'emailsend', 'send_mail', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: django.core.mail
+    call: send_mail
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.__init__
+  kind: sink
+  tags: ['pysa', 'emailsend', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: django.core.mail.message.EmailMessage
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.message_from_string
+  kind: sink
+  tags: ['pysa', 'emailsend', 'message_from_string', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email
+    call: message_from_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.message_from_bytes
+  kind: sink
+  tags: ['pysa', 'emailsend', 'message_from_bytes', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email
+    call: message_from_bytes
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.parsestr
+  kind: sink
+  tags: ['pysa', 'emailsend', 'parsestr', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.parser.Parser
+    call: parsestr
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.parsestr
+  kind: sink
+  tags: ['pysa', 'emailsend', 'parsestr', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.parser.HeaderParser
+    call: parsestr
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.parsebytes
+  kind: sink
+  tags: ['pysa', 'emailsend', 'parsebytes', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.parser.BytesParser
+    call: parsebytes
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.parsebytes
+  kind: sink
+  tags: ['pysa', 'emailsend', 'parsebytes', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.parser.BytesHeaderParser
+    call: parsebytes
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.set_unixfrom
+  kind: sink
+  tags: ['pysa', 'emailsend', 'set_unixfrom', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.message.Message
+    call: set_unixfrom
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.attach
+  kind: sink
+  tags: ['pysa', 'emailsend', 'attach', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.message.Message
+    call: attach
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.set_payload
+  kind: sink
+  tags: ['pysa', 'emailsend', 'set_payload', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.message.Message
+    call: set_payload
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.__setitem__
+  kind: sink
+  tags: ['pysa', 'emailsend', '__setitem__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.message.Message
+    call: __setitem__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.add_header
+  kind: sink
+  tags: ['pysa', 'emailsend', 'add_header', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.message.Message
+    call: add_header
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.replace_header
+  kind: sink
+  tags: ['pysa', 'emailsend', 'replace_header', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.message.Message
+    call: replace_header
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.set_param
+  kind: sink
+  tags: ['pysa', 'emailsend', 'set_param', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.message.Message
+    call: set_param
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.set_content
+  kind: sink
+  tags: ['pysa', 'emailsend', 'set_content', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.message.MIMEPart
+    call: set_content
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.add_related
+  kind: sink
+  tags: ['pysa', 'emailsend', 'add_related', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.message.MIMEPart
+    call: add_related
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.add_alternative
+  kind: sink
+  tags: ['pysa', 'emailsend', 'add_alternative', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.message.MIMEPart
+    call: add_alternative
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.add_attachment
+  kind: sink
+  tags: ['pysa', 'emailsend', 'add_attachment', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.message.MIMEPart
+    call: add_attachment
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.set_content
+  kind: sink
+  tags: ['pysa', 'emailsend', 'set_content', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.contentmanager.ContentManager
+    call: set_content
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.__init__
+  kind: sink
+  tags: ['pysa', 'emailsend', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.mime.application.MIMEApplication
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.__init__
+  kind: sink
+  tags: ['pysa', 'emailsend', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.mime.audio.MIMEAudio
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.__init__
+  kind: sink
+  tags: ['pysa', 'emailsend', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.mime.image.MIMEImage
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.__init__
+  kind: sink
+  tags: ['pysa', 'emailsend', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.mime.message.MIMEMessage
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.emailsend.__init__
+  kind: sink
+  tags: ['pysa', 'emailsend', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: EmailSend"
+  match:
+  - base_type: email.mime.text.MIMEText
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.eval
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'eval', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - call: eval
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.eval
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'eval', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - call: eval
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.exec
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'exec', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - call: exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.exec
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'exec', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - call: exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.exec
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'exec', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - call: exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execimportsink.import_module
+  kind: sink
+  tags: ['pysa', 'execimportsink', 'import_module', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecImportSink"
+  match:
+  - base_type: importlib
+    call: import_module
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execimportsink.__import__
+  kind: sink
+  tags: ['pysa', 'execimportsink', '__import__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecImportSink"
+  match:
+  - call: __import__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execdeserializationsink.loads
+  kind: sink
+  tags: ['pysa', 'execdeserializationsink', 'loads', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  description: "Pysa sink: ExecDeserializationSink"
+  match:
+  - base_type: pickle
+    call: loads
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filecontentdeserializationsink.load
+  kind: sink
+  tags: ['pysa', 'filecontentdeserializationsink', 'load', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  description: "Pysa sink: FileContentDeserializationSink"
+  match:
+  - base_type: pickle
+    call: load
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filecontentdeserializationsink.__init__
+  kind: sink
+  tags: ['pysa', 'filecontentdeserializationsink', '__init__', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  description: "Pysa sink: FileContentDeserializationSink"
+  match:
+  - base_type: pickle.Unpickler
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execdeserializationsink.load
+  kind: sink
+  tags: ['pysa', 'execdeserializationsink', 'load', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  description: "Pysa sink: ExecDeserializationSink"
+  match:
+  - base_type: yaml
+    call: load
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execdeserializationsink.load_all
+  kind: sink
+  tags: ['pysa', 'execdeserializationsink', 'load_all', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  description: "Pysa sink: ExecDeserializationSink"
+  match:
+  - base_type: yaml
+    call: load_all
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.run
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'run', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: subprocess
+    call: run
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.call
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'call', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: subprocess
+    call: call
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.check_call
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'check_call', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: subprocess
+    call: check_call
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.check_output
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'check_output', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: subprocess
+    call: check_output
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.__init__
+  kind: sink
+  tags: ['pysa', 'execargsink', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: subprocess.Popen
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.create_subprocess_exec
+  kind: sink
+  tags: ['pysa', 'execargsink', 'create_subprocess_exec', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: asyncio.subprocess
+    call: create_subprocess_exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.create_subprocess_shell
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'create_subprocess_shell', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: asyncio.subprocess
+    call: create_subprocess_shell
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.subprocess_exec
+  kind: sink
+  tags: ['pysa', 'execargsink', 'subprocess_exec', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: asyncio.events.AbstractEventLoop
+    call: subprocess_exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.subprocess_shell
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'subprocess_shell', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: asyncio.events.AbstractEventLoop
+    call: subprocess_shell
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.execl
+  kind: sink
+  tags: ['pysa', 'execargsink', 'execl', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: execl
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.execle
+  kind: sink
+  tags: ['pysa', 'execargsink', 'execle', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: execle
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.execlp
+  kind: sink
+  tags: ['pysa', 'execargsink', 'execlp', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: execlp
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.execlpe
+  kind: sink
+  tags: ['pysa', 'execargsink', 'execlpe', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: execlpe
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.execv
+  kind: sink
+  tags: ['pysa', 'execargsink', 'execv', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: execv
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.execve
+  kind: sink
+  tags: ['pysa', 'execargsink', 'execve', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: execve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.execvp
+  kind: sink
+  tags: ['pysa', 'execargsink', 'execvp', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: execvp
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.execvpe
+  kind: sink
+  tags: ['pysa', 'execargsink', 'execvpe', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: execvpe
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.popen
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'popen', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: os
+    call: popen
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.spawnl
+  kind: sink
+  tags: ['pysa', 'execargsink', 'spawnl', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: spawnl
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.spawnle
+  kind: sink
+  tags: ['pysa', 'execargsink', 'spawnle', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: spawnle
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.spawnlp
+  kind: sink
+  tags: ['pysa', 'execargsink', 'spawnlp', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: spawnlp
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.spawnlpe
+  kind: sink
+  tags: ['pysa', 'execargsink', 'spawnlpe', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: spawnlpe
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.spawnv
+  kind: sink
+  tags: ['pysa', 'execargsink', 'spawnv', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: spawnv
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.spawnve
+  kind: sink
+  tags: ['pysa', 'execargsink', 'spawnve', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: spawnve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.spawnvp
+  kind: sink
+  tags: ['pysa', 'execargsink', 'spawnvp', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: spawnvp
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execargsink.spawnvpe
+  kind: sink
+  tags: ['pysa', 'execargsink', 'spawnvpe', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ExecArgSink"
+  match:
+  - base_type: os
+    call: spawnvpe
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.system
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'system', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: os
+    call: system
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.execdeserializationsink.loads
+  kind: sink
+  tags: ['pysa', 'execdeserializationsink', 'loads', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  description: "Pysa sink: ExecDeserializationSink"
+  match:
+  - base_type: marshal
+    call: loads
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.load
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'load', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: marshal
+    call: load
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filecontentdeserializationsink.open
+  kind: sink
+  tags: ['pysa', 'filecontentdeserializationsink', 'open', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  description: "Pysa sink: FileContentDeserializationSink"
+  match:
+  - base_type: shelve
+    call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.compile_command
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'compile_command', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: code
+    call: compile_command
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.runsource
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'runsource', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: code.InteractiveInterpreter
+    call: runsource
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.runcode
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'runcode', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: code.InteractiveInterpreter
+    call: runcode
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.push
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'push', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: code.InteractiveConsole
+    call: push
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.run_module
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'run_module', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: runpy
+    call: run_module
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.remotecodeexecution.run_path
+  kind: sink
+  tags: ['pysa', 'remotecodeexecution', 'run_path', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-094"]
+  description: "Pysa sink: RemoteCodeExecution"
+  match:
+  - base_type: runpy
+    call: run_path
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.execute
+  kind: sink
+  tags: ['pysa', 'sql', 'execute', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: sqlite3.Cursor
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.executemany
+  kind: sink
+  tags: ['pysa', 'sql', 'executemany', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: sqlite3.Cursor
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.executescript
+  kind: sink
+  tags: ['pysa', 'sql', 'executescript', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: sqlite3.Cursor
+    call: executescript
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.execute
+  kind: sink
+  tags: ['pysa', 'sql', 'execute', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: sqlite3.Connection
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.executemany
+  kind: sink
+  tags: ['pysa', 'sql', 'executemany', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: sqlite3.Connection
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.executescript
+  kind: sink
+  tags: ['pysa', 'sql', 'executescript', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: sqlite3.Connection
+    call: executescript
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.copyfile
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'copyfile', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil
+    call: copyfile
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.copy
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'copy', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil
+    call: copy
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.copy2
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'copy2', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil
+    call: copy2
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.move
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'move', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil
+    call: move
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.remove
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'remove', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: remove
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.rename
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'rename', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: rename
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.mkdir
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'mkdir', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: mkdir
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.makedirs
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'makedirs', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: makedirs
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.rmdir
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'rmdir', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: rmdir
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.walk
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'walk', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: walk
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.chmod
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'chmod', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: chmod
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.chown
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'chown', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: chown
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.lchown
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'lchown', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: lchown
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.access
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'access', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: access
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.chflags
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'chflags', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: chflags
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.lchflags
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'lchflags', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: lchflags
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.link
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'link', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: link
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.truncate
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'truncate', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: truncate
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.utime
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'utime', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: utime
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.chdir
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'chdir', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: chdir
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.chroot
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'chroot', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: chroot
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.putenv
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'putenv', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: putenv
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.unsetenv
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'unsetenv', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: unsetenv
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.removedirs
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'removedirs', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: removedirs
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.renames
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'renames', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: renames
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.replace
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'replace', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: replace
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.unlink
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'unlink', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: unlink
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.fwalk
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'fwalk', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: fwalk
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.removexattr
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'removexattr', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: removexattr
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.setxattr
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'setxattr', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: os
+    call: setxattr
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.__call__
+  kind: sink
+  tags: ['pysa', 'filesystem_other', '__call__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil._RmtreeType
+    call: __call__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.__call__
+  kind: sink
+  tags: ['pysa', 'filesystem_other', '__call__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil._RmtreeType
+    call: __call__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.__call__
+  kind: sink
+  tags: ['pysa', 'filesystem_other', '__call__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil._RmtreeType
+    call: __call__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.copymode
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'copymode', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil
+    call: copymode
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.copystat
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'copystat', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil
+    call: copystat
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.copytree
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'copytree', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil
+    call: copytree
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.chown
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'chown', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil
+    call: chown
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.make_archive
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'make_archive', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil
+    call: make_archive
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.unpack_archive
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'unpack_archive', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shutil
+    call: unpack_archive
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.temporaryfile
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'temporaryfile', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: tempfile
+    call: TemporaryFile
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.namedtemporaryfile
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'namedtemporaryfile', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: tempfile
+    call: NamedTemporaryFile
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.__init__
+  kind: sink
+  tags: ['pysa', 'filesystem_other', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: tempfile.SpooledTemporaryFile
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.__init__
+  kind: sink
+  tags: ['pysa', 'filesystem_other', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: tempfile.TemporaryDirectory
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.mkstemp
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'mkstemp', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: tempfile
+    call: mkstemp
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.mkdtemp
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'mkdtemp', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: tempfile
+    call: mkdtemp
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.getline
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'getline', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: linecache
+    call: getline
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.lazycache
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'lazycache', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: linecache
+    call: lazycache
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.load
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'load', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: marshal
+    call: load
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.dump
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'dump', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: marshal
+    call: dump
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.__init__
+  kind: sink
+  tags: ['pysa', 'filesystem_other', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shelve.DbfilenameShelf
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.open
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'open', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: shelve
+    call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.__init__
+  kind: sink
+  tags: ['pysa', 'filesystem_other', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pickle.Unpickler
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.load
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'load', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pickle
+    call: load
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.urlretrieve
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'urlretrieve', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: urllib.request
+    call: urlretrieve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.symlink_to
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'symlink_to', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pathlib.Path
+    call: symlink_to
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.rglob
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'rglob', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pathlib.Path
+    call: rglob
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.chmod
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'chmod', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pathlib.Path
+    call: chmod
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.lchmod
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'lchmod', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pathlib.Path
+    call: lchmod
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.mkdir
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'mkdir', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pathlib.Path
+    call: mkdir
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.rename
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'rename', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pathlib.Path
+    call: rename
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.replace
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'replace', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pathlib.Path
+    call: replace
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.rmdir
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'rmdir', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pathlib.Path
+    call: rmdir
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.touch
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'touch', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pathlib.Path
+    call: touch
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_other.unlink
+  kind: sink
+  tags: ['pysa', 'filesystem_other', 'unlink', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_Other"
+  match:
+  - base_type: pathlib.Path
+    call: unlink
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.serversidetemplateinjection.from_string
+  kind: sink
+  tags: ['pysa', 'serversidetemplateinjection', 'from_string', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ServerSideTemplateInjection"
+  match:
+  - base_type: django.template.engine.Engine
+    call: from_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.serversidetemplateinjection.__init__
+  kind: sink
+  tags: ['pysa', 'serversidetemplateinjection', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ServerSideTemplateInjection"
+  match:
+  - base_type: django.template.base.Template
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.formatstring.format
+  kind: sink
+  tags: ['pysa', 'formatstring', 'format', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FormatString"
+  match:
+  - base_type: str
+    call: format
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.responsedata.start_response
+  kind: source
+  tags: ['pysa', 'responsedata', 'start_response', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: ResponseData"
+  match:
+  - base_type: wsgiref.handlers.BaseHandler
+    call: start_response
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.responsedata.error_output
+  kind: source
+  tags: ['pysa', 'responsedata', 'error_output', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: ResponseData"
+  match:
+  - base_type: wsgiref.handlers.BaseHandler
+    call: error_output
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.responseheadername.__setitem__
+  kind: sink
+  tags: ['pysa', 'responseheadername', '__setitem__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ResponseHeaderName"
+  match:
+  - base_type: wsgiref.headers.Headers
+    call: __setitem__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.responseheadername.setdefault
+  kind: sink
+  tags: ['pysa', 'responseheadername', 'setdefault', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ResponseHeaderName"
+  match:
+  - base_type: wsgiref.headers.Headers
+    call: setdefault
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.responseheadername.add_header
+  kind: sink
+  tags: ['pysa', 'responseheadername', 'add_header', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ResponseHeaderName"
+  match:
+  - base_type: wsgiref.headers.Headers
+    call: add_header
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.returnedtouser.start_response
+  kind: sink
+  tags: ['pysa', 'returnedtouser', 'start_response', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ReturnedToUser"
+  match:
+  - base_type: wsgiref.handlers.BaseHandler
+    call: start_response
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.returnedtouser.write
+  kind: sink
+  tags: ['pysa', 'returnedtouser', 'write', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ReturnedToUser"
+  match:
+  - base_type: wsgiref.handlers.BaseHandler
+    call: write
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.log_exception
+  kind: sink
+  tags: ['pysa', 'logging', 'log_exception', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: wsgiref.handlers.BaseHandler
+    call: log_exception
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.returnedtouser._write
+  kind: sink
+  tags: ['pysa', 'returnedtouser', '_write', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ReturnedToUser"
+  match:
+  - base_type: wsgiref.handlers.SimpleHandler
+    call: _write
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.returnedtouser.send_error
+  kind: sink
+  tags: ['pysa', 'returnedtouser', 'send_error', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ReturnedToUser"
+  match:
+  - base_type: http.server.BaseHTTPRequestHandler
+    call: send_error
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.returnedtouser.send_response
+  kind: sink
+  tags: ['pysa', 'returnedtouser', 'send_response', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ReturnedToUser"
+  match:
+  - base_type: http.server.BaseHTTPRequestHandler
+    call: send_response
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.returnedtouser.send_response_only
+  kind: sink
+  tags: ['pysa', 'returnedtouser', 'send_response_only', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ReturnedToUser"
+  match:
+  - base_type: http.server.BaseHTTPRequestHandler
+    call: send_response_only
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_readwrite.urlretrieve
+  kind: sink
+  tags: ['pysa', 'filesystem_readwrite', 'urlretrieve', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_ReadWrite"
+  match:
+  - base_type: urllib.request
+    call: urlretrieve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_readwrite.__new__
+  kind: sink
+  tags: ['pysa', 'filesystem_readwrite', '__new__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_ReadWrite"
+  match:
+  - base_type: pathlib.PurePath
+    call: __new__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_readwrite.__truediv__
+  kind: sink
+  tags: ['pysa', 'filesystem_readwrite', '__truediv__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_ReadWrite"
+  match:
+  - base_type: pathlib.PurePath
+    call: __truediv__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_readwrite.__rtruediv__
+  kind: sink
+  tags: ['pysa', 'filesystem_readwrite', '__rtruediv__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_ReadWrite"
+  match:
+  - base_type: pathlib.PurePath
+    call: __rtruediv__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_readwrite.__new__
+  kind: sink
+  tags: ['pysa', 'filesystem_readwrite', '__new__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_ReadWrite"
+  match:
+  - base_type: pathlib.Path
+    call: __new__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_readwrite.read_bytes
+  kind: sink
+  tags: ['pysa', 'filesystem_readwrite', 'read_bytes', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_ReadWrite"
+  match:
+  - base_type: pathlib.Path
+    call: read_bytes
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_readwrite.read_text
+  kind: sink
+  tags: ['pysa', 'filesystem_readwrite', 'read_text', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_ReadWrite"
+  match:
+  - base_type: pathlib.Path
+    call: read_text
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_readwrite.write_bytes
+  kind: sink
+  tags: ['pysa', 'filesystem_readwrite', 'write_bytes', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_ReadWrite"
+  match:
+  - base_type: pathlib.Path
+    call: write_bytes
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_readwrite.write_text
+  kind: sink
+  tags: ['pysa', 'filesystem_readwrite', 'write_text', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_ReadWrite"
+  match:
+  - base_type: pathlib.Path
+    call: write_text
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sanitizer.pysa.sanitizer.write_bytes
+  kind: sanitizer
+  tags: ['pysa', 'sanitizer', 'write_bytes']
+  severity: medium
+  description: Pysa sanitizer
+  match:
+  - base_type: pathlib.Path
+    call: write_bytes
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sanitizer.pysa.sanitizer.write_text
+  kind: sanitizer
+  tags: ['pysa', 'sanitizer', 'write_text']
+  severity: medium
+  description: Pysa sanitizer
+  match:
+  - base_type: pathlib.Path
+    call: write_text
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.cliusercontrolled.parse_args
+  kind: source
+  tags: ['pysa', 'cliusercontrolled', 'parse_args', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: CLIUserControlled"
+  match:
+  - base_type: argparse.ArgumentParser
+    call: parse_args
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xmlparser.parse
+  kind: sink
+  tags: ['pysa', 'xmlparser', 'parse', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: XMLParser"
+  match:
+  - base_type: xml.etree.ElementTree
+    call: parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xmlparser.iterparse
+  kind: sink
+  tags: ['pysa', 'xmlparser', 'iterparse', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: XMLParser"
+  match:
+  - base_type: xml.etree.ElementTree
+    call: iterparse
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xmlparser.xml
+  kind: sink
+  tags: ['pysa', 'xmlparser', 'xml', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: XMLParser"
+  match:
+  - base_type: xml.etree.ElementTree
+    read: XML
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xmlparser.feed
+  kind: sink
+  tags: ['pysa', 'xmlparser', 'feed', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: XMLParser"
+  match:
+  - base_type: xml.etree.ElementTree.XMLParser
+    call: feed
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xmlparser.parse
+  kind: sink
+  tags: ['pysa', 'xmlparser', 'parse', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: XMLParser"
+  match:
+  - base_type: xml.dom.minidom
+    call: parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xmlparser.parsestring
+  kind: sink
+  tags: ['pysa', 'xmlparser', 'parsestring', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: XMLParser"
+  match:
+  - base_type: xml.dom.minidom
+    call: parseString
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xmlparser.parse
+  kind: sink
+  tags: ['pysa', 'xmlparser', 'parse', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: XMLParser"
+  match:
+  - base_type: xml.dom.pulldom
+    call: parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xmlparser.parsestring
+  kind: sink
+  tags: ['pysa', 'xmlparser', 'parsestring', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: XMLParser"
+  match:
+  - base_type: xml.dom.pulldom
+    call: parseString
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.getattr.getattr
+  kind: sink
+  tags: ['pysa', 'getattr', 'getattr', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: GetAttr"
+  match:
+  - call: getattr
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.cookies.get_signed_cookie
+  kind: source
+  tags: ['pysa', 'cookies', 'get_signed_cookie', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: Cookies"
+  match:
+  - base_type: django.http.request.HttpRequest
+    call: get_signed_cookie
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.headerdata.__repr__
+  kind: source
+  tags: ['pysa', 'headerdata', '__repr__', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: HeaderData"
+  match:
+  - base_type: django.http.request.HttpRequest
+    call: __repr__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.headerdata.build_request_repr
+  kind: source
+  tags: ['pysa', 'headerdata', 'build_request_repr', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: HeaderData"
+  match:
+  - base_type: django.http.request
+    call: build_request_repr
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.url.get_full_path
+  kind: source
+  tags: ['pysa', 'url', 'get_full_path', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: URL"
+  match:
+  - base_type: django.http.request.HttpRequest
+    call: get_full_path
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.url.build_absolute_uri
+  kind: source
+  tags: ['pysa', 'url', 'build_absolute_uri', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: URL"
+  match:
+  - base_type: django.http.request.HttpRequest
+    call: build_absolute_uri
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.headerdata.serialize_headers
+  kind: source
+  tags: ['pysa', 'headerdata', 'serialize_headers', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: HeaderData"
+  match:
+  - base_type: django.http.response.HttpResponseBase
+    call: serialize_headers
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.headerdata.__bytes__
+  kind: source
+  tags: ['pysa', 'headerdata', '__bytes__', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: HeaderData"
+  match:
+  - base_type: django.http.response.HttpResponseBase
+    call: __bytes__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.headerdata.items
+  kind: source
+  tags: ['pysa', 'headerdata', 'items', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: HeaderData"
+  match:
+  - base_type: django.http.response.HttpResponseBase
+    call: items
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.headerdata.get
+  kind: source
+  tags: ['pysa', 'headerdata', 'get', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: HeaderData"
+  match:
+  - base_type: django.http.response.HttpResponseBase
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.headerdata.__getitem__
+  kind: source
+  tags: ['pysa', 'headerdata', '__getitem__', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: HeaderData"
+  match:
+  - base_type: django.http.response.HttpResponseBase
+    call: __getitem__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.headerdata.serialize
+  kind: source
+  tags: ['pysa', 'headerdata', 'serialize', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: HeaderData"
+  match:
+  - base_type: django.http.response.HttpResponse
+    call: serialize
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.headerdata.__bytes__
+  kind: source
+  tags: ['pysa', 'headerdata', '__bytes__', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: HeaderData"
+  match:
+  - base_type: django.http.response.HttpResponse
+    call: __bytes__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.responsedata.content
+  kind: source
+  tags: ['pysa', 'responsedata', 'content', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: ResponseData"
+  match:
+  - base_type: django.http.response.HttpResponse
+    call: content
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.responsedata.__iter__
+  kind: source
+  tags: ['pysa', 'responsedata', '__iter__', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: ResponseData"
+  match:
+  - base_type: django.http.response.HttpResponse
+    call: __iter__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.responsedata.getvalue
+  kind: source
+  tags: ['pysa', 'responsedata', 'getvalue', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: ResponseData"
+  match:
+  - base_type: django.http.response.HttpResponse
+    call: getvalue
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.memcache.get
+  kind: source
+  tags: ['pysa', 'memcache', 'get', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: MemCache"
+  match:
+  - base_type: django.core.cache.backends.base.BaseCache
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.memcache.get_many
+  kind: source
+  tags: ['pysa', 'memcache', 'get_many', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: MemCache"
+  match:
+  - base_type: django.core.cache.backends.base.BaseCache
+    call: get_many
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.responseheadervalue.__init__
+  kind: sink
+  tags: ['pysa', 'responseheadervalue', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ResponseHeaderValue"
+  match:
+  - base_type: django.http.response.HttpResponse
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.returnedtouser.__init__
+  kind: sink
+  tags: ['pysa', 'returnedtouser', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ReturnedToUser"
+  match:
+  - base_type: django.http.response.HttpResponse
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.responseheadername.__setitem__
+  kind: sink
+  tags: ['pysa', 'responseheadername', '__setitem__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ResponseHeaderName"
+  match:
+  - base_type: django.http.response.HttpResponseBase
+    call: __setitem__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.responseheadername.setdefault
+  kind: sink
+  tags: ['pysa', 'responseheadername', 'setdefault', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: ResponseHeaderName"
+  match:
+  - base_type: django.http.response.HttpResponseBase
+    call: setdefault
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.redirect.__init__
+  kind: sink
+  tags: ['pysa', 'redirect', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Redirect"
+  match:
+  - base_type: django.http.response.HttpResponseRedirect
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.redirect.redirect
+  kind: sink
+  tags: ['pysa', 'redirect', 'redirect', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Redirect"
+  match:
+  - base_type: django.shortcuts
+    call: redirect
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.filesystem_readwrite.render
+  kind: sink
+  tags: ['pysa', 'filesystem_readwrite', 'render', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: FileSystem_ReadWrite"
+  match:
+  - base_type: django.shortcuts
+    call: render
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xss.render
+  kind: sink
+  tags: ['pysa', 'xss', 'render', 'vulnerability']
+  severity: high
+  cwe: ["CWE-079"]
+  description: "Pysa sink: XSS"
+  match:
+  - base_type: django.shortcuts
+    call: render
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.memcachesink.set
+  kind: sink
+  tags: ['pysa', 'memcachesink', 'set', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: MemcacheSink"
+  match:
+  - base_type: django.core.cache.backends.base.BaseCache
+    call: set
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.memcachesink.set_many
+  kind: sink
+  tags: ['pysa', 'memcachesink', 'set_many', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: MemcacheSink"
+  match:
+  - base_type: django.core.cache.backends.base.BaseCache
+    call: set_many
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.raw
+  kind: sink
+  tags: ['pysa', 'sql', 'raw', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: django.db.models.manager.Manager
+    call: raw
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.execute
+  kind: sink
+  tags: ['pysa', 'sql', 'execute', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: django.db.backends.utils.CursorWrapper
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.executemany
+  kind: sink
+  tags: ['pysa', 'sql', 'executemany', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: django.db.backends.utils.CursorWrapper
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.execute
+  kind: sink
+  tags: ['pysa', 'sql', 'execute', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: django.db.backends.mysql.base.CursorWrapper
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.executemany
+  kind: sink
+  tags: ['pysa', 'sql', 'executemany', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: django.db.backends.mysql.base.CursorWrapper
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.extra
+  kind: sink
+  tags: ['pysa', 'sql', 'extra', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: django.db.models.query.QuerySet
+    call: extra
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.sql.__init__
+  kind: sink
+  tags: ['pysa', 'sql', '__init__', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa sink: SQL"
+  match:
+  - base_type: django.db.models.expressions.RawSQL
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xss.format_html
+  kind: sink
+  tags: ['pysa', 'xss', 'format_html', 'vulnerability']
+  severity: high
+  cwe: ["CWE-079"]
+  description: "Pysa sink: XSS"
+  match:
+  - base_type: django.utils.html
+    call: format_html
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xss.format_html_join
+  kind: sink
+  tags: ['pysa', 'xss', 'format_html_join', 'vulnerability']
+  severity: high
+  cwe: ["CWE-079"]
+  description: "Pysa sink: XSS"
+  match:
+  - base_type: django.utils.html
+    call: format_html_join
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xss.mark_safe
+  kind: sink
+  tags: ['pysa', 'xss', 'mark_safe', 'vulnerability']
+  severity: high
+  cwe: ["CWE-079"]
+  description: "Pysa sink: XSS"
+  match:
+  - base_type: django.utils.safestring
+    call: mark_safe
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xss.content
+  kind: sink
+  tags: ['pysa', 'xss', 'content', 'vulnerability']
+  severity: high
+  cwe: ["CWE-079"]
+  description: "Pysa sink: XSS"
+  match:
+  - base_type: django.http.response.HttpResponse
+    call: content
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.xss.__init__
+  kind: sink
+  tags: ['pysa', 'xss', '__init__', 'vulnerability']
+  severity: high
+  cwe: ["CWE-079"]
+  description: "Pysa sink: XSS"
+  match:
+  - base_type: django.http.response.HttpResponse
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.__init__
+  kind: sink
+  tags: ['pysa', 'logging', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: BaseException
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.debug
+  kind: sink
+  tags: ['pysa', 'logging', 'debug', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.Logger
+    call: debug
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.info
+  kind: sink
+  tags: ['pysa', 'logging', 'info', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.Logger
+    call: info
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.warning
+  kind: sink
+  tags: ['pysa', 'logging', 'warning', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.Logger
+    call: warning
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.error
+  kind: sink
+  tags: ['pysa', 'logging', 'error', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.Logger
+    call: error
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.exception
+  kind: sink
+  tags: ['pysa', 'logging', 'exception', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.Logger
+    call: exception
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.critical
+  kind: sink
+  tags: ['pysa', 'logging', 'critical', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.Logger
+    call: critical
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.log
+  kind: sink
+  tags: ['pysa', 'logging', 'log', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.Logger
+    call: log
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.critical
+  kind: sink
+  tags: ['pysa', 'logging', 'critical', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging
+    call: critical
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.error
+  kind: sink
+  tags: ['pysa', 'logging', 'error', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging
+    call: error
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.exception
+  kind: sink
+  tags: ['pysa', 'logging', 'exception', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging
+    call: exception
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.warning
+  kind: sink
+  tags: ['pysa', 'logging', 'warning', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging
+    call: warning
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.warn
+  kind: sink
+  tags: ['pysa', 'logging', 'warn', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging
+    call: warn
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.info
+  kind: sink
+  tags: ['pysa', 'logging', 'info', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging
+    call: info
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.debug
+  kind: sink
+  tags: ['pysa', 'logging', 'debug', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging
+    call: debug
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.log
+  kind: sink
+  tags: ['pysa', 'logging', 'log', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging
+    call: log
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.debug
+  kind: sink
+  tags: ['pysa', 'logging', 'debug', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.LoggerAdapter
+    call: debug
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.info
+  kind: sink
+  tags: ['pysa', 'logging', 'info', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.LoggerAdapter
+    call: info
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.warning
+  kind: sink
+  tags: ['pysa', 'logging', 'warning', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.LoggerAdapter
+    call: warning
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.warn
+  kind: sink
+  tags: ['pysa', 'logging', 'warn', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.LoggerAdapter
+    call: warn
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.error
+  kind: sink
+  tags: ['pysa', 'logging', 'error', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.LoggerAdapter
+    call: error
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.exception
+  kind: sink
+  tags: ['pysa', 'logging', 'exception', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.LoggerAdapter
+    call: exception
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.critical
+  kind: sink
+  tags: ['pysa', 'logging', 'critical', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.LoggerAdapter
+    call: critical
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.logging.log
+  kind: sink
+  tags: ['pysa', 'logging', 'log', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Logging"
+  match:
+  - base_type: logging.LoggerAdapter
+    call: log
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.request
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'request', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.api
+    call: request
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.get
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'get', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.api
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.options
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'options', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.api
+    call: options
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.head
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'head', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.api
+    call: head
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.post
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'post', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.api
+    call: post
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.put
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'put', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.api
+    call: put
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.patch
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'patch', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.api
+    call: patch
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.delete
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'delete', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.api
+    call: delete
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.get
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'get', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.sessions.Session
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.options
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'options', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.sessions.Session
+    call: options
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.head
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'head', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.sessions.Session
+    call: head
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.post
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'post', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.sessions.Session
+    call: post
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.put
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'put', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.sessions.Session
+    call: put
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.patch
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'patch', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.sessions.Session
+    call: patch
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.delete
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'delete', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.sessions.Session
+    call: delete
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.request
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'request', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: requests.sessions.Session
+    call: request
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.urlopen
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'urlopen', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: urllib.request
+    call: urlopen
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.urlretrieve
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'urlretrieve', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: urllib.request
+    call: urlretrieve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.open
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'open', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: urllib.request.URLopener
+    call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.open_unknown
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'open_unknown', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: urllib.request.URLopener
+    call: open_unknown
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.retrieve
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'retrieve', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: urllib.request.URLopener
+    call: retrieve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.datafrominternet.getresponse
+  kind: source
+  tags: ['pysa', 'datafrominternet', 'getresponse', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: DataFromInternet"
+  match:
+  - base_type: http.client.HTTPConnection
+    call: getresponse
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_metadata.request
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_metadata', 'request', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_METADATA"
+  match:
+  - base_type: requests.api
+    call: request
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.get
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'get', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.api
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.options
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'options', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.api
+    call: options
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.head
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'head', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.api
+    call: head
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.post
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'post', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.api
+    call: post
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.put
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'put', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.api
+    call: put
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.patch
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'patch', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.api
+    call: patch
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.delete
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'delete', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.api
+    call: delete
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.get
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'get', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.sessions.Session
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.options
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'options', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.sessions.Session
+    call: options
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.head
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'head', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.sessions.Session
+    call: head
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.post
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'post', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.sessions.Session
+    call: post
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.put
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'put', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.sessions.Session
+    call: put
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.patch
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'patch', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.sessions.Session
+    call: patch
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.delete
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'delete', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: requests.sessions.Session
+    call: delete
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_metadata.request
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_metadata', 'request', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_METADATA"
+  match:
+  - base_type: requests.sessions.Session
+    call: request
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.authentication.__init__
+  kind: sink
+  tags: ['pysa', 'authentication', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Authentication"
+  match:
+  - base_type: requests.models.Request
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.authentication.prepare
+  kind: sink
+  tags: ['pysa', 'authentication', 'prepare', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: Authentication"
+  match:
+  - base_type: requests.models.PreparedRequest
+    call: prepare
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.urlopen
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'urlopen', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: urllib.request
+    call: urlopen
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.urlretrieve
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'urlretrieve', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: urllib.request
+    call: urlretrieve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.open
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'open', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: urllib.request.URLopener
+    call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.open_unknown
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'open_unknown', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: urllib.request.URLopener
+    call: open_unknown
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.retrieve
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'retrieve', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: urllib.request.URLopener
+    call: retrieve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.__init__
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: http.client.HTTPConnection
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.__init__
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: http.client.HTTPSConnection
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.__init__
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', '__init__', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: http.client.HTTPSConnection
+    call: __init__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_metadata.request
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_metadata', 'request', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_METADATA"
+  match:
+  - base_type: http.client.HTTPConnection
+    call: request
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.set_tunnel
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'set_tunnel', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: http.client.HTTPConnection
+    call: set_tunnel
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_metadata.putrequest
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_metadata', 'putrequest', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_METADATA"
+  match:
+  - base_type: http.client.HTTPConnection
+    call: putrequest
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_metadata.putheader
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_metadata', 'putheader', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_METADATA"
+  match:
+  - base_type: http.client.HTTPConnection
+    call: putheader
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.create_connection
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'create_connection', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: socket
+    call: create_connection
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.connect
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'connect', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: _socket.socket
+    call: connect
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_uri.connect_ex
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_uri', 'connect_ex', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_URI"
+  match:
+  - base_type: _socket.socket
+    call: connect_ex
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_data.send
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_data', 'send', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_DATA"
+  match:
+  - base_type: _socket.socket
+    call: send
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.pysa.httpclientrequest_data.sendall
+  kind: sink
+  tags: ['pysa', 'httpclientrequest_data', 'sendall', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa sink: HTTPClientRequest_DATA"
+  match:
+  - base_type: _socket.socket
+    call: sendall
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.usercontrolled.post
+  kind: source
+  tags: ['pysa', 'usercontrolled', 'post', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: UserControlled"
+  match:
+  - base_type: rest_framework.request.Request
+    read: POST
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.usercontrolled.files
+  kind: source
+  tags: ['pysa', 'usercontrolled', 'files', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: UserControlled"
+  match:
+  - base_type: rest_framework.request.Request
+    read: FILES
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.usercontrolled.data
+  kind: source
+  tags: ['pysa', 'usercontrolled', 'data', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: UserControlled"
+  match:
+  - base_type: rest_framework.request.Request
+    read: DATA
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.usercontrolled.query_params
+  kind: source
+  tags: ['pysa', 'usercontrolled', 'query_params', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: UserControlled"
+  match:
+  - base_type: rest_framework.request.Request
+    read: QUERY_PARAMS
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.usercontrolled.data
+  kind: source
+  tags: ['pysa', 'usercontrolled', 'data', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: UserControlled"
+  match:
+  - base_type: rest_framework.request.Request
+    call: data
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.usercontrolled.query_params
+  kind: source
+  tags: ['pysa', 'usercontrolled', 'query_params', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: UserControlled"
+  match:
+  - base_type: rest_framework.request.Request
+    read: query_params
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.usercontrolled.content_type
+  kind: source
+  tags: ['pysa', 'usercontrolled', 'content_type', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: UserControlled"
+  match:
+  - base_type: rest_framework.request.Request
+    call: content_type
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.usercontrolled.stream
+  kind: source
+  tags: ['pysa', 'usercontrolled', 'stream', 'untrusted']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: "Pysa source: UserControlled"
+  match:
+  - base_type: rest_framework.request.Request
+    call: stream
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.sqlcontrolled.execute
+  kind: source
+  tags: ['pysa', 'sqlcontrolled', 'execute', 'untrusted']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa source: SQLControlled"
+  match:
+  - base_type: MySQLdb.cursors.BaseCursor
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.sqlcontrolled.executemany
+  kind: source
+  tags: ['pysa', 'sqlcontrolled', 'executemany', 'untrusted']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa source: SQLControlled"
+  match:
+  - base_type: MySQLdb.cursors.BaseCursor
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.sqlcontrolled.execute
+  kind: source
+  tags: ['pysa', 'sqlcontrolled', 'execute', 'untrusted']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa source: SQLControlled"
+  match:
+  - base_type: MySQLdb.cursors.BaseCursor
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: source.pysa.sqlcontrolled.executemany
+  kind: source
+  tags: ['pysa', 'sqlcontrolled', 'executemany', 'untrusted']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: "Pysa source: SQLControlled"
+  match:
+  - base_type: MySQLdb.cursors.BaseCursor
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const

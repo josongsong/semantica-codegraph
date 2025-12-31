@@ -1,0 +1,20 @@
+# CODEOWNERS - 코드 리뷰 자동 할당
+
+# 전체 프로젝트
+* @josongmin
+
+# Agent 관련
+/src/agent/ @josongmin
+/tests/agent/ @josongmin
+
+# 인프라 관련
+/infra/ @josongmin
+/docker-compose*.yml @josongmin
+/Dockerfile* @josongmin
+
+# CI/CD
+/.github/ @josongmin
+
+# 문서
+/docs/ @josongmin
+/*.md @josongmin

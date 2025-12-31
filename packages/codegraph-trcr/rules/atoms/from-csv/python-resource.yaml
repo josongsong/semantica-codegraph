@@ -1,0 +1,26 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.resource.dos_regex
+  kind: sink
+  tags: ['resource', 'dos_regex', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1333"]
+  owasp: "A03:2021-Injection"
+  description: Regular expression denial of service
+  match:
+  -     base_type: re
+        call: compile
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: match
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: search
+        args: [0]
+        constraints:
+          arg_type: not_const

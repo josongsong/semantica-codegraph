@@ -1,0 +1,191 @@
+[package]
+name = "codegraph-ir"
+version = "0.1.0"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[lib]
+name = "codegraph_ir"
+crate-type = ["cdylib", "rlib"]  # rlib needed for benchmarks
+
+[dependencies]
+# codegraph-core removed - using shared::models as SSOT
+# PyO3 is optional - only needed for Python bindings (cdylib)
+# Tests and benchmarks use rlib without Python dependency
+pyo3 = { workspace = true, optional = true }
+rayon = { workspace = true }
+walkdir = "2"  # For recursive directory traversal in IR Build
+tree-sitter = { workspace = true }
+tree-sitter-python = { workspace = true }
+tree-sitter-java = { workspace = true }
+tree-sitter-typescript = { workspace = true }
+tree-sitter-kotlin = { workspace = true }
+tree-sitter-rust = { workspace = true }
+tree-sitter-go = { workspace = true }
+petgraph = { workspace = true }  # NOTE: Still used by cross_file/dep_graph.rs, pdg, symbol_graph
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = "0.9"  # RFC-001: YAML configuration support
+regex = "1.10"
+num_cpus = "1.16"
+sha2 = "0.10"
+lazy_static = "1.4"
+ahash = { version = "0.8", features = ["serde"] }  # Fast hash map for SOTA algorithms
+rustc-hash = "2.1"  # FxHashMap for SOTA points-to analysis
+thiserror = "1.0"  # Derive macro for std::error::Error
+uuid = { version = "1.0", features = ["v4"] }  # RFC-071: Session IDs
+lru = "0.12"  # LRU cache for function summaries (SOTA interprocedural)
+chrono = { version = "0.4", features = ["serde"] }  # DateTime for git history analysis + Storage Backend
+pythonize = { version = "0.20", optional = true }  # Python object conversion
+tracing = "0.1"  # Logging framework for graph_builder
+once_cell = "1.19"  # Lazy static initialization (used for preprocessor)
+
+# RFC-078: Lexical Search - SOTA Native Tantivy
+tantivy = "0.22"       # Native full-text search engine (2x faster than Lucene)
+async-trait = "0.1"    # Async trait definitions for ChunkStore
+tokio = { version = "1.40", features = ["macros", "rt-multi-thread"] }  # Async runtime for tests
+
+# RFC-074: PostgreSQL Storage Backend (SOTA Production)
+# Using default-features = false to only include PostgreSQL driver
+# Migrations run manually via sqlx-cli to avoid dependency conflicts
+# NOTE: Upgraded to 0.8 to fix libsqlite3-sys version conflict with codegraph-storage
+sqlx = { version = "0.8", default-features = false, features = ["postgres", "runtime-tokio-native-tls", "chrono", "uuid", "macros", "json"] }
+
+# RFC-RUST-ENGINE Phase 2: Framing Protocol
+rmp-serde = "1.1"      # msgpack serialization
+byteorder = "1.5"      # u32 little-endian framing
+dashmap = { version = "5.5", features = ["rayon"] }  # Concurrent HashMap with parallel iteration
+parking_lot = "0.12"   # Fast synchronization primitives
+
+# RFC-062: Apache Arrow IPC (Zero-copy)
+arrow = "54.0"         # Apache Arrow columnar format
+arrow-ipc = "54.0"     # Arrow IPC streaming format
+
+# RFC-073: File Watcher (SOTA Rust-native)
+notify = "6.1"         # Cross-platform file system notifications
+
+# SMT Solving (optional Z3 backend)
+z3-sys = { version = "0.8", optional = true }  # Z3 theorem prover bindings
+
+# SQLite backend (optional, for chunk_store legacy code)
+rusqlite = { version = "0.32", features = ["bundled"], optional = true }
+
+# RFC-001: Git Integration for Differential Taint Analysis
+git2 = "0.19"  # Git operations for commit comparison
+
+# RFC-CONFIG-SYSTEM: Tiered Cache dependencies
+blake3 = "1.5"  # Fast hashing for cache keys
+probabilistic-collections = { version = "0.7", features = ["serde"] }  # Bloom filter for L0 cache
+moka = { version = "0.12", features = ["future", "sync"] }  # L1 adaptive cache with TTL
+prometheus = "0.13"  # Metrics for cache hit/miss rates
+rkyv = { version = "0.7", features = ["validation"] }  # Zero-copy serialization for L2 cache
+memmap2 = "0.9"  # Memory-mapped file I/O for L2 disk cache
+
+# RFC-002: Benchmark system
+clap = { version = "4.4", features = ["derive"] }
+
+# Temporary file handling (used in differential taint analysis)
+tempfile = "3.8"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# Property-based testing
+proptest = "1.4"
+quickcheck = "1.0"
+quickcheck_macros = "1.0"
+arbitrary = { version = "1.3", features = ["derive"] }
+
+# Concurrency testing
+loom = "0.7"
+
+# Test utilities
+pretty_assertions = "1.4"
+
+# Standalone example (no dependencies on lib)
+# NOTE: Disabled - file not found
+# [[example]]
+# name = "taint_bench_standalone"
+# path = "examples/taint_bench_standalone.rs"
+# crate-type = ["bin"]
+
+# RFC-002: Benchmark CLI
+[[bin]]
+name = "bench-codegraph"
+path = "src/bin/bench-codegraph.rs"
+
+[[bin]]
+name = "differential-taint-cli"
+path = "src/bin/differential_taint_cli.rs"
+
+[features]
+default = ["parallel", "sqlite"]  # Default: parallel algorithms + SQLite + PostgreSQL storage
+parallel = []  # Enable parallel algorithms in points-to analysis
+trace = []     # Enable tracing for debugging
+python = ["pyo3", "pythonize"]  # Enable Python bindings (required for cdylib, maturin automatically enables this)
+z3 = ["z3-sys"]  # Enable Z3 SMT solver backend (adds ~10-15MB to binary)
+smt-full = ["z3"]  # Alias for full SMT capabilities
+sqlite = ["rusqlite"]  # Enable SQLite backend for chunk_store
+
+[[bench]]
+name = "pattern_registry_bench"
+harness = false
+
+[[bench]]
+name = "storage_benchmarks"
+harness = false
+
+# Taint Analysis Benchmarks (migrated to benches/taint/)
+[[bench]]
+name = "taint_legacy"
+path = "benches/taint/legacy_benchmark.rs"
+harness = false
+
+[[bench]]
+name = "taint_standalone"
+path = "benches/taint/standalone.rs"
+harness = false
+
+[[bench]]
+name = "ifds_benchmark"
+path = "benches/taint/ifds_benchmark.rs"
+harness = false
+
+[[bench]]
+name = "ifds_ground_truth"
+path = "benches/taint/ground_truth.rs"
+harness = false
+
+# Important Benchmarks (previously unregistered)
+[[bench]]
+name = "config_benchmarks"
+harness = false
+
+[[bench]]
+name = "smt_benchmark"
+harness = false
+
+[[bench]]
+name = "pipeline_benchmarks"
+harness = false
+
+[[bench]]
+name = "unified_orchestrator_bench"
+harness = false
+
+[[bench]]
+name = "effect_analysis_ground_truth"
+harness = false
+
+[[bench]]
+name = "parsing_benchmarks"
+harness = false
+
+# Unit test targets (tests/unit/)
+[[test]]
+name = "lexical_advanced_tests"
+path = "tests/unit/lexical_advanced_tests.rs"
+
+# Note: profile.release is defined in workspace root Cargo.toml

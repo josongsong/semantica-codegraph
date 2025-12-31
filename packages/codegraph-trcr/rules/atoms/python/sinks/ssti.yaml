@@ -1,0 +1,53 @@
+# Python Server-Side Template Injection (SSTI) Sinks
+# CWE-1336: Server-Side Template Injection
+# OWASP: A03:2021-Injection
+
+atoms:
+# =============================================================================
+# Jinja2
+# =============================================================================
+- id: sink.ssti.jinja2
+  kind: sink
+  tags: [injection, ssti, template, rce]
+  severity: critical
+  cwe: ["CWE-1336"]
+  description: Jinja2 template injection
+  match:
+  - base_type: jinja2.Template
+    call: render
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: jinja2.Template
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: jinja2.Environment
+    call: from_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: render_template_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# Mako
+# =============================================================================
+- id: sink.ssti.mako
+  kind: sink
+  tags: [injection, ssti, template, rce]
+  severity: critical
+  cwe: ["CWE-1336"]
+  description: Mako template injection
+  match:
+  - base_type: mako.template.Template
+    call: render
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: mako.template.Template
+    args: [0]
+    constraints:
+      arg_type: not_const

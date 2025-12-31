@@ -1,0 +1,32 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.crypto.weak_key_size
+  kind: sink
+  tags: ['crypto', 'weak_key_size', 'vulnerability']
+  severity: high
+  cwe: ["CWE-326"]
+  owasp: "A02:2021-Cryptographic Failures"
+  description: Weak cryptographic key size
+  match:
+  -     base_type: RSA
+        call: generate
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: DSA
+        call: generate
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: barrier.crypto.aes_gcm
+  kind: sanitizer
+  tags: ['crypto', 'aes_gcm', 'safety']
+  severity: high
+  description: Strong AES-GCM encryption
+  match:
+  -     base_type: Crypto.Cipher.AES
+        read: MODE_GCM
+  -     base_type: cryptography.hazmat.primitives.ciphers.modes
+        read: GCM

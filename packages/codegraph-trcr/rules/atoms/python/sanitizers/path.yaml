@@ -1,0 +1,25 @@
+# Python Path Traversal Sanitizers
+# CWE-22: Path Traversal Prevention
+
+atoms:
+# =============================================================================
+# Path Validation
+# =============================================================================
+- id: barrier.path.validation
+  kind: sanitizer
+  tags: [safety, path, file]
+  description: Path validation functions
+  scope: return
+  match:
+  - call: os.path.realpath
+    scope: return
+  - call: realpath
+    scope: return
+  - call: os.path.abspath
+    scope: return
+  - call: abspath
+    scope: return
+  - call: secure_filename
+    scope: return
+  - call: werkzeug.utils.secure_filename
+    scope: return

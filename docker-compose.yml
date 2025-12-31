@@ -1,0 +1,102 @@
+# ========================================================================
+# Semantica v2 Agent - Docker Compose
+# ========================================================================
+# SOTA급 프로덕션 배포 설정
+# Agent + Multi-Agent + Monitoring (Prometheus + Grafana)
+# ========================================================================
+
+version: '3.8'
+
+services:
+  # ========================================================================
+  # Agent Service (v7 통합)
+  # Port/Adapter + Domain Model + Multi-Agent + Human-in-the-loop
+  # ========================================================================
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+      target: ${BUILD_TARGET:-production}
+    container_name: codegraph-agent
+    environment:
+      # Database (기본: SQLite, 선택: PostgreSQL)
+      SEMANTICA_DATABASE_URL: ${DATABASE_URL:-sqlite:///./app/data/codegraph.db}
+      # PostgreSQL 사용 시: postgresql://${POSTGRES_USER:-codegraph}:${POSTGRES_PASSWORD:-codegraph_dev}@postgres:5432/${POSTGRES_DB:-codegraph}
+      # Qdrant (Embedded Mode)
+      SEMANTICA_QDRANT_MODE: embedded
+      SEMANTICA_QDRANT_STORAGE_PATH: /app/data/qdrant_storage
+      SEMANTICA_QDRANT_COLLECTION_NAME: ${QDRANT_COLLECTION:-codegraph}
+      # LLM
+      SEMANTICA_OPENAI_API_KEY: ${OPENAI_API_KEY}
+      SEMANTICA_ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      SEMANTICA_EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      # E2B Sandbox
+      E2B_API_KEY: ${E2B_API_KEY}
+      # Application
+      SEMANTICA_LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SEMANTICA_ENVIRONMENT: ${ENVIRONMENT:-production}
+      SEMANTICA_API_HOST: 0.0.0.0
+      SEMANTICA_API_PORT: 8000
+      # Multi-Agent
+      AGENT_LOCK_TTL_SECONDS: ${AGENT_LOCK_TTL:-1800}
+      AGENT_MAX_CONCURRENT: ${AGENT_MAX_CONCURRENT:-5}
+      # Monitoring
+      PROMETHEUS_MULTIPROC_DIR: /app/metrics
+    ports:
+      - "${AGENT_API_PORT:-7210}:8000"
+      - "${AGENT_METRICS_PORT:-9090}:9090"
+    volumes:
+      # 개발 환경: 코드 마운트
+      - ./src:/app/src:ro
+      - ./server:/app/server:ro
+      # 작업 공간
+      - agent_workspace:/app/.agent_workspace
+      # 로그
+      - ./logs:/app/logs
+      # Metrics (Prometheus multiprocess mode)
+      - agent_metrics:/app/metrics
+    networks:
+      - codegraph-network
+    # depends_on:
+      # PostgreSQL 사용 시 주석 해제
+      # postgres:
+      #   condition: service_healthy
+      # qdrant: embedded 모드 사용으로 불필요
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    # 리소스 제한 (프로덕션)
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+  # ========================================================================
+  # Prometheus/Grafana는 별도 인프라 레포에서 관리
+  # 이 서비스는 /metrics 엔드포인트만 제공 (메트릭 생산자 역할)
+  # ========================================================================
+
+# ========================================================================
+# Volumes
+# ========================================================================
+volumes:
+  agent_workspace:
+    driver: local
+  agent_metrics:
+    driver: local
+
+# ========================================================================
+# Networks
+# ========================================================================
+networks:
+  codegraph-network:
+    name: codegraph-network
+    driver: bridge

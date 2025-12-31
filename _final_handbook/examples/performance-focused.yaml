@@ -1,0 +1,87 @@
+# Performance-Focused Configuration
+# Use for: Clone detection, code quality analysis, refactoring
+# Performance: Medium cost, 10-60s latency, 1-5GB memory
+# Focus: Code duplication, structure analysis, refactoring opportunities
+
+version: 1
+preset: balanced
+
+stages:
+  # Code structure stages
+  parsing: true
+  chunking: true
+  cross_file: true
+  cfg: true
+  dfg: true
+  type_inference: true
+
+  # Performance-relevant analyses
+  clone: true
+  repomap: true
+
+  # Disable security stages
+  taint: false
+  pta: false
+  effects: false
+
+overrides:
+  # Comprehensive clone detection
+  clone:
+    min_tokens: 30
+    min_lines: 5
+    type1:
+      enable_exact_matching: true
+    type2:
+      enable_normalization: true
+    type3:
+      max_gap_ratio: 0.4
+      enable_gapped_detection: true
+    type4:
+      enable_semantic_clones: true
+      embedding_threshold: 0.80
+
+  # Optimized chunking for clone detection
+  chunking:
+    max_chunk_tokens: 512
+    overlap_tokens: 128  # Higher overlap for better clone detection
+    enable_semantic_split: true
+    min_chunk_tokens: 30
+
+  # Lexical search for code patterns
+  lexical:
+    enable_fuzzy: true
+    fuzzy_distance: 2
+    enable_ngram: true
+    ngram_size: 3
+    boost_exact_match: 2.0
+
+  # PageRank for identifying important code
+  pagerank:
+    damping_factor: 0.85
+    max_iterations: 150
+    convergence_threshold: 0.000001
+    enable_personalization: true
+
+  # High parallelism for large codebases
+  parallel:
+    workers: 0  # 0 = num_cpus
+    batch_size: 150
+    enable_rayon: true
+
+  # Balanced caching
+  cache:
+    enable_background_l2_writes: true
+    l0:
+      max_entries: 20000
+      enable_bloom_filter: true
+      expected_items: 200000
+      false_positive_rate: 0.005
+    l1:
+      max_entries: 2000
+      max_bytes: 1073741824  # 1GB
+      ttl_seconds: 3600  # 1 hour
+    l2:
+      cache_dir: ".cache/codegraph-perf"
+      max_disk_bytes: 21474836480  # 20GB
+      enable_compression: true
+      enable_mmap: true

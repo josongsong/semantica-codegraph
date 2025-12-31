@@ -1,0 +1,54 @@
+# Cryptographic Security Patterns
+# L22: Cryptographic Analysis
+
+patterns:
+  weak_hash:
+    severity: HIGH
+    cwe: CWE-327
+    description: "Weak cryptographic hash function"
+    functions:
+      - hashlib.md5
+      - hashlib.sha1
+      - Crypto.Hash.MD2
+      - Crypto.Hash.MD4
+      - Crypto.Hash.MD5
+    remediation: "Use SHA-256, SHA-3, or BLAKE2 instead"
+
+  weak_cipher:
+    severity: HIGH
+    cwe: CWE-327
+    description: "Weak or broken cipher"
+    functions:
+      - DES
+      - DES3
+      - RC4
+      - Blowfish
+    remediation: "Use AES-256-GCM or ChaCha20-Poly1305"
+
+  weak_random:
+    severity: MEDIUM
+    cwe: CWE-338
+    description: "Weak random number generator"
+    functions:
+      - random.random
+      - random.randint
+      - Math.random  # JavaScript
+    remediation: "Use secrets module (Python) or crypto.randomBytes (Node.js)"
+
+  hardcoded_key:
+    severity: CRITICAL
+    cwe: CWE-798
+    description: "Hardcoded cryptographic key"
+    patterns:
+      - "key\\s*=\\s*['\"][A-Za-z0-9+/]{32,}['\"]"
+      - "SECRET_KEY\\s*=\\s*['\"]"
+      - "api_key\\s*=\\s*['\"]"
+    remediation: "Use environment variables or key management service"
+
+  small_rsa_key:
+    severity: HIGH
+    cwe: CWE-326
+    description: "RSA key size too small"
+    patterns:
+      - "RSA.generate\\((512|1024)\\)"
+    remediation: "Use at least 2048-bit RSA keys, prefer 4096-bit"

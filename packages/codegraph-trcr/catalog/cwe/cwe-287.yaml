@@ -1,0 +1,228 @@
+# CWE-287: Improper Authentication
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/287.html
+
+metadata:
+  cwe_id: CWE-287
+  name: "Improper Authentication"
+  severity: critical
+  owasp: "A07:2021-Identification and Authentication Failures"
+  category: "Authentication"
+
+  # Status
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  # Classification
+  mitre_abstraction: class
+  likelihood_of_exploit: high
+
+  # References
+  references:
+    - https://cwe.mitre.org/data/definitions/287.html
+    - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/04-Authentication_Testing/README
+    - https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
+
+description: |
+  When an actor claims to have a given identity, the software does not prove
+  or insufficiently proves that the claim is correct.
+
+  This weakness can lead to unauthorized access to resources and functionality.
+  Common issues include:
+  - Not verifying credentials before granting access
+  - Using weak comparison for password checking
+  - Bypassing authentication through parameter manipulation
+
+# ============================================================================
+# Detection Pattern
+# ============================================================================
+
+sources:
+  - id: source.auth.credentials
+    description: "User-provided authentication credentials"
+    patterns:
+      - flask.Request.form.get("password")
+      - flask.Request.form.get("username")
+      - django.http.HttpRequest.POST.get("password")
+      - request.json.get("password")
+
+sinks:
+  - id: sink.auth.session_create
+    description: "Session creation without proper authentication"
+    patterns:
+      - call: login_user
+      - call: login
+      - call: create_session
+      - call: set_authenticated
+      - base_type: flask.session
+        call: __setitem__
+
+  - id: sink.auth.token_issue
+    description: "Token issuance without verification"
+    patterns:
+      - call: generate_token
+      - call: create_access_token
+      - call: issue_jwt
+      - call: jwt.encode
+
+  - id: sink.auth.access_grant
+    description: "Granting access without authentication"
+    patterns:
+      - call: grant_access
+      - call: authorize_user
+      - return: True  # In authentication function
+
+sanitizers:
+  - id: barrier.auth.password_verify
+    description: "Proper password verification"
+    patterns:
+      - call: check_password
+      - call: verify_password
+      - call: bcrypt.checkpw
+      - call: passlib.verify
+      - call: werkzeug.security.check_password_hash
+      - call: django.contrib.auth.hashers.check_password
+
+  - id: barrier.auth.mfa
+    description: "Multi-factor authentication"
+    patterns:
+      - call: verify_otp
+      - call: verify_totp
+      - call: check_mfa
+      - call: validate_2fa
+
+  - id: barrier.auth.rate_limit
+    description: "Rate limiting for authentication"
+    patterns:
+      - call: check_rate_limit
+      - decorator: rate_limit
+      - decorator: throttle
+
+# ============================================================================
+# Taint Flow Policy
+# ============================================================================
+
+policy:
+  grammar:
+    WHEN:
+      tag: credentials
+    FLOWS:
+      - id: sink.auth.session_create
+      - id: sink.auth.token_issue
+      - id: sink.auth.access_grant
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: authentication
+
+# ============================================================================
+# Validation Requirements
+# ============================================================================
+
+validation:
+  min_test_cases: 10
+  required_scenarios:
+    - no_password_check
+    - weak_comparison
+    - bypass_authentication
+    - proper_bcrypt_check
+    - mfa_verification
+
+  min_precision: 0.85
+  min_recall: 0.90
+  max_false_positive_rate: 0.15
+
+# ============================================================================
+# Test Suite Mapping
+# ============================================================================
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE287_Improper_Authentication"
+    cases:
+      - bad_01.py  # No password check
+      - bad_02.py  # Weak comparison (==)
+      - bad_03.py  # Always returns True
+      - good_01.py # bcrypt verification
+      - good_02.py # Django auth
+      - good_03.py # With MFA
+
+# ============================================================================
+# Examples
+# ============================================================================
+
+examples:
+  vulnerable:
+    - |
+      # BAD: No password verification
+      @app.route('/login', methods=['POST'])
+      def login():
+          username = request.form['username']
+          password = request.form['password']
+          user = User.query.filter_by(username=username).first()
+          if user:  # No password check!
+              login_user(user)
+              return redirect('/dashboard')
+
+    - |
+      # BAD: Weak string comparison
+      def authenticate(username, password):
+          user = get_user(username)
+          if user.password == password:  # Plain text comparison!
+              return True
+          return False
+
+  safe:
+    - |
+      # GOOD: Proper password verification with bcrypt
+      @app.route('/login', methods=['POST'])
+      def login():
+          username = request.form['username']
+          password = request.form['password']
+          user = User.query.filter_by(username=username).first()
+          if user and bcrypt.checkpw(password.encode(), user.password_hash):
+              login_user(user)
+              return redirect('/dashboard')
+          return "Invalid credentials", 401
+
+    - |
+      # GOOD: Using Django's authentication
+      from django.contrib.auth import authenticate, login
+
+      def login_view(request):
+          username = request.POST['username']
+          password = request.POST['password']
+          user = authenticate(request, username=username, password=password)
+          if user is not None:
+              login(request, user)
+              return redirect('dashboard')
+
+# ============================================================================
+# Fix Recommendations
+# ============================================================================
+
+fix:
+  priority: 1
+  effort: low
+
+  recommendations:
+    - title: "Use secure password hashing"
+      severity: best
+      example: |
+        import bcrypt
+        if bcrypt.checkpw(password.encode(), user.password_hash):
+            login_user(user)
+
+    - title: "Use framework authentication"
+      severity: recommended
+      example: |
+        from django.contrib.auth import authenticate
+        user = authenticate(username=username, password=password)
+
+    - title: "Implement MFA"
+      severity: recommended
+      example: |
+        if verify_password(user, password) and verify_otp(user, otp_code):
+            create_session(user)

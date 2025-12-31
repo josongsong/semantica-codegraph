@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_074.TemplateInjection
+  kind: sink
+  tags: ['cwe_074', 'TemplateInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-074"]
+  description: Using user-controlled data to create a template can lead to remote code execution or cross site scri
+  match:
+  -     call: TemplateInjection
+
+- id: sink.cwe_074.TemplateInjection
+  kind: sink
+  tags: ['cwe_074', 'TemplateInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-074"]
+  description: Using user-controlled data to create a template can lead to remote code execution or cross site scri
+  match:
+  -     call: TemplateInjection

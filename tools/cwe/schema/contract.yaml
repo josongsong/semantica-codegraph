@@ -1,0 +1,119 @@
+# CWE Contract Schema
+#
+# CWE Catalog의 표준 스키마 정의
+
+version: "1.0.0"
+
+# ============================================================================
+# CWE Catalog Entry Schema
+# ============================================================================
+
+cwe_schema:
+  required_fields:
+    - metadata.cwe_id
+    - metadata.name
+    - metadata.severity
+    - description
+    - sources
+    - sinks
+    - policy
+    - validation
+    - test_suite
+
+  optional_fields:
+    - sanitizers
+    - examples
+    - fix
+
+  metadata_schema:
+    cwe_id:
+      type: string
+      pattern: "^CWE-\\d+$"
+      example: "CWE-89"
+
+    name:
+      type: string
+      min_length: 10
+      max_length: 200
+
+    severity:
+      type: enum
+      values: [critical, high, medium, low]
+
+    category:
+      type: enum
+      values: [Injection, AccessControl, Crypto, InfoLeak, Other]
+
+    status:
+      type: enum
+      values: [active, deprecated, experimental]
+
+# ============================================================================
+# View Schema
+# ============================================================================
+
+view_schema:
+  required_fields:
+    - metadata.view_id
+    - metadata.name
+    - cwes
+    - execution
+    - acceptance
+
+  cwes_schema:
+    cwe_id:
+      type: string
+      pattern: "^CWE-\\d+$"
+
+    weight:
+      type: float
+      min: 0.0
+      max: 1.0
+
+    required:
+      type: boolean
+
+# ============================================================================
+# Test Suite Schema
+# ============================================================================
+
+test_suite_schema:
+  directory_structure:
+    pattern: "test-suite/CWE{number}_{name}/"
+    required_files:
+      - bad_*.py
+      - good_*.py
+      - metadata.yaml
+
+  metadata_yaml:
+    required:
+      - cwe_id
+      - test_cases
+      - ground_truth
+
+  ground_truth:
+    format:
+      file_name:
+        vulnerable: boolean
+        sink_line: integer
+        source_line: integer
+
+# ============================================================================
+# Validation Rules
+# ============================================================================
+
+validation_rules:
+  precision:
+    min: 0.80
+    target: 0.90
+    formula: "TP / (TP + FP)"
+
+  recall:
+    min: 0.75
+    target: 0.85
+    formula: "TP / (TP + FN)"
+
+  f1_score:
+    min: 0.77
+    target: 0.87
+    formula: "2 * (precision * recall) / (precision + recall)"

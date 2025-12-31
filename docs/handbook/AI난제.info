@@ -1,0 +1,265 @@
+[A] Control Flow 난제 (제어 흐름)
+
+LLM은 실행 순서를 시뮬레이션할 수 없기 때문에 절대 해결 불가.
+
+Async/Await → 비동기 상태 머신 분해 필요
+
+Generator/Coroutine → continuation 복원
+
+try-catch-finally → Exceptional Edge 계산
+
+Short-circuit (&&, ||) 숨은 분기
+
+switch-case fallthrough
+
+labeled break/continue
+
+Desugaring (for → while 변환)
+
+Tail-call / Recursion unfolding
+
+Event-loop scheduling(reactor pattern)
+
+[B] Dataflow 난제 (데이터 흐름)
+
+AI는 상태(state)가 없으므로 값의 흐름을 계산할 수 없음.
+
+SSA 변환 + Phi-node 생성
+
+Path-sensitive Dataflow
+
+Flow-sensitive Dataflow
+
+Context-sensitive Dataflow
+
+IFDS/IDE Tabulation
+
+Constant propagation
+
+Copy propagation
+
+Dead store elimination
+
+Alias analysis (포인터 alias)
+
+Must-Alias / May-Alias 구분
+
+Heap dataflow tracking
+
+Interprocedural Dataflow
+
+Implicit flow tracking
+
+[C] Memory/Lifetime 난제 (메모리 모델)
+
+AI는 스택/힙, 수명, 소유권 개념 자체가 없음.
+
+Escape analysis (클로저 캡처)
+
+Stack → Heap promotion
+
+Borrow checker (Rust)
+
+Move semantics / Ownership
+
+Mutable vs immutable tracking
+
+Reference vs copy semantics
+
+Dangling reference detection
+
+Lifetime region inference
+
+[D] Type System 난제 (타입 추론)
+
+타입 추론은 수학적 constraint solving이며 AI가 못함.
+
+Hindley–Milner inference
+
+Union/Intersection type lattice
+
+Variance (in/out/invariant)
+
+Generic instantiation
+
+Flow-sensitive type narrowing
+
+Nominal vs Structural typing
+
+Type refinement via guard
+
+Overloaded functions resolution
+
+[E] Reflection & Dynamic Dispatch 난제
+
+정적 분석은 over-approx 가능하지만 AI는 불가능.
+
+String-based reflection resolution
+
+dynamic object indexing (obj[key])
+
+virtual method dispatch resolution
+
+monkey patching tracking
+
+prototype chain lookup
+
+dynamic module loading (require/import)
+
+[F] Framework Runtime 난제
+
+프레임워크가 코드를 호출하기 때문에 call graph가 깨진다.
+
+Synthetic call edge 삽입
+
+Lifecycle modeling (Spring, React, FastAPI)
+
+Dependency Injection resolution
+
+Middleware chain reconstruction
+
+Event handler registration tracing
+
+Hook/Interceptor resolution
+
+[G] Build / Macro / Lowering 난제
+
+최종 실행코드가 원본과 다름.
+
+Macro expansion (C/C++, Rust)
+
+Annotation processing (Java/Kotlin)
+
+KSP/KAPT codegen mapping
+
+Webpack/Babel TS→JS lowering
+
+Dead code elimination stage tracking
+
+Minification name mapping
+
+Template/GQL/GRPC code generation linkage
+
+[H] Graph-based Program Representation 난제
+
+AI는 그래프를 만들거나 reasoning할 수 없음.
+
+Call Graph construction
+
+CFG (Control Flow Graph)
+
+DFG (Data Flow Graph)
+
+PDG (Program Dependence Graph)
+
+VFG (Value Flow Graph)
+
+CDG (Control Dependence Graph)
+
+Program slicing (backward/forward)
+
+Dominator tree construction
+
+[I] Soundness & Fixpoint 난제
+
+정적 분석의 핵심이며 AI는 절대 불가능.
+
+Abstract interpretation
+
+Fixpoint iteration (widening/narrowing)
+
+Sound over-approximation
+
+Under-approximation detection
+
+Loop invariant inference
+
+Worst-case path analysis
+
+[J] Security SAST 난제
+
+AI는 security flow를 제대로 계산하지 못함.
+
+Source-sink chain resolution
+
+Sanitizer inference
+
+SQLi/XSS/SSRF/Template injection
+
+Authorization flow analysis
+
+Credential/Secret propagation
+
+Parameter pollution detection
+
+[K] Concurrency / Parallelism 난제
+
+AI는 시간/순서/경쟁 상태를 모델링할 수 없음.
+
+Thread interleaving
+
+Data race detection
+
+Atomicity violation detection
+
+Lock/unlock matching
+
+Deadlock detection
+
+Async + thread hybrid analysis
+
+[L] Distributed Systems 난제
+
+정적 분석기는 일부 approximate 가능, AI는 절대 불가.
+
+Eventual consistency modeling
+
+Retry-with-backoff correctness
+
+Idempotency violation detection
+
+Message ordering tracking
+
+Distributed transaction/SAGA flow analysis
+
+[M] Scalability & Incrementality 난제
+
+AI는 프로젝트 전체를 유지할 능력이 없음.
+
+Multi-million LOC project analysis
+
+Incremental indexing/incremental flow
+
+Semantic diff & impact analysis
+
+Cache invalidation modeling
+
+[N] Determinism / Formal Guarantees 난제
+
+AI는 non-deterministic, formal proof 불가.
+
+Deterministic reproducible reasoning
+
+Proof-carrying code
+
+Formal method constraints checking (SMT/Z3)
+
+Path feasibility checking
+
+Symbolic execution
+
+[O] AI 고유 제한과 결합되는 난제 (정적 도구 없으면 절대 불가)
+
+정적 분석이 없으면 AI는 더 이상 진행이 불가.
+
+Long-range dependency tracking
+
+Cross-file symbol resolution
+
+Overwriting context loss
+
+Patch planning & multi-step consistency
+
+Global reasoning beyond context window
+
+Non-hallucinatory grounding

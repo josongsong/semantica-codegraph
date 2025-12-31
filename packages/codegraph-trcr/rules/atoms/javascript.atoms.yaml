@@ -1,0 +1,836 @@
+# JavaScript/TypeScript Taint Analysis Atoms
+# Language: JavaScript, TypeScript
+# Framework: Node.js, Express, React, etc.
+
+atoms:
+# ============================================================================
+# Sources - Untrusted Input
+# ============================================================================
+- id: input.http.express
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  severity: high
+  description: Express.js HTTP request input
+  match:
+  - base_type: express.Request
+    read: query
+  - base_type: express.Request
+    read: params
+  - base_type: express.Request
+    read: body
+  - call: req.query.get
+  - call: req.params.get
+  - call: req.body.get
+
+- id: input.http.nextjs
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  severity: high
+  description: Next.js request input
+  match:
+  - base_type: NextApiRequest
+    read: query
+  - base_type: NextApiRequest
+    read: body
+  - call: request.query
+  - call: request.body
+
+- id: input.http.koa
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  severity: high
+  description: Koa.js request input
+  match:
+  - base_type: koa.Context
+    read: query
+  - base_type: koa.Context
+    read: request
+  - call: ctx.query
+  - call: ctx.request.body
+
+- id: input.url.params
+  kind: source
+  tags:
+  - untrusted
+  - url
+  severity: high
+  description: URL parameters
+  match:
+  - call: URLSearchParams
+    args: [0]
+  - base_type: URLSearchParams
+    call: get
+  - call: window.location.search
+  - call: document.location.search
+
+- id: input.websocket
+  kind: source
+  tags:
+  - untrusted
+  - websocket
+  severity: high
+  description: WebSocket message input
+  match:
+  - base_type: WebSocket
+    read: data
+  - call: ws.on
+    args: [1]
+  - call: socket.on
+    args: [1]
+
+- id: input.env.node
+  kind: source
+  tags:
+  - untrusted
+  - env
+  - config
+  severity: medium
+  description: Environment variables
+  match:
+  - call: process.env.get
+  - read: process.env
+
+# ============================================================================
+# Sinks - SQL Injection (CWE-89)
+# ============================================================================
+- id: sink.sql.mysql
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - mysql
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [mysql, mysql2]
+  description: MySQL query execution
+  match:
+  - base_type: mysql.Connection
+    call: query
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: mysql2.Connection
+    call: query
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: connection.query
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sql.postgres
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - postgresql
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [pg, postgresql]
+  description: PostgreSQL query execution
+  match:
+  - base_type: pg.Client
+    call: query
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: pg.Pool
+    call: query
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sql.mongodb
+  kind: sink
+  tags:
+  - injection
+  - db
+  - nosql
+  - mongodb
+  severity: critical
+  cwe: ["CWE-943"]
+  owasp: "A03:2021-Injection"
+  frameworks: [mongodb]
+  description: MongoDB query with user input
+  match:
+  - base_type: mongodb.Collection
+    call: find
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: mongodb.Collection
+    call: findOne
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: collection.find
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sql.sequelize
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - orm
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [sequelize]
+  description: Sequelize raw query
+  match:
+  - base_type: Sequelize
+    call: query
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: sequelize.query
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - Command Injection (CWE-78)
+# ============================================================================
+- id: sink.command.exec
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  description: Command execution via exec
+  match:
+  - call: child_process.exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.command.spawn
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: high
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  description: Command execution via spawn
+  match:
+  - call: child_process.spawn
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: spawn
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.command.execfile
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  description: File execution
+  match:
+  - call: child_process.execFile
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - XSS (CWE-79)
+# ============================================================================
+- id: sink.xss.innerhtml
+  kind: sink
+  tags:
+  - xss
+  - web
+  - dom
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A03:2021-Injection"
+  description: DOM innerHTML assignment
+  match:
+  - call: innerHTML
+    constraints:
+      arg_type: not_const
+  - call: outerHTML
+    constraints:
+      arg_type: not_const
+
+- id: sink.xss.document_write
+  kind: sink
+  tags:
+  - xss
+  - web
+  - dom
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A03:2021-Injection"
+  description: document.write with user input
+  match:
+  - call: document.write
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: document.writeln
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.xss.eval
+  kind: sink
+  tags:
+  - xss
+  - code
+  - dangerous
+  severity: critical
+  cwe: ["CWE-79", "CWE-94"]
+  owasp: "A03:2021-Injection"
+  description: Code evaluation
+  match:
+  - call: eval
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: Function
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: setTimeout
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: setInterval
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.xss.react
+  kind: sink
+  tags:
+  - xss
+  - web
+  - react
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A03:2021-Injection"
+  frameworks: [react]
+  description: React dangerouslySetInnerHTML
+  match:
+  - call: dangerouslySetInnerHTML
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - Path Traversal (CWE-22)
+# ============================================================================
+- id: sink.path.fs
+  kind: sink
+  tags:
+  - traversal
+  - file
+  - path
+  severity: high
+  cwe: ["CWE-22"]
+  owasp: "A01:2021-Broken Access Control"
+  description: File system operations
+  match:
+  - call: fs.readFile
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: fs.writeFile
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: fs.readFileSync
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: fs.writeFileSync
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: fs.unlink
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - SSRF (CWE-918)
+# ============================================================================
+- id: sink.ssrf.fetch
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  cwe: ["CWE-918"]
+  owasp: "A10:2021-Server-Side Request Forgery"
+  description: SSRF via fetch
+  match:
+  - call: fetch
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.ssrf.axios
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  cwe: ["CWE-918"]
+  owasp: "A10:2021-Server-Side Request Forgery"
+  frameworks: [axios]
+  description: SSRF via axios
+  match:
+  - call: axios.get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: axios.post
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.ssrf.request
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  cwe: ["CWE-918"]
+  owasp: "A10:2021-Server-Side Request Forgery"
+  frameworks: [request]
+  description: SSRF via request
+  match:
+  - call: request.get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: request.post
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sources - GraphQL Input
+# ============================================================================
+- id: input.graphql.args
+  kind: source
+  tags:
+  - untrusted
+  - graphql
+  - api
+  severity: high
+  description: GraphQL resolver arguments
+  match:
+  - call: args
+  - read: args
+  - read: context.req
+  - base_type: GraphQLResolveInfo
+    read: variableValues
+
+- id: input.graphql.input
+  kind: source
+  tags:
+  - untrusted
+  - graphql
+  - api
+  severity: high
+  description: GraphQL input types
+  match:
+  - read: input
+  - call: input.get
+  - base_type: GraphQLInputObjectType
+    read: value
+
+# ============================================================================
+# Sinks - GraphQL Security (CWE-400, CWE-943)
+# ============================================================================
+- id: sink.graphql.injection
+  kind: sink
+  tags:
+  - graphql
+  - injection
+  - api
+  severity: critical
+  cwe: ["CWE-943"]
+  owasp: "A03:2021-Injection"
+  description: GraphQL query injection
+  match:
+  - call: graphql
+    args: [1]
+    constraints:
+      arg_type: not_const
+  - base_type: GraphQLClient
+    call: request
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.graphql.depth_attack
+  kind: sink
+  tags:
+  - graphql
+  - dos
+  - api
+  severity: high
+  cwe: ["CWE-400"]
+  owasp: "A04:2021-Insecure Design"
+  description: GraphQL deep query attack (DoS)
+  match:
+  - call: graphql
+  - call: execute
+  - base_type: GraphQLSchema
+    call: execute
+
+- id: sink.graphql.batch_attack
+  kind: sink
+  tags:
+  - graphql
+  - dos
+  - batching
+  severity: high
+  cwe: ["CWE-400"]
+  owasp: "A04:2021-Insecure Design"
+  description: GraphQL batch query attack
+  match:
+  - call: graphqlHTTP
+  - call: ApolloServer
+  - base_type: ApolloServer
+    call: executeOperation
+
+- id: sink.graphql.introspection
+  kind: sink
+  tags:
+  - graphql
+  - introspection
+  - info_disclosure
+  severity: medium
+  cwe: ["CWE-200"]
+  owasp: "A01:2021-Broken Access Control"
+  description: GraphQL introspection enabled in production
+  match:
+  - call: buildSchema
+  - call: makeExecutableSchema
+  - base_type: ApolloServer
+    call: start
+
+# ============================================================================
+# Sinks - gRPC Security
+# ============================================================================
+- id: sink.grpc.injection
+  kind: sink
+  tags:
+  - grpc
+  - injection
+  - api
+  severity: high
+  cwe: ["CWE-20"]
+  owasp: "A03:2021-Injection"
+  description: gRPC message injection
+  match:
+  - base_type: grpc.Client
+    call: makeUnaryRequest
+  - call: grpc.load
+  - call: grpcClient.call
+
+- id: sink.grpc.reflection
+  kind: sink
+  tags:
+  - grpc
+  - reflection
+  - info_disclosure
+  severity: medium
+  cwe: ["CWE-200"]
+  owasp: "A01:2021-Broken Access Control"
+  description: gRPC reflection enabled
+  match:
+  - call: addReflectionService
+  - call: grpc.reflection.v1alpha.ServerReflection
+
+# ============================================================================
+# Sinks - REST API Security
+# ============================================================================
+- id: sink.api.mass_assignment
+  kind: sink
+  tags:
+  - api
+  - mass_assignment
+  - rest
+  severity: high
+  cwe: ["CWE-915"]
+  owasp: "A04:2021-Insecure Design"
+  description: Mass assignment vulnerability
+  match:
+  - call: Object.assign
+    args: [1]
+    constraints:
+      arg_type: not_const
+  - call: Model.create
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: Model.update
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.api.rate_limit_bypass
+  kind: sink
+  tags:
+  - api
+  - rate_limit
+  - dos
+  severity: medium
+  cwe: ["CWE-770"]
+  owasp: "A04:2021-Insecure Design"
+  description: API without rate limiting
+  match:
+  - call: app.use
+  - call: router.use
+  - call: express
+
+- id: sink.api.cors_misconfiguration
+  kind: sink
+  tags:
+  - api
+  - cors
+  - misconfiguration
+  severity: high
+  cwe: ["CWE-942"]
+  owasp: "A05:2021-Security Misconfiguration"
+  description: CORS misconfiguration
+  match:
+  - call: cors
+    constraints:
+      arg_value: ["*"]
+  - call: res.setHeader
+    args: [0]
+    constraints:
+      arg_value: ["Access-Control-Allow-Origin"]
+
+- id: sink.api.jwt_weak_secret
+  kind: sink
+  tags:
+  - api
+  - jwt
+  - auth
+  severity: critical
+  cwe: ["CWE-347", "CWE-798"]
+  owasp: "A02:2021-Cryptographic Failures"
+  description: JWT with weak or hardcoded secret
+  match:
+  - call: jwt.sign
+    args: [1]
+    constraints:
+      arg_type: const_string
+  - call: jwt.verify
+    args: [1]
+    constraints:
+      arg_type: const_string
+  - call: jsonwebtoken.sign
+
+- id: sink.api.unsafe_header
+  kind: sink
+  tags:
+  - api
+  - headers
+  - security
+  severity: medium
+  cwe: ["CWE-644"]
+  owasp: "A05:2021-Security Misconfiguration"
+  description: Missing security headers
+  match:
+  - call: res.send
+  - call: res.json
+  - call: response.send
+
+# ============================================================================
+# Sanitizers - GraphQL/API
+# ============================================================================
+- id: barrier.graphql.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - graphql
+  - validation
+  description: GraphQL query validation
+  scope: return
+  match:
+  - call: graphql-depth-limit
+  - call: graphql-query-complexity
+  - call: validateQuery
+
+- id: barrier.api.rate_limiter
+  kind: sanitizer
+  tags:
+  - safety
+  - api
+  - rate_limit
+  description: Rate limiter middleware
+  scope: return
+  match:
+  - call: rateLimit
+  - call: expressRateLimit
+  - call: express-rate-limit
+
+# ============================================================================
+# Sinks - Prototype Pollution (CWE-1321)
+# ============================================================================
+- id: sink.prototype.pollution
+  kind: sink
+  tags:
+  - prototype
+  - pollution
+  - dangerous
+  severity: high
+  cwe: ["CWE-1321"]
+  owasp: "A03:2021-Injection"
+  description: Prototype pollution
+  match:
+  - call: Object.assign
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: merge
+    constraints:
+      arg_type: not_const
+  - call: _.merge
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sanitizers
+# ============================================================================
+- id: barrier.sql.parameterized
+  kind: sanitizer
+  tags:
+  - safety
+  - db
+  - sql
+  description: Parameterized queries
+  scope: return
+  match:
+  - call: query
+    constraints:
+      arg_count: 2
+
+- id: barrier.xss.escape
+  kind: sanitizer
+  tags:
+  - safety
+  - xss
+  - html
+  description: HTML escaping
+  scope: return
+  match:
+  - call: escapeHtml
+    scope: return
+  - call: escape
+    scope: return
+  - call: sanitize
+    scope: return
+
+- id: barrier.path.normalize
+  kind: sanitizer
+  tags:
+  - safety
+  - path
+  - file
+  description: Path normalization
+  scope: return
+  match:
+  - call: path.normalize
+    scope: return
+  - call: path.resolve
+    scope: return
+
+- id: barrier.url.validate
+  kind: sanitizer
+  tags:
+  - safety
+  - url
+  - validation
+  description: URL validation
+  scope: return
+  match:
+  - call: new URL
+    scope: return
+  - call: validator.isURL
+    scope: return
+
+# ============================================================================
+# Propagators
+# ============================================================================
+- id: prop.string
+  kind: propagator
+  tags:
+  - flow
+  - string
+  description: String operations
+  match:
+  - base_type: String
+    call: concat
+    from_args: [0]
+    to: return
+  - base_type: String
+    call: replace
+    from_args: [0]
+    to: return
+  - base_type: String
+    call: slice
+    from_args: [0]
+    to: return
+  - base_type: String
+    call: substring
+    from_args: [0]
+    to: return
+
+- id: prop.json
+  kind: propagator
+  tags:
+  - flow
+  - json
+  description: JSON operations
+  match:
+  - call: JSON.parse
+    from_args: [0]
+    to: return
+  - call: JSON.stringify
+    from_args: [0]
+    to: return
+

@@ -1,0 +1,964 @@
+atoms:
+- id: input.http.spring
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - spring
+  severity: high
+  description: Spring Boot Kotlin HTTP request input
+  match:
+  - base_type: org.springframework.web.bind.annotation.RequestParam
+  - base_type: org.springframework.web.bind.annotation.PathVariable
+  - base_type: org.springframework.web.bind.annotation.RequestBody
+  - base_type: org.springframework.web.bind.annotation.RequestHeader
+  - base_type: javax.servlet.http.HttpServletRequest
+    call: getParameter
+  - base_type: javax.servlet.http.HttpServletRequest
+    call: getHeader
+  - base_type: jakarta.servlet.http.HttpServletRequest
+    call: getParameter
+  - base_type: jakarta.servlet.http.HttpServletRequest
+    call: getHeader
+- id: input.http.ktor
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - ktor
+  severity: high
+  description: Ktor HTTP request input
+  match:
+  - base_type: io.ktor.server.application.ApplicationCall
+    read: parameters
+  - base_type: io.ktor.server.application.ApplicationCall
+    read: request
+  - base_type: io.ktor.http.Parameters
+    call: get
+  - base_type: io.ktor.http.Parameters
+    call: getAll
+  - base_type: io.ktor.server.request.ApplicationRequest
+    call: queryParameters
+  - base_type: io.ktor.server.request.ApplicationRequest
+    call: header
+  - base_type: io.ktor.server.request.ApplicationRequest
+    call: headers
+  - call: call.parameters
+  - call: call.receive
+- id: input.android
+  kind: source
+  tags:
+  - untrusted
+  - android
+  - mobile
+  severity: high
+  description: Android user input
+  match:
+  - base_type: android.content.Intent
+    call: getStringExtra
+  - base_type: android.content.Intent
+    call: getIntExtra
+  - base_type: android.content.Intent
+    call: getExtras
+  - base_type: android.content.Intent
+    call: getData
+  - base_type: android.os.Bundle
+    call: getString
+  - base_type: android.os.Bundle
+    call: get
+  - base_type: android.widget.EditText
+    call: getText
+  - base_type: android.widget.TextView
+    call: getText
+  - base_type: android.webkit.WebView
+    call: loadUrl
+  - base_type: android.content.ContentResolver
+    call: query
+- id: input.file.kotlin
+  kind: source
+  tags:
+  - untrusted
+  - file
+  - io
+  severity: medium
+  description: Kotlin file read operations
+  match:
+  - base_type: java.io.File
+    call: readText
+  - base_type: java.io.File
+    call: readLines
+  - base_type: java.io.File
+    call: readBytes
+  - base_type: java.io.BufferedReader
+    call: readLine
+  - base_type: java.io.BufferedReader
+    call: readText
+  - call: File.readText
+  - call: readLine
+- id: input.env.kotlin
+  kind: source
+  tags:
+  - untrusted
+  - env
+  - config
+  severity: medium
+  description: Environment variables
+  match:
+  - call: System.getenv
+  - call: System.getProperty
+- id: sink.sql.jdbc
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - jdbc
+  severity: critical
+  description: JDBC SQL injection
+  match:
+  - base_type: java.sql.Statement
+    call: executeQuery
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: java.sql.Statement
+    call: executeUpdate
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: java.sql.Statement
+    call: execute
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: java.sql.Connection
+    call: prepareStatement
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: &id001
+  - CWE-89
+  owasp: A03:2021-Injection
+- id: sink.sql.exposed
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - exposed
+  severity: critical
+  description: Exposed ORM raw SQL
+  match:
+  - base_type: org.jetbrains.exposed.sql.Transaction
+    call: exec
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: exec
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+- id: sink.sql.spring_data
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - spring
+  severity: critical
+  description: Spring Data JPA native query
+  match:
+  - base_type: javax.persistence.EntityManager
+    call: createNativeQuery
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: javax.persistence.EntityManager
+    call: createQuery
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: org.springframework.jdbc.core.JdbcTemplate
+    call: query
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: org.springframework.jdbc.core.JdbcTemplate
+    call: update
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+- id: sink.command.kotlin
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: critical
+  description: Kotlin command execution
+  match:
+  - base_type: java.lang.Runtime
+    call: exec
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: java.lang.ProcessBuilder
+    call: command
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Runtime.getRuntime().exec
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-78
+  owasp: A03:2021-Injection
+- id: sink.xss.ktor
+  kind: sink
+  tags:
+  - xss
+  - web
+  - html
+  - ktor
+  severity: high
+  description: Ktor HTML output
+  match:
+  - base_type: io.ktor.server.response.ApplicationResponse
+    call: respondText
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: io.ktor.server.response.ApplicationResponse
+    call: respondHtml
+  - call: call.respondText
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: &id002
+  - CWE-79
+  owasp: A03:2021-Injection
+- id: sink.xss.android
+  kind: sink
+  tags:
+  - xss
+  - android
+  - webview
+  severity: high
+  description: Android WebView XSS
+  match:
+  - base_type: android.webkit.WebView
+    call: loadData
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: android.webkit.WebView
+    call: loadDataWithBaseURL
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  - base_type: android.webkit.WebView
+    call: evaluateJavascript
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id002
+  owasp: A03:2021-Injection
+- id: sink.path.kotlin
+  kind: sink
+  tags:
+  - traversal
+  - file
+  - path
+  severity: high
+  description: Kotlin file path operations
+  match:
+  - call: File
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: java.io.File
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: java.nio.file.Paths
+    call: get
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: java.nio.file.Files
+    call: readAllBytes
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: java.nio.file.Files
+    call: write
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: java.nio.file.Files
+    call: delete
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-22
+  owasp: A01:2021-Broken Access Control
+- id: sink.ssrf.kotlin
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  description: Kotlin SSRF via HTTP clients
+  match:
+  - call: URL
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: java.net.URL
+    call: openConnection
+  - base_type: io.ktor.client.HttpClient
+    call: get
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: io.ktor.client.HttpClient
+    call: post
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: okhttp3.OkHttpClient
+    call: newCall
+  - base_type: okhttp3.Request.Builder
+    call: url
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: retrofit2.Retrofit.Builder
+    call: baseUrl
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: org.springframework.web.client.RestTemplate
+    call: getForObject
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: org.springframework.web.reactive.function.client.WebClient
+    call: get
+  cwe:
+  - CWE-918
+  owasp: A10:2021-Server-Side Request Forgery
+- id: sink.deserialize.kotlin
+  kind: sink
+  tags:
+  - deserialize
+  - rce
+  - dangerous
+  severity: critical
+  description: Kotlin insecure deserialization
+  match:
+  - base_type: java.io.ObjectInputStream
+    call: readObject
+  - base_type: kotlinx.serialization.json.Json
+    call: decodeFromString
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: com.google.gson.Gson
+    call: fromJson
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: com.fasterxml.jackson.databind.ObjectMapper
+    call: readValue
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-502
+  owasp: A08:2021-Software and Data Integrity Failures
+- id: sink.xxe.kotlin
+  kind: sink
+  tags:
+  - xxe
+  - xml
+  severity: critical
+  description: Kotlin XXE via XML parsing
+  match:
+  - base_type: javax.xml.parsers.DocumentBuilder
+    call: parse
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: javax.xml.parsers.SAXParser
+    call: parse
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: org.xml.sax.XMLReader
+    call: parse
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-611
+  owasp: A05:2021-Security Misconfiguration
+- id: sink.log.kotlin
+  kind: sink
+  tags:
+  - log
+  - injection
+  severity: medium
+  description: Kotlin log injection
+  match:
+  - base_type: org.slf4j.Logger
+    call: info
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: org.slf4j.Logger
+    call: debug
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: org.slf4j.Logger
+    call: warn
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: org.slf4j.Logger
+    call: error
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Log.d
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  - call: Log.i
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  - call: Log.w
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  - call: Log.e
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-117
+  owasp: A09:2021-Security Logging and Monitoring Failures
+- id: sink.android.intent
+  kind: sink
+  tags:
+  - android
+  - intent
+  - dangerous
+  severity: high
+  description: Android implicit Intent with user data
+  match:
+  - base_type: android.content.Intent
+    call: setData
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: android.content.Intent
+    call: setAction
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: android.content.Intent
+    call: putExtra
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-940
+  owasp: A01:2021-Broken Access Control
+- id: sink.android.sql
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - android
+  severity: critical
+  description: Android SQLite injection
+  match:
+  - base_type: android.database.sqlite.SQLiteDatabase
+    call: rawQuery
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: android.database.sqlite.SQLiteDatabase
+    call: execSQL
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+
+# ============================================================================
+# Sinks - Android Mobile Security
+# ============================================================================
+- id: sink.mobile.insecure_storage
+  kind: sink
+  tags:
+  - mobile
+  - storage
+  - android
+  - insecure
+  severity: high
+  description: Insecure data storage on Android (use EncryptedSharedPreferences)
+  match:
+  - base_type: android.content.SharedPreferences.Editor
+    call: putString
+  - base_type: android.content.SharedPreferences.Editor
+    call: putInt
+  - base_type: java.io.FileOutputStream
+    call: write
+  - call: openFileOutput
+  cwe:
+  - CWE-312
+  owasp: A02:2021-Cryptographic Failures
+
+- id: sink.mobile.cleartext_traffic
+  kind: sink
+  tags:
+  - mobile
+  - network
+  - cleartext
+  severity: high
+  description: Cleartext network traffic (HTTP instead of HTTPS)
+  match:
+  - call: URL
+    constraints:
+      arg_value: ["http://"]
+  - base_type: okhttp3.OkHttpClient.Builder
+    call: build
+  cwe:
+  - CWE-319
+  owasp: A02:2021-Cryptographic Failures
+
+- id: sink.mobile.weak_crypto
+  kind: sink
+  tags:
+  - mobile
+  - crypto
+  - weak
+  severity: high
+  description: Weak cryptographic algorithm usage
+  match:
+  - call: MessageDigest.getInstance
+    args: [0]
+    constraints:
+      arg_value: ["MD5"]
+  - call: MessageDigest.getInstance
+    args: [0]
+    constraints:
+      arg_value: ["SHA-1"]
+  - call: Cipher.getInstance
+    args: [0]
+    constraints:
+      arg_value: ["DES"]
+  - call: Cipher.getInstance
+    args: [0]
+    constraints:
+      arg_value: ["AES/ECB"]
+  cwe:
+  - CWE-327
+  - CWE-328
+  owasp: A02:2021-Cryptographic Failures
+
+- id: sink.mobile.insecure_random
+  kind: sink
+  tags:
+  - mobile
+  - crypto
+  - random
+  severity: medium
+  description: Insecure random number generation
+  match:
+  - call: java.util.Random
+  - call: Math.random
+  - call: kotlin.random.Random
+  cwe:
+  - CWE-330
+  - CWE-338
+  owasp: A02:2021-Cryptographic Failures
+
+- id: sink.mobile.ssl_pinning_bypass
+  kind: sink
+  tags:
+  - mobile
+  - ssl
+  - bypass
+  severity: critical
+  description: SSL certificate validation bypass
+  match:
+  - base_type: javax.net.ssl.X509TrustManager
+    call: checkServerTrusted
+  - base_type: javax.net.ssl.HostnameVerifier
+    call: verify
+  - base_type: okhttp3.OkHttpClient.Builder
+    call: hostnameVerifier
+  - call: SSLContext.getInstance
+  cwe:
+  - CWE-295
+  - CWE-297
+  owasp: A07:2021-Identification and Authentication Failures
+
+- id: sink.mobile.root_detection_bypass
+  kind: sink
+  tags:
+  - mobile
+  - root
+  - bypass
+  severity: high
+  description: Root detection can be bypassed
+  match:
+  - call: File
+    constraints:
+      arg_value: ["/system/app/Superuser.apk"]
+  - call: Runtime.getRuntime().exec
+    constraints:
+      arg_value: ["su"]
+  cwe:
+  - CWE-919
+  owasp: A07:2021-Identification and Authentication Failures
+
+- id: sink.mobile.clipboard_sensitive
+  kind: sink
+  tags:
+  - mobile
+  - clipboard
+  - sensitive
+  severity: medium
+  description: Sensitive data copied to clipboard
+  match:
+  - base_type: android.content.ClipboardManager
+    call: setPrimaryClip
+  - base_type: android.content.ClipData
+    call: newPlainText
+  cwe:
+  - CWE-200
+  - CWE-359
+  owasp: A01:2021-Broken Access Control
+
+- id: sink.mobile.exported_component
+  kind: sink
+  tags:
+  - mobile
+  - android
+  - exported
+  severity: high
+  description: Exported Android component without permission
+  match:
+  - base_type: android.content.Intent
+    call: setComponent
+  - base_type: android.content.Context
+    call: startActivity
+  - base_type: android.content.Context
+    call: sendBroadcast
+  cwe:
+  - CWE-926
+  owasp: A01:2021-Broken Access Control
+
+- id: sink.mobile.broadcast_sensitive
+  kind: sink
+  tags:
+  - mobile
+  - android
+  - broadcast
+  severity: high
+  description: Sensitive data in broadcast
+  match:
+  - base_type: android.content.Context
+    call: sendBroadcast
+  - base_type: android.content.Context
+    call: sendOrderedBroadcast
+  cwe:
+  - CWE-927
+  owasp: A01:2021-Broken Access Control
+
+- id: sink.mobile.backup_sensitive
+  kind: sink
+  tags:
+  - mobile
+  - android
+  - backup
+  severity: medium
+  description: Sensitive data in Android backup
+  match:
+  - base_type: android.content.SharedPreferences.Editor
+    call: commit
+  - base_type: android.content.SharedPreferences.Editor
+    call: apply
+  cwe:
+  - CWE-530
+  owasp: A02:2021-Cryptographic Failures
+
+- id: sink.mobile.deeplink_validation
+  kind: sink
+  tags:
+  - mobile
+  - android
+  - deeplink
+  severity: high
+  description: Deep link without proper validation
+  match:
+  - base_type: android.content.Intent
+    call: getData
+  - base_type: android.net.Uri
+    call: parse
+  cwe:
+  - CWE-939
+  owasp: A01:2021-Broken Access Control
+- id: barrier.sql.prepared
+  kind: sanitizer
+  tags:
+  - safety
+  - db
+  - sql
+  description: Prepared statements
+  scope: return
+  match:
+  - base_type: java.sql.PreparedStatement
+    call: setString
+    scope: return
+  - base_type: java.sql.PreparedStatement
+    call: setInt
+    scope: return
+  - base_type: java.sql.PreparedStatement
+    call: setObject
+    scope: return
+- id: barrier.xss.encode
+  kind: sanitizer
+  tags:
+  - safety
+  - web
+  - html
+  description: HTML encoding
+  scope: return
+  match:
+  - base_type: org.owasp.encoder.Encode
+    call: forHtml
+    scope: return
+  - base_type: org.springframework.web.util.HtmlUtils
+    call: htmlEscape
+    scope: return
+  - call: escapeHtml
+    scope: return
+- id: barrier.path.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - path
+  - file
+  description: Path validation
+  scope: return
+  match:
+  - base_type: java.io.File
+    call: getCanonicalPath
+    scope: return
+  - base_type: java.nio.file.Path
+    call: normalize
+    scope: return
+  - base_type: java.nio.file.Path
+    call: toRealPath
+    scope: return
+- id: barrier.android.parameterized
+  kind: sanitizer
+  tags:
+  - safety
+  - db
+  - sql
+  - android
+  description: Android parameterized queries
+  scope: return
+  match:
+  - base_type: android.database.sqlite.SQLiteDatabase
+    call: query
+    scope: return
+  - base_type: android.database.sqlite.SQLiteDatabase
+    call: rawQuery
+    constraints:
+      arg_count: 2
+    scope: return
+- id: prop.string.kotlin
+  kind: propagator
+  tags:
+  - flow
+  - string
+  description: Kotlin string operations propagate taint
+  match:
+  - base_type: kotlin.String
+    call: plus
+    from_args:
+    - 0
+    to: return
+  - base_type: kotlin.String
+    call: replace
+    from_args:
+    - 0
+    to: return
+  - base_type: kotlin.String
+    call: substring
+    from_args:
+    - 0
+    to: return
+  - base_type: kotlin.String
+    call: trim
+    from_args:
+    - 0
+    to: return
+  - base_type: kotlin.String
+    call: lowercase
+    from_args:
+    - 0
+    to: return
+  - base_type: kotlin.String
+    call: uppercase
+    from_args:
+    - 0
+    to: return
+  - base_type: kotlin.text.StringBuilder
+    call: append
+    from_args:
+    - 0
+    to: base
+  - base_type: kotlin.text.StringBuilder
+    call: toString
+    from_args:
+    - 0
+    to: return
+  - call: String.format
+    from_args:
+    - 1
+    to: return
+- id: prop.collection.kotlin
+  kind: propagator
+  tags:
+  - flow
+  - collection
+  description: Kotlin collection operations propagate taint
+  match:
+  - base_type: kotlin.collections.List
+    call: get
+    from_args:
+    - 0
+    to: return
+  - base_type: kotlin.collections.MutableList
+    call: add
+    from_args:
+    - 0
+    to: base
+  - base_type: kotlin.collections.Map
+    call: get
+    from_args:
+    - 0
+    to: return
+  - base_type: kotlin.collections.MutableMap
+    call: put
+    from_args:
+    - 1
+    to: base
+  - call: listOf
+    from_args:
+    - 0
+    to: return
+  - call: mutableListOf
+    from_args:
+    - 0
+    to: return
+  - call: mapOf
+    from_args:
+    - 0
+    to: return
+- id: prop.json.kotlin
+  kind: propagator
+  tags:
+  - flow
+  - json
+  description: JSON operations propagate taint
+  match:
+  - base_type: kotlinx.serialization.json.Json
+    call: encodeToString
+    from_args:
+    - 0
+    to: return
+  - base_type: kotlinx.serialization.json.Json
+    call: decodeFromString
+    from_args:
+    - 0
+    to: return
+  - base_type: com.google.gson.Gson
+    call: toJson
+    from_args:
+    - 0
+    to: return
+  - base_type: com.google.gson.Gson
+    call: fromJson
+    from_args:
+    - 0
+    to: return

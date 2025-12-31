@@ -1,0 +1,33 @@
+[package]
+name = "codegraph-storage"
+version = "0.1.0"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[dependencies]
+# Core dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+sha2 = "0.10"  # SHA256 for content hashing
+
+# Async runtime
+async-trait = "0.1"
+tokio = { version = "1.40", features = ["macros", "rt-multi-thread"] }
+
+# SQLite backend (RFC-102)
+rusqlite = { version = "0.32", features = ["bundled", "chrono"], optional = true }
+
+# PostgreSQL backend (RFC-103, future)
+# tokio-postgres = { version = "0.7", optional = true }
+
+[dev-dependencies]
+tempfile = "3.8"
+
+[features]
+default = ["sqlite"]
+sqlite = ["rusqlite"]
+# postgres = ["tokio-postgres"]  # RFC-103

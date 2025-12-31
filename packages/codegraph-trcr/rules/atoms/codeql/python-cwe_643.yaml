@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_643.XpathInjection
+  kind: sink
+  tags: ['cwe_643', 'XpathInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-643"]
+  description: Building a XPath query from user-controlled sources is vulnerable to insertion of
+  match:
+  -     call: XpathInjection
+
+- id: sink.cwe_643.XpathInjection
+  kind: sink
+  tags: ['cwe_643', 'XpathInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-643"]
+  description: Building a XPath query from user-controlled sources is vulnerable to insertion of
+  match:
+  -     call: XpathInjection

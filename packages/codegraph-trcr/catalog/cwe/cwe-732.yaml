@@ -1,0 +1,104 @@
+# CWE-732: Incorrect Permission Assignment for Critical Resource
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/732.html
+
+metadata:
+  cwe_id: CWE-732
+  name: "Incorrect Permission Assignment for Critical Resource"
+  severity: high
+  owasp: "A01:2021-Broken Access Control"
+  category: "Access Control"
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+  mitre_abstraction: class
+  likelihood_of_exploit: medium
+  references:
+    - https://cwe.mitre.org/data/definitions/732.html
+    - https://owasp.org/www-community/vulnerabilities/Insecure_File_Permissions
+
+description: |
+  The product specifies permissions for a security-critical resource in a way
+  that allows that resource to be read or modified by unintended actors.
+
+sources:
+  - id: source.file_creation
+    description: "File creation operations"
+    patterns:
+      - call: open
+        mode: w
+      - call: os.open
+      - call: tempfile.mktemp
+
+sinks:
+  - id: sink.permission.file
+    description: "File permission settings"
+    patterns:
+      - call: os.chmod
+        args: [1]
+      - call: os.umask
+      - call: os.open
+        flags: O_CREAT
+
+  - id: sink.permission.world_writable
+    description: "World-writable permissions"
+    patterns:
+      - value: 0o777
+      - value: 0o666
+      - value: 0o776
+
+sanitizers:
+  - id: barrier.permission.restrictive
+    description: "Restrictive permissions"
+    patterns:
+      - value: 0o600
+      - value: 0o640
+      - value: 0o700
+      - call: os.umask
+        value: 0o077
+
+policy:
+  grammar:
+    WHEN:
+      tag: critical_resource
+    FLOWS:
+      - id: sink.permission.world_writable
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: restrictive_permission
+
+validation:
+  min_test_cases: 6
+  min_precision: 0.85
+  min_recall: 0.80
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE732_Incorrect_Permission"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: World-writable permissions
+      os.chmod('/etc/myapp/config', 0o777)
+
+  safe:
+    - |
+      # GOOD: Restrictive permissions
+      os.chmod('/etc/myapp/config', 0o600)
+
+fix:
+  priority: 1
+  effort: low
+  recommendations:
+    - title: "Use restrictive permissions"
+      severity: best
+      example: |
+        os.chmod(filepath, 0o600)  # Owner read/write only

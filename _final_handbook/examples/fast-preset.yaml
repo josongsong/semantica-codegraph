@@ -1,0 +1,68 @@
+# Fast Preset Configuration
+# Use for: IDE integration, pre-commit hooks, quick feedback
+# Performance: <1s latency, <100MB memory
+
+version: 1
+preset: fast
+
+stages:
+  # Basic stages (always enabled in fast mode)
+  parsing: true
+  chunking: true
+  cross_file: true
+
+  # Optional lightweight analyses
+  taint: false
+  pta: false
+  clone: false
+
+overrides:
+  # Minimal taint analysis (if enabled)
+  taint:
+    max_depth: 10
+    max_paths: 100
+    use_points_to: false
+    field_sensitive: false
+    use_ssa: false
+    detect_sanitizers: false
+    enable_interprocedural: false
+    worklist_max_iterations: 50
+
+  # Lightweight chunking
+  chunking:
+    max_chunk_tokens: 512
+    overlap_tokens: 64
+    enable_semantic_split: true
+    min_chunk_tokens: 50
+
+  # Fast lexical search
+  lexical:
+    enable_fuzzy: true
+    fuzzy_distance: 1
+    enable_ngram: false
+    ngram_size: 3
+    boost_exact_match: 2.0
+
+  # High parallelism for speed
+  parallel:
+    workers: 0  # 0 = num_cpus
+    batch_size: 100
+    enable_rayon: true
+
+  # Aggressive caching
+  cache:
+    enable_background_l2_writes: true
+    l0:
+      max_entries: 10000
+      enable_bloom_filter: true
+      expected_items: 100000
+      false_positive_rate: 0.01
+    l1:
+      max_entries: 1000
+      max_bytes: 268435456  # 256MB
+      ttl_seconds: 1800  # 30 minutes
+    l2:
+      cache_dir: ".cache/codegraph"
+      max_disk_bytes: 2147483648  # 2GB
+      enable_compression: false  # Faster without compression
+      enable_mmap: true

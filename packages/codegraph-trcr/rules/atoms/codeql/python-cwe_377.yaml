@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_377.InsecureTemporaryFile
+  kind: sink
+  tags: ['cwe_377', 'InsecureTemporaryFile', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-377"]
+  description: Creating a temporary file using this method may be insecure.
+  match:
+  -     call: InsecureTemporaryFile
+
+- id: sink.cwe_377.InsecureTemporaryFile
+  kind: sink
+  tags: ['cwe_377', 'InsecureTemporaryFile', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-377"]
+  description: Creating a temporary file using this method may be insecure.
+  match:
+  -     call: InsecureTemporaryFile

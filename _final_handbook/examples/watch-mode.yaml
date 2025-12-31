@@ -1,0 +1,60 @@
+# Watch Mode Configuration
+# Use for: LSP server, file watcher, IDE integration
+# Performance: <100ms latency, 100MB-1GB memory
+# Focus: Ultra-fast incremental analysis with aggressive caching
+
+version: 1
+preset: fast
+
+stages:
+  # Minimal stages for LSP
+  parsing: true
+  chunking: true
+  cross_file: true
+
+  # Disable all analyses for speed
+  taint: false
+  pta: false
+  clone: false
+  repomap: false
+  effects: false
+
+overrides:
+  # Very lightweight chunking
+  chunking:
+    max_chunk_tokens: 256
+    overlap_tokens: 32
+    enable_semantic_split: true
+    min_chunk_tokens: 50
+
+  # Exact match only for speed
+  lexical:
+    enable_fuzzy: false
+    fuzzy_distance: 0
+    enable_ngram: false
+    ngram_size: 3
+    boost_exact_match: 1.0
+
+  # Maximum parallelism for responsiveness
+  parallel:
+    workers: 0  # 0 = num_cpus
+    batch_size: 50
+    enable_rayon: true
+
+  # Aggressive caching for watch mode
+  cache:
+    enable_background_l2_writes: true  # Async writes
+    l0:
+      max_entries: 100000  # Large L0 for recent files
+      enable_bloom_filter: true
+      expected_items: 1000000
+      false_positive_rate: 0.001
+    l1:
+      max_entries: 10000  # Large L1 for hot paths
+      max_bytes: 1073741824  # 1GB
+      ttl_seconds: 1800  # 30 minutes (short for fresh data)
+    l2:
+      cache_dir: ".cache/codegraph-watch"
+      max_disk_bytes: 5368709120  # 5GB
+      enable_compression: false  # Speed over size
+      enable_mmap: true  # Fast disk I/O

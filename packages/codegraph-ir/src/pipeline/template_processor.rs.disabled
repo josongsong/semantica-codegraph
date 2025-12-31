@@ -1,0 +1,304 @@
+//! Template File Processor
+//!
+//! SOTA 2025: Template/Document processing with Python parser integration
+//!
+//! Handles special file types:
+//! - JSX/TSX (React) → IR with XSS sinks
+//! - Vue SFC → IR with v-html sinks
+//! - Markdown → Searchable document chunks
+//! - Jupyter Notebook → Code blocks + outputs
+
+// TEMPORARILY DISABLED: pyo3 dependency issues
+// This module will be enabled once PyO3 integration is ready
+// For now, these functions are stubs that return empty results
+
+use crate::pipeline::processor::ProcessResult;
+use crate::shared::models::{
+    Node, Edge, NodeKind, EdgeKind, Span, CodegraphError, Result,
+    TemplateDoc, TemplateSlot, SlotContextKind,
+    ParsedDocument, SectionType,
+};
+use std::collections::HashMap;
+
+// Helper to create minimal Node
+fn create_node(id: String, kind: NodeKind, fqn: String, file_path: String, span: Span, language: String) -> Node {
+    Node {
+        id,
+        kind,
+        fqn,
+        file_path,
+        span,
+        language,
+        name: None,
+        stable_id: None,
+        content_hash: None,
+        module_path: None,
+        parent_id: None,
+        body_span: None,
+        docstring: None,
+        decorators: None,
+        annotations: None,
+        modifiers: None,
+        is_async: None,
+        is_generator: None,
+        is_static: None,
+        is_abstract: None,
+        parameters: None,
+        return_type: None,
+        base_classes: None,
+        metaclass: None,
+        type_annotation: None,
+        initial_value: None,
+        metadata: None,
+        role: None,
+        is_test_file: None,
+        signature_id: None,
+        declared_type_id: None,
+        attrs: None,
+        raw: None,
+        flavor: None,
+        is_nullable: None,
+        owner_node_id: None,
+    }
+}
+
+/// Process template file (JSX, Vue, etc.)
+///
+/// Uses Python parsers via PyO3 bridge for SOTA template analysis
+pub fn process_template_file(
+    file_path: &str,
+    source_code: &str,
+    repo_id: &str,
+) -> Result<ProcessResult> {
+    use crate::pipeline::preprocessors::TemplatePreprocessor;
+
+    let preprocessor = TemplatePreprocessor::new();
+    let template = preprocessor.parse_template(file_path, source_code)?;
+    let (nodes, edges) = convert_template_to_ir(&template, repo_id)?;
+
+    Ok(ProcessResult {
+        nodes,
+        edges,
+        occurrences: vec![],
+        bfg_graphs: vec![],
+        cfg_edges: vec![],
+        type_entities: vec![],
+        dfg_graphs: vec![],
+        ssa_graphs: vec![],
+        pdg_graphs: vec![],
+        taint_results: vec![],
+        slice_results: vec![],
+        points_to_result: None,
+        memory_safety_issues: vec![],
+        security_vulnerabilities: vec![],
+        errors: vec![],
+    })
+}
+
+/// Process document file (Markdown, Notebook, etc.)
+///
+/// Uses Python parsers via PyO3 bridge for SOTA document analysis
+pub fn process_document_file(
+    file_path: &str,
+    source_code: &str,
+    repo_id: &str,
+) -> Result<ProcessResult> {
+    use crate::pipeline::preprocessors::TemplatePreprocessor;
+
+    let preprocessor = TemplatePreprocessor::new();
+    let document = preprocessor.parse_document(file_path, source_code)?;
+    let (nodes, edges) = convert_document_to_ir(&document, repo_id)?;
+
+    Ok(ProcessResult {
+        nodes,
+        edges,
+        occurrences: vec![],
+        bfg_graphs: vec![],
+        cfg_edges: vec![],
+        type_entities: vec![],
+        dfg_graphs: vec![],
+        ssa_graphs: vec![],
+        pdg_graphs: vec![],
+        taint_results: vec![],
+        slice_results: vec![],
+        points_to_result: None,
+        memory_safety_issues: vec![],
+        security_vulnerabilities: vec![],
+        errors: vec![],
+    })
+}
+
+// ============================================================================
+// Template → IR Conversion
+// ============================================================================
+
+fn convert_template_to_ir(
+    template: &TemplateDoc,
+    repo_id: &str,
+) -> Result<(Vec<Node>, Vec<Edge>)> {
+    let mut nodes = Vec::new();
+    let mut edges = Vec::new();
+
+    // Create file node
+    let file_id = format!("{}:{}", repo_id, template.file_path);
+    let mut file_node = create_node(
+        file_id.clone(),
+        NodeKind::File,
+        template.file_path.clone(),
+        template.file_path.clone(),
+        Span::default(),
+        template.engine.clone(),
+    );
+    file_node.name = Some(template.file_path.clone());
+    file_node.attrs = Some(format!(r#"{{"engine":"{}","is_template":"true"}}"#, template.engine));
+    nodes.push(file_node);
+
+    // Convert elements to nodes
+    for element in &template.elements {
+        let kind = if element.is_component {
+            NodeKind::Class
+        } else {
+            NodeKind::Variable
+        };
+        let mut elem_node = create_node(
+            element.element_id.clone(),
+            kind,
+            format!("{}.{}", template.file_path, element.tag_name),
+            template.file_path.clone(),
+            Span::new(
+                (element.span.0 / 1000) as u32,
+                0,
+                (element.span.1 / 1000) as u32,
+                0,
+            ),
+            template.engine.clone(),
+        );
+        elem_node.name = Some(element.tag_name.clone());
+
+        nodes.push(elem_node);
+
+        // CONTAINS edge
+        edges.push(Edge::contains(&file_id, &element.element_id));
+    }
+
+    // Convert slots to nodes
+    for slot in &template.slots {
+        let attrs_json = format!(
+            r#"{{"context_kind":"{}","is_sink":"{}","severity":"{}","framework":"{}"}}"#,
+            format!("{:?}", slot.context_kind),
+            slot.is_sink,
+            slot.context_kind.severity_level(),
+            slot.framework
+        );
+
+        let mut slot_node = create_node(
+            slot.slot_id.clone(),
+            NodeKind::Expression,
+            format!("{}:{}", template.file_path, slot.expr_raw),
+            template.file_path.clone(),
+            Span::new(
+                (slot.expr_span.0 / 1000) as u32,
+                0,
+                (slot.expr_span.1 / 1000) as u32,
+                0,
+            ),
+            template.engine.clone(),
+        );
+        slot_node.name = Some(slot.expr_raw.clone());
+        slot_node.attrs = Some(attrs_json);
+
+        nodes.push(slot_node);
+
+        // CONTAINS edge
+        edges.push(Edge::contains(&slot.host_node_id, &slot.slot_id));
+
+        // READS edge for variables
+        if let Some(var_name) = &slot.name_hint {
+            let var_id = format!("{}:var:{}", template.file_path, var_name);
+            if !nodes.iter().any(|n| n.id == var_id) {
+                let mut var_node = create_node(
+                    var_id.clone(),
+                    NodeKind::Variable,
+                    format!("{}.{}", template.file_path, var_name),
+                    template.file_path.clone(),
+                    Span::default(),
+                    template.engine.clone(),
+                );
+                var_node.name = Some(var_name.clone());
+                nodes.push(var_node);
+            }
+
+            edges.push(Edge::reads(&slot.slot_id, &var_id));
+        }
+    }
+
+    Ok((nodes, edges))
+}
+
+fn convert_document_to_ir(
+    doc: &ParsedDocument,
+    repo_id: &str,
+) -> Result<(Vec<Node>, Vec<Edge>)> {
+    let mut nodes = Vec::new();
+    let mut edges = Vec::new();
+
+    // Create file node
+    let file_id = format!("{}:{}", repo_id, doc.file_path);
+    let mut file_node = create_node(
+        file_id.clone(),
+        NodeKind::File,
+        doc.file_path.clone(),
+        doc.file_path.clone(),
+        Span::default(),
+        "markdown".to_string(),
+    );
+    file_node.name = Some(doc.file_path.clone());
+    file_node.attrs = Some(format!(r#"{{"doc_type":"{}","is_document":"true"}}"#, format!("{:?}", doc.doc_type)));
+    nodes.push(file_node);
+
+    // Convert sections
+    for (idx, section) in doc.sections.iter().enumerate() {
+        let section_id = format!("{}:section:{}", file_id, idx);
+
+        let (kind, name) = match section.section_type {
+            SectionType::Heading => (NodeKind::Function, section.content.clone()),
+            SectionType::CodeBlock => (NodeKind::Expression, format!("code_block_{}", idx)),
+            _ => (NodeKind::Variable, format!("section_{}", idx)),
+        };
+
+        let mut section_node = create_node(
+            section_id.clone(),
+            kind,
+            format!("{}:section:{}", doc.file_path, idx),
+            doc.file_path.clone(),
+            Span::new(
+                section.line_start as u32,
+                0,
+                section.line_end as u32,
+                0,
+            ),
+            "markdown".to_string(),
+        );
+        section_node.name = Some(name);
+        nodes.push(section_node);
+
+        edges.push(Edge::contains(&file_id, &section_id));
+    }
+
+    Ok((nodes, edges))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_stub_functions() {
+        // Just verify stubs compile and return Ok
+        let result = process_template_file("test.tsx", "source", "repo1");
+        assert!(result.is_ok());
+
+        let result = process_document_file("test.md", "source", "repo1");
+        assert!(result.is_ok());
+    }
+}

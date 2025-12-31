@@ -1,0 +1,31 @@
+# Python Code Evaluation Sinks
+# CWE-94: Code Injection
+# OWASP: A03:2021-Injection
+
+atoms:
+# =============================================================================
+# Python Built-in Eval/Exec
+# =============================================================================
+- id: sink.code.eval
+  kind: sink
+  tags: [injection, code, dangerous]
+  severity: critical
+  cwe: ["CWE-94"]
+  description: Code evaluation
+  match:
+  - call: eval
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: compile
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: __import__
+    args: [0]
+    constraints:
+      arg_type: not_const

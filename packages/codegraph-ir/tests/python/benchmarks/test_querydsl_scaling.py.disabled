@@ -1,0 +1,293 @@
+#!/usr/bin/env python3
+"""
+QueryDSL Scaling Test - 중대형 레포지토리
+
+실제 규모의 코드베이스에서 변환/초기화 병목 측정
+"""
+
+import codegraph_ir
+import time
+import sys
+
+sys.path.insert(0, "/Users/songmin/Documents/code-jo/semantica-v2/codegraph/packages/codegraph-engine")
+sys.path.insert(0, "/Users/songmin/Documents/code-jo/semantica-v2/codegraph/packages/codegraph-shared")
+
+from codegraph_engine.code_foundation.infrastructure.query import QueryEngine
+from codegraph_engine.code_foundation.domain.query.factories import Q
+from codegraph_engine.code_foundation.infrastructure.ir.models.document import IRDocument
+from codegraph_engine.code_foundation.infrastructure.ir.models.core import Node, Edge, NodeKind, EdgeKind, Span
+
+
+def convert_rust_ir_to_document(rust_result: dict) -> IRDocument:
+    """Rust IR → Python IRDocument 변환"""
+    metadata = rust_result.get("stats", {})
+    repo_name = metadata.get("repo_name", "test-repo")
+
+    ir_doc = IRDocument(
+        repo_id=repo_name,
+        snapshot_id=f"test-{int(time.time())}",
+        schema_version="2.3",
+    )
+
+    # Convert nodes
+    for rust_node in rust_result.get("nodes", []):
+        span_dict = rust_node.get("span", {})
+        span_obj = Span(
+            start_line=span_dict.get("start_line", 0),
+            start_col=span_dict.get("start_col", 0),
+            end_line=span_dict.get("end_line", 0),
+            end_col=span_dict.get("end_col", 0),
+        )
+
+        kind_str = rust_node["kind"].upper()
+        kind_mapping = {
+            "PARAMETER": "VARIABLE",
+            "CALL": "EXPRESSION",
+        }
+        kind_str = kind_mapping.get(kind_str, kind_str)
+
+        try:
+            node_kind = NodeKind[kind_str]
+        except KeyError:
+            continue
+
+        node = Node(
+            id=rust_node["id"],
+            kind=node_kind,
+            fqn=rust_node["fqn"],
+            name=rust_node.get("name", ""),
+            file_path=rust_node["file_path"],
+            span=span_obj,
+            language="python",
+        )
+        ir_doc.nodes.append(node)
+
+    # Convert edges
+    for idx, rust_edge in enumerate(rust_result.get("edges", [])):
+        edge_kind_str = rust_edge["kind"].upper()
+        try:
+            edge_kind = EdgeKind[edge_kind_str]
+        except KeyError:
+            continue
+
+        edge_id = f"edge:{edge_kind_str.lower()}:{idx}"
+        edge = Edge(
+            id=edge_id,
+            source_id=rust_edge["source_id"],
+            target_id=rust_edge["target_id"],
+            kind=edge_kind,
+        )
+        ir_doc.edges.append(edge)
+
+    return ir_doc
+
+
+def test_repo(repo_path: str, repo_name: str, expected_size: str):
+    """단일 레포지토리 테스트"""
+    print(f"\n{'=' * 80}")
+    print(f"Testing: {repo_name} ({expected_size})")
+    print(f"Path: {repo_path}")
+    print(f"{'=' * 80}")
+
+    # Step 1: Rust IR Indexing
+    print("\n[1/4] Rust IR Indexing...")
+    start = time.perf_counter()
+    rust_result = codegraph_ir.run_ir_indexing_pipeline(
+        repo_root=repo_path,
+        repo_name=repo_name,
+        file_paths=None,
+        enable_chunking=True,
+        enable_cross_file=True,
+        enable_symbols=True,
+        enable_points_to=True,
+        parallel_workers=8,
+    )
+    indexing_time = (time.perf_counter() - start) * 1000
+
+    stats = rust_result.get("stats", {})
+    nodes_count = len(rust_result.get("nodes", []))
+    edges_count = len(rust_result.get("edges", []))
+    files_processed = stats.get("files_processed", 0)
+    total_loc = stats.get("total_loc", 0)
+    loc_per_sec = stats.get("loc_per_second", 0)
+
+    print(f"  ✓ Indexing: {indexing_time:.2f}ms")
+    print(f"    Files: {files_processed}")
+    print(f"    LOC: {total_loc:,}")
+    print(f"    Nodes: {nodes_count:,}")
+    print(f"    Edges: {edges_count:,}")
+    print(f"    Speed: {loc_per_sec:,.0f} LOC/s")
+
+    # Step 2: Conversion (병목 측정!)
+    print("\n[2/4] Rust IR → Python IRDocument Conversion...")
+    start = time.perf_counter()
+    ir_doc = convert_rust_ir_to_document(rust_result)
+    conversion_time = (time.perf_counter() - start) * 1000
+
+    print(f"  ✓ Conversion: {conversion_time:.2f}ms")
+    print(f"    Converted nodes: {len(ir_doc.nodes):,}")
+    print(f"    Converted edges: {len(ir_doc.edges):,}")
+    print(f"    Conversion rate: {len(ir_doc.nodes) / (conversion_time / 1000):,.0f} nodes/s")
+
+    # Step 3: QueryEngine Initialization (병목 측정!)
+    print("\n[3/4] QueryEngine Initialization...")
+    start = time.perf_counter()
+    engine = QueryEngine(ir_doc)
+    init_time = (time.perf_counter() - start) * 1000
+
+    print(f"  ✓ Initialization: {init_time:.2f}ms")
+    graph_stats = engine.get_stats()
+    print(f"    Graph nodes: {graph_stats['graph']['total_nodes']:,}")
+    print(f"    Graph edges: {graph_stats['graph']['total_edges']:,}")
+    print(f"    Functions indexed: {graph_stats['graph']['functions']:,}")
+    print(f"    Classes indexed: {graph_stats['graph']['classes']:,}")
+
+    # Step 4: Query Performance
+    print("\n[4/4] Query Performance (5 iterations)...")
+    queries = [
+        ("Find all functions", lambda: engine.node_matcher.match(Q.Func())),
+        ("Find all classes", lambda: engine.node_matcher.match(Q.Class())),
+        ("Find all variables", lambda: engine.node_matcher.match(Q.Var())),
+    ]
+
+    query_times = []
+    for query_name, query_func in queries:
+        times = []
+        for _ in range(5):
+            start = time.perf_counter()
+            result = query_func()
+            elapsed = (time.perf_counter() - start) * 1000
+            times.append(elapsed)
+
+        avg_time = sum(times) / len(times)
+        query_times.append(avg_time)
+        print(f"  {query_name}: {avg_time:.3f}ms (avg)")
+
+    avg_query_time = sum(query_times) / len(query_times)
+
+    # Summary
+    print(f"\n{'=' * 80}")
+    print(f"SUMMARY: {repo_name}")
+    print(f"{'=' * 80}")
+    print(f"  Rust Indexing:     {indexing_time:>10.2f}ms  ({total_loc:,} LOC @ {loc_per_sec:,.0f} LOC/s)")
+    print(f"  Conversion:        {conversion_time:>10.2f}ms  ({nodes_count:,} nodes)")
+    print(f"  QueryEngine Init:  {init_time:>10.2f}ms")
+    print(f"  Avg Query:         {avg_query_time:>10.3f}ms")
+    print(f"  {'─' * 80}")
+    print(f"  Total (Index+Conv+Init): {indexing_time + conversion_time + init_time:>10.2f}ms")
+
+    # 병목 분석
+    total_time = indexing_time + conversion_time + init_time
+    indexing_pct = (indexing_time / total_time) * 100
+    conversion_pct = (conversion_time / total_time) * 100
+    init_pct = (init_time / total_time) * 100
+
+    print(f"\n  Bottleneck Analysis:")
+    print(f"    Indexing:    {indexing_pct:>5.1f}%")
+    print(f"    Conversion:  {conversion_pct:>5.1f}%  ⚠️")
+    print(f"    Init:        {init_pct:>5.1f}%  ⚠️")
+
+    return {
+        "repo_name": repo_name,
+        "files": files_processed,
+        "loc": total_loc,
+        "nodes": nodes_count,
+        "edges": edges_count,
+        "indexing_ms": indexing_time,
+        "conversion_ms": conversion_time,
+        "init_ms": init_time,
+        "avg_query_ms": avg_query_time,
+        "total_ms": total_time,
+    }
+
+
+def main():
+    """중대형 레포 스케일링 테스트"""
+    print("\n" + "📊 " * 20)
+    print("QueryDSL Scaling Test - Real-world Repositories")
+    print("📊 " * 20)
+
+    results = []
+
+    # Test 1: 자기 자신 (codegraph-engine)
+    results.append(
+        test_repo(
+            repo_path="/Users/songmin/Documents/code-jo/semantica-v2/codegraph/packages/codegraph-engine",
+            repo_name="codegraph-engine",
+            expected_size="Medium (~50K LOC)",
+        )
+    )
+
+    # Test 2: codegraph-rust (작은 레포)
+    results.append(
+        test_repo(
+            repo_path="/Users/songmin/Documents/code-jo/semantica-v2/codegraph/packages/codegraph-rust/codegraph-ir",
+            repo_name="codegraph-ir (Rust)",
+            expected_size="Small (~10K LOC)",
+        )
+    )
+
+    # Final Comparison
+    print("\n" + "=" * 80)
+    print("FINAL COMPARISON")
+    print("=" * 80)
+    print(
+        f"{'Repository':<25} {'Files':>8} {'LOC':>10} {'Nodes':>10} {'Index':>10} {'Conv':>10} {'Init':>10} {'Query':>10}"
+    )
+    print("─" * 80)
+
+    for r in results:
+        print(
+            f"{r['repo_name']:<25} {r['files']:>8} {r['loc']:>10,} {r['nodes']:>10,} "
+            f"{r['indexing_ms']:>9.1f}ms {r['conversion_ms']:>9.1f}ms {r['init_ms']:>9.1f}ms {r['avg_query_ms']:>9.3f}ms"
+        )
+
+    print("\n" + "=" * 80)
+    print("KEY FINDINGS")
+    print("=" * 80)
+
+    # 병목 패턴 분석
+    for r in results:
+        total = r["indexing_ms"] + r["conversion_ms"] + r["init_ms"]
+        conv_pct = (r["conversion_ms"] / total) * 100
+        init_pct = (r["init_ms"] / total) * 100
+
+        print(f"\n{r['repo_name']}:")
+        print(f"  - Conversion overhead: {conv_pct:.1f}%")
+        print(f"  - Init overhead: {init_pct:.1f}%")
+
+        if conv_pct > 20:
+            print(f"  ⚠️  Conversion is a bottleneck! ({r['conversion_ms']:.1f}ms for {r['nodes']:,} nodes)")
+        if init_pct > 50:
+            print(f"  ⚠️  QueryEngine init is the main bottleneck! ({r['init_ms']:.1f}ms)")
+
+    print("\n" + "=" * 80)
+    print("RECOMMENDATION")
+    print("=" * 80)
+
+    # 가장 큰 레포 기준으로 분석
+    largest = max(results, key=lambda x: x["nodes"])
+    total = largest["indexing_ms"] + largest["conversion_ms"] + largest["init_ms"]
+    conv_pct = (largest["conversion_ms"] / total) * 100
+    init_pct = (largest["init_ms"] / total) * 100
+
+    if conv_pct > 30:
+        print("  🔴 Conversion is a significant bottleneck")
+        print("     → Consider: Zero-copy approach or pre-built indexes from Rust")
+    elif init_pct > 50:
+        print("  🟡 QueryEngine initialization is the main bottleneck")
+        print("     → Consider: Index reuse or lazy initialization")
+    else:
+        print("  🟢 Current approach is efficient for this scale")
+        print("     → Conversion + Init overhead is acceptable")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"\n❌ Test failed: {e}")
+        import traceback
+
+        traceback.print_exc()
+        exit(1)

@@ -1,0 +1,314 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.validation.missing_length_check
+  kind: sink
+  tags: ['validation', 'missing_length_check', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-1284"]
+  description: Validation Missing Length Check
+  match:
+  -     call: len
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: __len__
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.missing_type_check
+  kind: sink
+  tags: ['validation', 'missing_type_check', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: Validation Missing Type Check
+  match:
+  -     call: isinstance
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: type
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.missing_range_check
+  kind: sink
+  tags: ['validation', 'missing_range_check', 'vulnerability']
+  severity: high
+  cwe: ["CWE-129"]
+  description: Validation Missing Range Check
+  match:
+  -     call: range
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: min
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: max
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.missing_format_check
+  kind: sink
+  tags: ['validation', 'missing_format_check', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-1286"]
+  description: Validation Missing Format Check
+  match:
+  -     base_type: re
+        call: match
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: fullmatch
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.integer_overflow
+  kind: sink
+  tags: ['validation', 'integer_overflow', 'vulnerability']
+  severity: high
+  cwe: ["CWE-190"]
+  description: Validation Integer Overflow
+  match:
+  -     call: int
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: float
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.array_index_negative
+  kind: sink
+  tags: ['validation', 'array_index_negative', 'vulnerability']
+  severity: high
+  cwe: ["CWE-129"]
+  description: Validation Array Index Negative
+  match:
+  -     call: __getitem__
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: __setitem__
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.null_pointer
+  kind: sink
+  tags: ['validation', 'null_pointer', 'vulnerability']
+  severity: high
+  cwe: ["CWE-476"]
+  description: Validation Null Pointer
+  match:
+  -     call: None
+  -     call: null
+
+- id: sink.validation.division_by_zero
+  kind: sink
+  tags: ['validation', 'division_by_zero', 'vulnerability']
+  severity: high
+  cwe: ["CWE-369"]
+  description: Validation Division By Zero
+  match:
+  -     call: __truediv__
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: __floordiv__
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: __mod__
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: barrier.validation.length_check
+  kind: sanitizer
+  tags: ['validation', 'length_check', 'safety']
+  severity: medium
+  description: Validation Length Check
+  match:
+  -     call: len
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: maxlen
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: barrier.validation.whitelist
+  kind: sanitizer
+  tags: ['validation', 'whitelist', 'safety']
+  severity: high
+  description: Validation Whitelist
+  match:
+  -     call: choices
+  -     read: ALLOWED_VALUES
+
+- id: sink.validation.missing_length_check
+  kind: sink
+  tags: ['validation', 'missing_length_check', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-1284"]
+  description: Validation Missing Length Check
+  match:
+  -     call: len
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: __len__
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.missing_type_check
+  kind: sink
+  tags: ['validation', 'missing_type_check', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-20"]
+  description: Validation Missing Type Check
+  match:
+  -     call: isinstance
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: type
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.missing_range_check
+  kind: sink
+  tags: ['validation', 'missing_range_check', 'vulnerability']
+  severity: high
+  cwe: ["CWE-129"]
+  description: Validation Missing Range Check
+  match:
+  -     call: range
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: min
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: max
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.missing_format_check
+  kind: sink
+  tags: ['validation', 'missing_format_check', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-1286"]
+  description: Validation Missing Format Check
+  match:
+  -     base_type: re
+        call: match
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: fullmatch
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.integer_overflow
+  kind: sink
+  tags: ['validation', 'integer_overflow', 'vulnerability']
+  severity: high
+  cwe: ["CWE-190"]
+  description: Validation Integer Overflow
+  match:
+  -     call: int
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: float
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.array_index_negative
+  kind: sink
+  tags: ['validation', 'array_index_negative', 'vulnerability']
+  severity: high
+  cwe: ["CWE-129"]
+  description: Validation Array Index Negative
+  match:
+  -     call: __getitem__
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: __setitem__
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.validation.null_pointer
+  kind: sink
+  tags: ['validation', 'null_pointer', 'vulnerability']
+  severity: high
+  cwe: ["CWE-476"]
+  description: Validation Null Pointer
+  match:
+  -     call: None
+  -     call: null
+
+- id: sink.validation.division_by_zero
+  kind: sink
+  tags: ['validation', 'division_by_zero', 'vulnerability']
+  severity: high
+  cwe: ["CWE-369"]
+  description: Validation Division By Zero
+  match:
+  -     call: __truediv__
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: __floordiv__
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: __mod__
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: barrier.validation.length_check
+  kind: sanitizer
+  tags: ['validation', 'length_check', 'safety']
+  severity: medium
+  description: Validation Length Check
+  match:
+  -     call: len
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: maxlen
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: barrier.validation.whitelist
+  kind: sanitizer
+  tags: ['validation', 'whitelist', 'safety']
+  severity: high
+  description: Validation Whitelist
+  match:
+  -     call: choices
+  -     read: ALLOWED_VALUES

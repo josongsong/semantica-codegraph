@@ -1,0 +1,31 @@
+#!/bin/bash
+# Claude Code pre-commit hook
+# Automatically runs fast tests before commit
+
+set -e
+
+echo "🤖 Claude AI: Running pre-commit tests..."
+
+cd "$(git rev-parse --show-toplevel)"
+
+# Check if we're in codegraph-ir package
+if [ -d "packages/codegraph-ir" ]; then
+    cd packages/codegraph-ir
+
+    # Check if just is available
+    if command -v just &> /dev/null; then
+        echo "✅ Using just for fast parallel tests (16 cores)..."
+        just test-parallel
+    elif command -v cargo-nextest &> /dev/null; then
+        echo "✅ Using nextest with auto-detected cores..."
+        CORES=$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 8)
+        cargo nextest run --lib --test-threads=$CORES --profile fast
+    else
+        echo "⚠️  Falling back to cargo test..."
+        cargo test --lib
+    fi
+else
+    echo "ℹ️  Not in codegraph-ir, skipping tests"
+fi
+
+echo "✅ Pre-commit tests passed!"

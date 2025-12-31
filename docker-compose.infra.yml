@@ -1,0 +1,178 @@
+version: '3.8'
+
+services:
+  # ========================================================================
+  # 관계형 데이터베이스 (메타데이터, 세션, 협업 정보)
+  # 기본: SQLite (파일 기반, 설치 불필요)
+  # 선택: PostgreSQL (프로덕션 환경에서 필요 시 주석 해제)
+  # ========================================================================
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: codegraph-postgres
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER:-codegraph}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codegraph_dev}
+  #     POSTGRES_DB: ${POSTGRES_DB:-codegraph}
+  #   ports:
+  #     - "${POSTGRES_PORT:-7201}:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #     - ./infra/db/init:/docker-entrypoint-initdb.d:ro
+  #   networks:
+  #     - codegraph-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-codegraph}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 10s
+  #   restart: unless-stopped
+
+  # ========================================================================
+  # Qdrant (벡터 검색 - dense embedding + payload filter)
+  # 로컬 개발: embedded 모드 사용 (Docker 불필요)
+  # 프로덕션: 필요 시 아래 주석 해제
+  # ========================================================================
+  # qdrant:
+  #   image: qdrant/qdrant:v1.7.4
+  #   container_name: codegraph-qdrant
+  #   ports:
+  #     - "${QDRANT_HTTP_PORT:-7203}:6333"
+  #     - "${QDRANT_GRPC_PORT:-7204}:6334"
+  #   volumes:
+  #     - qdrant_data:/qdrant/storage
+  #   environment:
+  #     QDRANT__SERVICE__GRPC_PORT: 6334
+  #     QDRANT__SERVICE__HTTP_PORT: 6333
+  #     QDRANT__STORAGE__PERFORMANCE__MAX_SEARCH_THREADS: ${QDRANT_MAX_THREADS:-4}
+  #   networks:
+  #     - codegraph-network
+  #   healthcheck:
+  #     test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6333/"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 15s
+  #   restart: unless-stopped
+
+  # ========================================================================
+  # Zoekt (DEPRECATED - RFC-020 Phase 4에서 제거됨)
+  # Tantivy로 대체됨 (Python 내장, Docker 불필요)
+  # ========================================================================
+  # zoekt-webserver:
+  #   image: sourcegraph/zoekt-webserver:latest
+  #   container_name: codegraph-zoekt-web
+  #   ports:
+  #     - "${ZOEKT_PORT:-7205}:6070"
+  #   volumes:
+  #     - zoekt_index:/data/index
+  #   command: ["zoekt-webserver", "-index", "/data/index", "-listen", ":6070"]
+  #   networks:
+  #     - codegraph-network
+  #   healthcheck:
+  #     test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6070/"]
+  #     interval: 15s
+  #     timeout: 5s
+  #     retries: 3
+  #     start_period: 20s
+  #   restart: unless-stopped
+
+  # zoekt-indexserver:
+  #   image: sourcegraph/zoekt-indexserver:latest
+  #   container_name: codegraph-zoekt-index
+  #   volumes:
+  #     - zoekt_index:/data/index
+  #     - ./repos:/data/repos:ro
+  #   environment:
+  #     ZOEKT_INDEX_INTERVAL: ${ZOEKT_INDEX_INTERVAL:-1h}
+  #   command: [
+  #     "zoekt-sourcegraph-indexserver",
+  #     "-index", "/data/index",
+  #     "-interval", "${ZOEKT_INDEX_INTERVAL:-1h}",
+  #     "-sourcegraph_url", "/data/repos",
+  #     "-hostname", "codegraph-zoekt"
+  #   ]
+  #   networks:
+  #     - codegraph-network
+  #   restart: unless-stopped
+
+  # ========================================================================
+  # API Server (HTTP API - FastAPI)
+  # 요구사항 1-1: CLI / MCP / HTTP API / IDE 플러그인 등 헤드리스 엔진
+  # 요구사항 5-1: 하이브리드 검색 파이프라인
+  # 요구사항 8-3: Tool 세트 (search_code, get_call_chain 등)
+  # ========================================================================
+  api-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: codegraph-api
+    environment:
+      # Database (기본: SQLite, 선택: PostgreSQL)
+      SEMANTICA_DATABASE_URL: ${DATABASE_URL:-sqlite:///./app/data/codegraph.db}
+      # PostgreSQL 사용 시: postgresql://${POSTGRES_USER:-codegraph}:${POSTGRES_PASSWORD:-codegraph_dev}@postgres:5432/${POSTGRES_DB:-codegraph}
+      # Qdrant (Embedded Mode)
+      SEMANTICA_QDRANT_MODE: embedded
+      SEMANTICA_QDRANT_STORAGE_PATH: /app/data/qdrant_storage
+      SEMANTICA_QDRANT_COLLECTION_NAME: ${QDRANT_COLLECTION:-codegraph}
+      # Zoekt (DEPRECATED - RFC-020)
+      # SEMANTICA_ZOEKT_HOST: http://zoekt-webserver
+      # SEMANTICA_ZOEKT_PORT: 6070
+      # Tantivy (RFC-020 Phase 4)
+      SEMANTICA_TANTIVY_INDEX_PATH: /app/data/tantivy_index
+      # Kuzu (Embedded Graph Database)
+      SEMANTICA_KUZU_DB_PATH: ${KUZU_DB_PATH:-/app/data/kuzu}
+      SEMANTICA_KUZU_BUFFER_POOL_SIZE: ${KUZU_BUFFER_POOL_SIZE:-1024}
+      # LLM
+      SEMANTICA_OPENAI_API_KEY: ${OPENAI_API_KEY}
+      SEMANTICA_EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      SEMANTICA_EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-1536}
+      # Application
+      SEMANTICA_LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SEMANTICA_ENVIRONMENT: ${ENVIRONMENT:-development}
+      SEMANTICA_API_HOST: 0.0.0.0
+      SEMANTICA_API_PORT: 8000
+      SEMANTICA_API_RELOAD: ${API_RELOAD:-true}
+    ports:
+      - "${API_PORT:-7200}:8000"
+    volumes:
+      # 개발 환경: 코드 마운트 (핫 리로드)
+      - ./codegraph:/app/codegraph:ro
+      - ./apps/api_server:/app/apps/api_server:ro
+      # Kùzu embedded DB 스토리지 (요구사항 1-2: Kùzu embedded)
+      - kuzu_data:/app/data/kuzu
+      # 로그
+      - ./logs:/app/logs
+    networks:
+      - codegraph-network
+    # depends_on:
+      # PostgreSQL 사용 시 주석 해제
+      # postgres:
+      #   condition: service_healthy
+      # qdrant: embedded 모드 사용으로 Docker 불필요
+      # zoekt-webserver: RFC-020 Phase 4에서 제거됨
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+# ========================================================================
+# Volumes
+# ========================================================================
+volumes:
+  # postgres_data: SQLite 기본 사용으로 불필요 (PostgreSQL 사용 시 주석 해제)
+  #   driver: local
+  # qdrant_data: embedded 모드 사용으로 불필요
+  # zoekt_index: RFC-020 Phase 4에서 제거됨 (Tantivy로 대체)
+  kuzu_data:
+    driver: local
+
+# ========================================================================
+# Networks
+# ========================================================================
+networks:
+  codegraph-network:
+    driver: bridge

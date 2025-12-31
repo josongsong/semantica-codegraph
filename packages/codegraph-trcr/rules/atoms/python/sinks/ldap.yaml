@@ -1,0 +1,28 @@
+# Python LDAP Injection Sinks
+# CWE-90: LDAP Injection
+# OWASP: A03:2021-Injection
+
+atoms:
+# =============================================================================
+# LDAP Search
+# =============================================================================
+- id: sink.ldap.search
+  kind: sink
+  tags: [injection, ldap]
+  severity: critical
+  cwe: ["CWE-90"]
+  description: LDAP Injection via search
+  match:
+  - call: ldap3.Connection.search
+    args: [1]
+    constraints:
+      arg_type: not_const
+  # python-ldap method calls
+  - call: search_s
+    args: [2]
+    constraints:
+      arg_type: not_const
+  - call: search
+    args: [2]
+    constraints:
+      arg_type: not_const

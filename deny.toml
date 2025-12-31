@@ -1,0 +1,71 @@
+# ============================================================================
+# Cargo Deny Configuration - Architecture Boundary Protection
+# ============================================================================
+# Run: cargo deny check
+# Docs: https://embarkstudios.github.io/cargo-deny/
+
+# ============================================================================
+# ADVISORIES: 보안 취약점 자동 차단
+# ============================================================================
+[advisories]
+version = 2
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+yanked = "deny"
+
+# ============================================================================
+# BANS: 아키텍처 경계 위반 금지
+# ============================================================================
+[bans]
+multiple-versions = "warn"
+wildcards = "allow"  # 개발 편의성
+highlight = "all"
+
+# ADR-072: Rust = Analysis Engine, Python = Consumer
+# Rust 코드에서 Python 런타임 의존 금지 (PyO3 bindings 제외)
+[[bans.deny]]
+name = "cpython"
+
+[[bans.deny]]
+name = "python3-sys"
+
+# 네트워크 라이브러리 사용 제한 (필요 시 Storage 레이어에서만)
+# Note: 현재는 경고만, 향후 강화 가능
+# [[bans.deny]]
+# name = "reqwest"
+
+# [[bans.deny]]
+# name = "hyper"
+
+# ============================================================================
+# LICENSES: 허용된 라이선스만 사용
+# ============================================================================
+[licenses]
+version = 2
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-DFS-2016",
+]
+
+[[licenses.clarify]]
+name = "ring"
+expression = "MIT AND ISC AND OpenSSL"
+license-files = [
+    { path = "LICENSE", hash = 0xbd0eed23 }
+]
+
+# ============================================================================
+# SOURCES: 신뢰할 수 있는 소스만 허용
+# ============================================================================
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+
+[sources.allow-org]
+github = ["rust-lang", "tokio-rs", "serde-rs", "tree-sitter"]

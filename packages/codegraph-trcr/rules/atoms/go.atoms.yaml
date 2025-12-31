@@ -1,0 +1,495 @@
+# Go Taint Analysis Atoms
+# Language: Go
+# Framework: net/http, gin, echo, gorm, etc.
+
+atoms:
+# ============================================================================
+# Sources - Untrusted Input
+# ============================================================================
+- id: input.http.stdlib
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  severity: high
+  description: Go HTTP request input
+  match:
+  - base_type: http.Request
+    read: URL
+  - base_type: http.Request
+    call: FormValue
+  - base_type: http.Request
+    call: PostFormValue
+  - base_type: url.Values
+    call: Get
+
+- id: input.http.gin
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  severity: high
+  description: Gin framework input
+  match:
+  - base_type: gin.Context
+    call: Query
+  - base_type: gin.Context
+    call: Param
+  - base_type: gin.Context
+    call: PostForm
+  - base_type: gin.Context
+    call: GetHeader
+
+- id: input.http.echo
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  severity: high
+  description: Echo framework input
+  match:
+  - base_type: echo.Context
+    call: QueryParam
+  - base_type: echo.Context
+    call: Param
+  - base_type: echo.Context
+    call: FormValue
+
+- id: input.env
+  kind: source
+  tags:
+  - untrusted
+  - env
+  - config
+  severity: medium
+  description: Environment variables
+  match:
+  - call: os.Getenv
+
+- id: input.file
+  kind: source
+  tags:
+  - untrusted
+  - file
+  - io
+  severity: medium
+  description: File read operations
+  match:
+  - call: ioutil.ReadFile
+  - call: os.ReadFile
+  - base_type: os.File
+    call: Read
+
+# ============================================================================
+# Sinks - SQL Injection (CWE-89)
+# ============================================================================
+- id: sink.sql.database
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  description: database/sql Query execution
+  match:
+  - base_type: sql.DB
+    call: Query
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: sql.DB
+    call: QueryRow
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: sql.DB
+    call: Exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sql.gorm
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - orm
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [gorm]
+  description: GORM raw SQL
+  match:
+  - base_type: gorm.DB
+    call: Raw
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: gorm.DB
+    call: Exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sql.sqlx
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [sqlx]
+  description: sqlx query execution
+  match:
+  - base_type: sqlx.DB
+    call: Query
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: sqlx.DB
+    call: Exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - NoSQL Injection (CWE-943)
+# ============================================================================
+- id: sink.nosql.mongodb
+  kind: sink
+  tags:
+  - injection
+  - db
+  - nosql
+  - mongodb
+  severity: critical
+  cwe: ["CWE-943"]
+  owasp: "A03:2021-Injection"
+  frameworks: [mongodb]
+  description: MongoDB query
+  match:
+  - base_type: mongo.Collection
+    call: Find
+    args: [1]
+    constraints:
+      arg_type: not_const
+  - base_type: mongo.Collection
+    call: FindOne
+    args: [1]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - Command Injection (CWE-78)
+# ============================================================================
+- id: sink.command.exec
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  description: Command execution
+  match:
+  - call: exec.Command
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: exec.CommandContext
+    args: [1]
+    constraints:
+      arg_type: not_const
+
+- id: sink.command.shell
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  - shell
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  description: Shell command execution
+  match:
+  - call: os.system
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - Path Traversal (CWE-22)
+# ============================================================================
+- id: sink.path.file
+  kind: sink
+  tags:
+  - traversal
+  - file
+  - path
+  severity: high
+  cwe: ["CWE-22"]
+  owasp: "A01:2021-Broken Access Control"
+  description: File operations
+  match:
+  - call: os.Open
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: os.OpenFile
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: ioutil.ReadFile
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: os.ReadFile
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: ioutil.WriteFile
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: os.WriteFile
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - SSRF (CWE-918)
+# ============================================================================
+- id: sink.ssrf.http
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  cwe: ["CWE-918"]
+  owasp: "A10:2021-Server-Side Request Forgery"
+  description: SSRF via HTTP client
+  match:
+  - call: http.Get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: http.Post
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: http.Client
+    call: Get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: http.Client
+    call: Post
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - Template Injection (CWE-94)
+# ============================================================================
+- id: sink.template.html
+  kind: sink
+  tags:
+  - injection
+  - template
+  - xss
+  severity: high
+  cwe: ["CWE-94"]
+  owasp: "A03:2021-Injection"
+  description: HTML template with user input
+  match:
+  - call: template.New
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: template.Template
+    call: Parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - XXE (CWE-611)
+# ============================================================================
+- id: sink.xxe.xml
+  kind: sink
+  tags:
+  - xxe
+  - xml
+  severity: critical
+  cwe: ["CWE-611"]
+  owasp: "A05:2021-Security Misconfiguration"
+  description: XML parsing
+  match:
+  - call: xml.Unmarshal
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: xml.NewDecoder
+
+# ============================================================================
+# Sinks - Code Evaluation (CWE-470)
+# ============================================================================
+- id: sink.eval.unsafe
+  kind: sink
+  tags:
+  - eval
+  - dangerous
+  - reflection
+  severity: critical
+  cwe: ["CWE-470"]
+  owasp: "A03:2021-Injection"
+  description: Unsafe reflection/eval
+  match:
+  - call: reflect.ValueOf
+  - call: reflect.New
+
+# ============================================================================
+# Sinks - Logging (CWE-532)
+# ============================================================================
+- id: sink.info_leak.logging
+  kind: sink
+  tags:
+  - info_leak
+  - logging
+  severity: medium
+  cwe: ["CWE-532"]
+  owasp: "A09:2021-Security Logging and Monitoring Failures"
+  description: Sensitive data in logs
+  match:
+  - call: log.Print
+    args: [0]
+  - call: log.Println
+    args: [0]
+  - call: log.Printf
+    args: [0]
+  - call: fmt.Print
+    args: [0]
+  - call: fmt.Println
+    args: [0]
+
+# ============================================================================
+# Sanitizers
+# ============================================================================
+- id: barrier.sql.parameterized
+  kind: sanitizer
+  tags:
+  - safety
+  - db
+  - sql
+  description: Parameterized queries
+  scope: return
+  match:
+  - base_type: sql.DB
+    call: Query
+    constraints:
+      arg_count: 2
+  - base_type: sql.DB
+    call: Exec
+    constraints:
+      arg_count: 2
+
+- id: barrier.path.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - path
+  - file
+  description: Path validation
+  scope: return
+  match:
+  - call: filepath.Clean
+    scope: return
+  - call: filepath.Abs
+    scope: return
+
+- id: barrier.html.escape
+  kind: sanitizer
+  tags:
+  - safety
+  - html
+  - xss
+  description: HTML escaping
+  scope: return
+  match:
+  - call: html.EscapeString
+    scope: return
+
+- id: barrier.url.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - url
+  - validation
+  description: URL validation
+  scope: return
+  match:
+  - call: url.Parse
+    scope: return
+
+# ============================================================================
+# Propagators
+# ============================================================================
+- id: prop.string
+  kind: propagator
+  tags:
+  - flow
+  - string
+  description: String operations
+  match:
+  - call: strings.Join
+    from_args: [0]
+    to: return
+  - call: strings.Replace
+    from_args: [0]
+    to: return
+  - call: strings.ReplaceAll
+    from_args: [0]
+    to: return
+  - call: fmt.Sprintf
+    from_args: [0]
+    to: return
+
+- id: prop.bytes
+  kind: propagator
+  tags:
+  - flow
+  - bytes
+  description: Bytes operations
+  match:
+  - call: bytes.Join
+    from_args: [0]
+    to: return
+  - call: bytes.Replace
+    from_args: [0]
+    to: return
+
+- id: prop.json
+  kind: propagator
+  tags:
+  - flow
+  - json
+  description: JSON operations
+  match:
+  - call: json.Marshal
+    from_args: [0]
+    to: return
+  - call: json.Unmarshal
+    from_args: [0]
+    to: return
+

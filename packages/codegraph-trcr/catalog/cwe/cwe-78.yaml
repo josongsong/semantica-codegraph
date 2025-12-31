@@ -1,0 +1,111 @@
+# CWE-78: OS Command Injection
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/78.html
+
+metadata:
+  cwe_id: CWE-78
+  name: "Improper Neutralization of Special Elements used in an OS Command"
+  severity: critical
+  owasp: "A03:2021-Injection"
+  category: "Injection"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-17"
+
+  mitre_abstraction: base
+  likelihood_of_exploit: high
+
+  references:
+    - https://cwe.mitre.org/data/definitions/78.html
+    - https://owasp.org/www-community/attacks/Command_Injection
+
+description: |
+  The software constructs all or part of an OS command using externally-influenced
+  input from an upstream component, but it does not neutralize or incorrectly neutralizes
+  special elements that could modify the intended OS command when it is sent to a
+  downstream component.
+
+sources:
+  - id: input.http.request
+    patterns:
+      - flask.Request.args
+      - django.http.HttpRequest.GET
+      - fastapi.Request.query_params
+
+sinks:
+  - id: sink.command.os
+    patterns:
+      - call: os.system
+      - call: os.popen
+
+  - id: sink.command.subprocess
+    patterns:
+      - call: subprocess.call
+        constraints:
+          has_shell_true: true
+      - call: subprocess.run
+        constraints:
+          has_shell_true: true
+      - call: subprocess.Popen
+        constraints:
+          has_shell_true: true
+
+sanitizers:
+  - id: barrier.command.quote
+    patterns:
+      - shlex.quote()
+      - pipes.quote()
+
+  - id: barrier.command.list_form
+    patterns:
+      - subprocess.run([...], shell=False)
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.command.os
+      - id: sink.command.subprocess
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: command
+
+validation:
+  min_test_cases: 8
+  required_scenarios:
+    - os_system
+    - subprocess_shell_true
+    - list_form_safe
+    - shlex_quote_safe
+
+  min_precision: 0.90
+  min_recall: 0.85
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE78_OS_Command_Injection"
+  owasp:
+    directory: "test-suite/owasp/command"
+
+examples:
+  vulnerable:
+    - |
+      # BAD: os.system with user input
+      cmd = request.args.get("cmd")
+      os.system(f"ls {cmd}")
+
+  safe:
+    - |
+      # GOOD: subprocess with list
+      cmd = request.args.get("cmd")
+      subprocess.run(["ls", cmd])
+
+    - |
+      # GOOD: shlex.quote
+      cmd = request.args.get("cmd")
+      safe_cmd = shlex.quote(cmd)
+      os.system(f"ls {safe_cmd}")

@@ -1,0 +1,165 @@
+# CWE-22: Path Traversal
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/22.html
+
+metadata:
+  cwe_id: CWE-22
+  name: "Improper Limitation of a Pathname to a Restricted Directory"
+  severity: high
+  owasp: "A01:2021-Broken Access Control"
+  category: "AccessControl"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  mitre_abstraction: base
+  likelihood_of_exploit: high
+
+  references:
+    - https://cwe.mitre.org/data/definitions/22.html
+    - https://owasp.org/www-community/attacks/Path_Traversal
+
+description: |
+  The software uses external input to construct a pathname that is intended to identify
+  a file or directory that is located underneath a restricted parent directory, but the
+  software does not properly neutralize special elements within the pathname that can
+  cause the pathname to resolve to a location that is outside of the restricted directory.
+
+sources:
+  - id: input.http.flask
+    description: "Flask HTTP request parameters"
+    patterns:
+      - flask.Request.args
+      - flask.Request.form
+      - flask.Request.files
+
+  - id: input.http.django
+    description: "Django HTTP request parameters"
+    patterns:
+      - django.http.HttpRequest.GET
+      - django.http.HttpRequest.POST
+
+  - id: input.http.fastapi
+    description: "FastAPI request parameters"
+    patterns:
+      - fastapi.Request.query_params
+
+sinks:
+  - id: sink.file.open
+    description: "File open operations"
+    patterns:
+      - call: open
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - call: builtins.open
+        args: [0]
+
+  - id: sink.file.pathlib
+    description: "pathlib operations"
+    patterns:
+      - base_type: pathlib.Path
+        call: open
+      - base_type: pathlib.Path
+        call: read_text
+      - base_type: pathlib.Path
+        call: read_bytes
+
+  - id: sink.file.send
+    description: "Flask send_file"
+    patterns:
+      - call: flask.send_file
+        args: [0]
+
+sanitizers:
+  - id: barrier.path.realpath
+    description: "Path canonicalization"
+    patterns:
+      - os.path.realpath()
+      - os.path.abspath()
+      - pathlib.Path.resolve()
+
+  - id: barrier.path.basename
+    description: "Extract basename only"
+    patterns:
+      - os.path.basename()
+      - pathlib.Path.name
+
+  - id: barrier.path.validation
+    description: "Path validation"
+    patterns:
+      - startswith(base_dir)
+      - allowlist check
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.file.open
+      - id: sink.file.pathlib
+      - id: sink.file.send
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: path
+
+validation:
+  min_test_cases: 6
+  required_scenarios:
+    - direct_concatenation
+    - join_path
+    - realpath_safe
+    - basename_safe
+
+  min_precision: 0.85
+  min_recall: 0.80
+  max_false_positive_rate: 0.15
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE22_Path_Traversal"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - bad_03_join.py
+      - good_01.py
+      - good_02.py
+      - good_03_realpath.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: Direct concatenation
+      filename = request.args.get("file")
+      file_path = f"/var/uploads/{filename}"
+      return send_file(open(file_path, "rb"))
+
+  safe:
+    - |
+      # GOOD: Validate with realpath
+      filename = request.args.get("file")
+      file_path = Path("/var/uploads") / filename
+      resolved = file_path.resolve()
+      if not str(resolved).startswith("/var/uploads"):
+          raise ValueError("Invalid path")
+      return send_file(resolved)
+
+fix:
+  priority: 2
+  effort: low
+
+  recommendations:
+    - title: "Use path canonicalization"
+      severity: best
+      example: |
+        resolved = Path(base_dir) / filename
+        if not resolved.resolve().is_relative_to(base_dir):
+            raise ValueError()
+
+    - title: "Use basename only"
+      severity: recommended
+      example: |
+        safe_name = os.path.basename(filename)

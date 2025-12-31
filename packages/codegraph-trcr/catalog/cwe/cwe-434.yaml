@@ -1,0 +1,239 @@
+# CWE-434: Unrestricted Upload of File with Dangerous Type
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/434.html
+
+metadata:
+  cwe_id: CWE-434
+  name: "Unrestricted Upload of File with Dangerous Type"
+  severity: critical
+  owasp: "A01:2021-Broken Access Control"
+  category: "File Upload"
+
+  # Status
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  # Classification
+  mitre_abstraction: base
+  likelihood_of_exploit: high
+
+  # References
+  references:
+    - https://cwe.mitre.org/data/definitions/434.html
+    - https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload
+    - https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html
+
+description: |
+  The software allows the attacker to upload or transfer files of dangerous
+  types that can be automatically processed within the product's environment.
+
+  This can lead to:
+  - Remote code execution (uploading .php, .py, .jsp files)
+  - Cross-site scripting (uploading HTML/SVG with scripts)
+  - Denial of service (uploading very large files)
+  - Server-side request forgery (uploading files that trigger requests)
+
+# ============================================================================
+# Detection Pattern
+# ============================================================================
+
+sources:
+  - id: source.upload.file
+    description: "File upload inputs"
+    patterns:
+      - flask.Request.files
+      - django.http.HttpRequest.FILES
+      - fastapi.UploadFile
+      - werkzeug.datastructures.FileStorage
+
+sinks:
+  - id: sink.file.save
+    description: "File save operations"
+    patterns:
+      - base_type: werkzeug.datastructures.FileStorage
+        call: save
+      - call: shutil.copy
+      - call: shutil.move
+      - call: os.rename
+      - base_type: pathlib.Path
+        call: write_bytes
+      - base_type: io.BufferedWriter
+        call: write
+
+  - id: sink.file.execute
+    description: "File execution after upload"
+    patterns:
+      - call: exec
+      - call: eval
+      - call: subprocess.run
+      - call: os.system
+      - call: importlib.import_module
+
+sanitizers:
+  - id: barrier.upload.extension_whitelist
+    description: "Extension whitelist validation"
+    patterns:
+      - call: validate_extension
+      - condition: "extension in ALLOWED_EXTENSIONS"
+      - condition: ".endswith(('.jpg', '.png', '.gif'))"
+
+  - id: barrier.upload.mime_check
+    description: "MIME type validation"
+    patterns:
+      - call: magic.from_buffer
+      - call: mimetypes.guess_type
+      - call: filetype.guess
+      - call: validate_mime_type
+
+  - id: barrier.upload.content_scan
+    description: "File content scanning"
+    patterns:
+      - call: scan_for_malware
+      - call: antivirus_scan
+      - call: validate_image_content
+
+  - id: barrier.upload.filename_sanitize
+    description: "Filename sanitization"
+    patterns:
+      - call: secure_filename
+      - call: werkzeug.utils.secure_filename
+      - call: sanitize_filename
+
+# ============================================================================
+# Taint Flow Policy
+# ============================================================================
+
+policy:
+  grammar:
+    WHEN:
+      tag: uploaded_file
+    FLOWS:
+      - id: sink.file.save
+      - id: sink.file.execute
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: upload_validation
+
+# ============================================================================
+# Validation Requirements
+# ============================================================================
+
+validation:
+  min_test_cases: 10
+  required_scenarios:
+    - direct_save
+    - client_extension_only
+    - whitelist_extension
+    - mime_validation
+    - secure_filename
+
+  min_precision: 0.85
+  min_recall: 0.90
+  max_false_positive_rate: 0.15
+
+# ============================================================================
+# Test Suite Mapping
+# ============================================================================
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE434_Unrestricted_Upload"
+    cases:
+      - bad_01.py  # Direct save
+      - bad_02.py  # Client extension only
+      - bad_03.py  # Path traversal in filename
+      - good_01.py # Whitelist + MIME check
+      - good_02.py # Secure filename + validation
+      - good_03.py # Content scanning
+
+# ============================================================================
+# Examples
+# ============================================================================
+
+examples:
+  vulnerable:
+    - |
+      # BAD: Direct file save without validation
+      @app.route('/upload', methods=['POST'])
+      def upload_file():
+          file = request.files['file']
+          file.save(f'uploads/{file.filename}')  # No validation!
+          return 'Uploaded'
+
+    - |
+      # BAD: Client-side extension only
+      @app.route('/upload', methods=['POST'])
+      def upload_file():
+          file = request.files['file']
+          # Only checks extension from filename (easily bypassed)
+          if file.filename.endswith('.jpg'):
+              file.save(f'uploads/{file.filename}')
+
+  safe:
+    - |
+      # GOOD: Whitelist + MIME type + secure filename
+      import magic
+      from werkzeug.utils import secure_filename
+
+      ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+      ALLOWED_MIMES = {'image/png', 'image/jpeg', 'image/gif'}
+
+      @app.route('/upload', methods=['POST'])
+      def upload_file():
+          file = request.files['file']
+
+          # Check extension
+          ext = file.filename.rsplit('.', 1)[-1].lower()
+          if ext not in ALLOWED_EXTENSIONS:
+              return 'Invalid extension', 400
+
+          # Check MIME type
+          mime = magic.from_buffer(file.read(1024), mime=True)
+          file.seek(0)
+          if mime not in ALLOWED_MIMES:
+              return 'Invalid file type', 400
+
+          # Use secure filename
+          filename = secure_filename(file.filename)
+          file.save(f'uploads/{filename}')
+          return 'Uploaded'
+
+# ============================================================================
+# Fix Recommendations
+# ============================================================================
+
+fix:
+  priority: 1
+  effort: medium
+
+  recommendations:
+    - title: "Validate file extension with whitelist"
+      severity: best
+      example: |
+        ALLOWED = {'png', 'jpg', 'gif'}
+        ext = filename.rsplit('.', 1)[-1].lower()
+        if ext not in ALLOWED:
+            raise ValueError("Invalid extension")
+
+    - title: "Validate MIME type from content"
+      severity: best
+      example: |
+        import magic
+        mime = magic.from_buffer(file.read(1024), mime=True)
+        if mime not in ALLOWED_MIMES:
+            raise ValueError("Invalid file type")
+
+    - title: "Use secure_filename"
+      severity: recommended
+      example: |
+        from werkzeug.utils import secure_filename
+        filename = secure_filename(file.filename)
+
+    - title: "Store outside web root"
+      severity: recommended
+      example: |
+        # Store in /var/uploads, not in /var/www/uploads
+        file.save(f'/var/uploads/{uuid4()}.{ext}')

@@ -1,0 +1,126 @@
+# Python Sources - Untrusted Input Entry Points
+# CWE: Various (depends on usage)
+# OWASP: A03:2021-Injection (when flows to sinks)
+
+atoms:
+# =============================================================================
+# User Input
+# =============================================================================
+- id: input.user
+  kind: source
+  tags: [untrusted, user, stdin]
+  severity: high
+  description: Python builtin input() function
+  match:
+  - call: input
+  - call: builtins.input
+  - call: raw_input
+
+# =============================================================================
+# HTTP Input - Flask
+# =============================================================================
+- id: input.http.flask
+  kind: source
+  tags: [untrusted, web, http, flask]
+  severity: high
+  description: Flask HTTP request input
+  match:
+  - base_type: flask.Request
+    read: args
+  - base_type: flask.Request
+    read: form
+  - base_type: flask.Request
+    read: values
+  - base_type: flask.Request
+    read: json
+  - base_type: werkzeug.datastructures.ImmutableMultiDict
+    call: get
+  - base_type: werkzeug.datastructures.ImmutableMultiDict
+    call: __getitem__
+  - call: request.args.get
+  - call: request.form.get
+  - call: request.json.get
+  - call: request.get_json
+  - call: request.values.get
+  - call: request.get_data
+  - call: request.data
+  - base_type: flask.Request
+    call: get_json
+  - base_type: flask.Request
+    call: get_data
+
+# =============================================================================
+# HTTP Input - Django
+# =============================================================================
+- id: input.http.django
+  kind: source
+  tags: [untrusted, web, http, django]
+  severity: high
+  description: Django HTTP request input
+  match:
+  - base_type: django.http.HttpRequest
+    read: GET
+  - base_type: django.http.HttpRequest
+    read: POST
+  - base_type: django.http.QueryDict
+    call: get
+  - base_type: django.http.QueryDict
+    call: __getitem__
+  - call: request.GET.get
+  - call: request.POST.get
+  - call: request.GET.__getitem__
+  - call: request.POST.__getitem__
+
+# =============================================================================
+# HTTP Input - FastAPI
+# =============================================================================
+- id: input.http.fastapi
+  kind: source
+  tags: [untrusted, web, http, fastapi]
+  severity: high
+  description: FastAPI request input
+  match:
+  - base_type: fastapi.Request
+    read: query_params
+  - base_type: fastapi.Request
+    read: path_params
+  - base_type: starlette.datastructures.QueryParams
+    call: get
+
+# =============================================================================
+# File Input
+# =============================================================================
+- id: input.file.read
+  kind: source
+  tags: [untrusted, file, io]
+  severity: medium
+  description: File read operations
+  match:
+  - base_type: builtins.file
+    call: read
+  - base_type: io.TextIOWrapper
+    call: read
+  - base_type: io.BufferedReader
+    call: read
+  - call: f.read
+  - call: file.read
+  - base_type: pathlib.Path
+    call: read_text
+  - base_type: pathlib.Path
+    call: read_bytes
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+- id: input.env
+  kind: source
+  tags: [untrusted, env, config]
+  severity: medium
+  description: Environment variable access
+  match:
+  - base_type: os._Environ
+    call: get
+  - base_type: os._Environ
+    call: __getitem__
+  - call: os.getenv
+  - call: os.environ.get

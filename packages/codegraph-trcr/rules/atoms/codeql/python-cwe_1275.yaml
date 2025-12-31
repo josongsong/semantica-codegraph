@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_1275.SameSiteNoneCookie
+  kind: sink
+  tags: ['cwe_1275', 'SameSiteNoneCookie', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1275"]
+  description: Cookies with `SameSite` set to `None` can allow for Cross-Site Request Forgery (CSRF) attacks.
+  match:
+  -     call: SameSiteNoneCookie
+
+- id: sink.cwe_1275.SameSiteNoneCookie
+  kind: sink
+  tags: ['cwe_1275', 'SameSiteNoneCookie', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1275"]
+  description: Cookies with `SameSite` set to `None` can allow for Cross-Site Request Forgery (CSRF) attacks.
+  match:
+  -     call: SameSiteNoneCookie

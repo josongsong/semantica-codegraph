@@ -1,0 +1,234 @@
+#!/usr/bin/env python3
+"""
+Complete Indexing Workflow - All Scenarios
+
+Rust IR → 다중 백엔드로 분산 저장
+"""
+
+import codegraph_ir
+import time
+
+
+def index_and_distribute(repo_path: str, repo_name: str):
+    """
+    완전한 인덱싱 워크플로우
+
+    1. Rust IR 생성
+    2. 각 시나리오별로 데이터 분배
+    """
+
+    print("=" * 80)
+    print("STEP 1: Rust IR Indexing")
+    print("=" * 80)
+
+    start = time.perf_counter()
+    rust_result = codegraph_ir.run_ir_indexing_pipeline(
+        repo_root=repo_path,
+        repo_name=repo_name,
+        file_paths=None,
+        enable_chunking=True,
+        enable_cross_file=True,
+        enable_symbols=True,
+        enable_points_to=True,
+        parallel_workers=8,
+    )
+    indexing_time = (time.perf_counter() - start) * 1000
+
+    print(f"\n✓ Indexing completed in {indexing_time:.2f}ms")
+    print(f"  Nodes:       {len(rust_result['nodes']):,}")
+    print(f"  Edges:       {len(rust_result['edges']):,}")
+    print(f"  Chunks:      {len(rust_result['chunks']):,}")
+    print(f"  Symbols:     {len(rust_result['symbols']):,}")
+    print(f"  Occurrences: {len(rust_result['occurrences']):,}")
+
+    # ========================================
+    # Scenario 1: QueryEngine (코드 분석)
+    # ========================================
+    print("\n" + "=" * 80)
+    print("STEP 2a: QueryEngine Setup (Code Analysis)")
+    print("=" * 80)
+
+    start = time.perf_counter()
+
+    # IRDocument 변환 (Nodes + Edges만)
+    import sys
+
+    sys.path.insert(0, "packages/codegraph-engine")
+    sys.path.insert(0, "packages/codegraph-shared")
+
+    from codegraph_engine.code_foundation.infrastructure.query import QueryEngine
+    from codegraph_engine.code_foundation.infrastructure.ir.models.document import IRDocument
+    from codegraph_engine.code_foundation.infrastructure.ir.models.core import Node, Edge, NodeKind, EdgeKind, Span
+
+    ir_doc = IRDocument(
+        repo_id=repo_name,
+        snapshot_id=f"snapshot-{int(time.time())}",
+        schema_version="2.3",
+    )
+
+    # Nodes 변환
+    for rust_node in rust_result["nodes"]:
+        span_dict = rust_node.get("span", {})
+        span_obj = Span(
+            start_line=span_dict.get("start_line", 0),
+            start_col=span_dict.get("start_col", 0),
+            end_line=span_dict.get("end_line", 0),
+            end_col=span_dict.get("end_col", 0),
+        )
+
+        kind_str = rust_node["kind"].upper()
+        kind_mapping = {"PARAMETER": "VARIABLE", "CALL": "EXPRESSION"}
+        kind_str = kind_mapping.get(kind_str, kind_str)
+
+        try:
+            node_kind = NodeKind[kind_str]
+        except KeyError:
+            continue
+
+        node = Node(
+            id=rust_node["id"],
+            kind=node_kind,
+            fqn=rust_node["fqn"],
+            name=rust_node.get("name", ""),
+            file_path=rust_node["file_path"],
+            span=span_obj,
+            language="python",
+        )
+        ir_doc.nodes.append(node)
+
+    # Edges 변환
+    for idx, rust_edge in enumerate(rust_result["edges"]):
+        edge_kind_str = rust_edge["kind"].upper()
+        try:
+            edge_kind = EdgeKind[edge_kind_str]
+        except KeyError:
+            continue
+
+        edge = Edge(
+            id=f"edge:{edge_kind_str.lower()}:{idx}",
+            source_id=rust_edge["source_id"],
+            target_id=rust_edge["target_id"],
+            kind=edge_kind,
+        )
+        ir_doc.edges.append(edge)
+
+    # QueryEngine 생성
+    engine = QueryEngine(ir_doc)
+
+    conversion_time = (time.perf_counter() - start) * 1000
+
+    print(f"\n✓ QueryEngine ready in {conversion_time:.2f}ms")
+    print(f"  Converted nodes: {len(ir_doc.nodes):,}")
+    print(f"  Converted edges: {len(ir_doc.edges):,}")
+    print(f"  Usage: engine.node_matcher.match(Q.Func())")
+
+    # ========================================
+    # Scenario 2: Semantic Search (Qdrant)
+    # ========================================
+    print("\n" + "=" * 80)
+    print("STEP 2b: Semantic Search Setup (Qdrant)")
+    print("=" * 80)
+
+    chunks = rust_result["chunks"]
+    print(f"\n📦 Chunks: {len(chunks):,} items")
+    print(f"  Format: dict (no conversion needed)")
+    print(f"  Usage:")
+    print(f"    from qdrant_client import QdrantClient")
+    print(f"    client.upsert(points=[{{")
+    print(f"        'id': chunk['id'],")
+    print(f"        'vector': chunk['embedding'],")
+    print(f"        'payload': {{'content': chunk['content'], ...}}")
+    print(f"    }} for chunk in chunks])")
+    print(f"\n  ⚠️  TODO: Qdrant upload logic needed")
+
+    # ========================================
+    # Scenario 3: Code Navigation (PostgreSQL)
+    # ========================================
+    print("\n" + "=" * 80)
+    print("STEP 2c: Code Navigation Setup (PostgreSQL)")
+    print("=" * 80)
+
+    symbols = rust_result["symbols"]
+    print(f"\n🔍 Symbols: {len(symbols):,} items")
+    print(f"  Format: dict (no conversion needed)")
+    print(f"  Usage:")
+    print(f"    from codegraph_shared.infra.storage import SymbolStore")
+    print(f"    store.batch_insert([{{")
+    print(f"        'id': symbol['id'],")
+    print(f"        'kind': symbol['kind'],")
+    print(f"        'name': symbol['name'],")
+    print(f"        'file_path': symbol['file_path'],")
+    print(f"        ...'")
+    print(f"    }} for symbol in symbols])")
+    print(f"\n  ⚠️  TODO: PostgreSQL insert logic needed")
+
+    # ========================================
+    # Scenario 4: SCIP Export
+    # ========================================
+    print("\n" + "=" * 80)
+    print("STEP 2d: SCIP Export Setup")
+    print("=" * 80)
+
+    occurrences = rust_result["occurrences"]
+    print(f"\n📝 Occurrences: {len(occurrences):,} items")
+    print(f"  Format: dict (no conversion needed)")
+    print(f"  Usage:")
+    print(f"    from scip_pb2 import Index, Occurrence")
+    print(f"    scip_index = Index()")
+    print(f"    for occ in occurrences:")
+    print(f"        scip_occ = Occurrence()")
+    print(f"        scip_occ.symbol = occ['symbol']")
+    print(f"        scip_index.occurrences.append(scip_occ)")
+    print(f"\n  ⚠️  TODO: SCIP serialization logic needed")
+
+    # ========================================
+    # Summary
+    # ========================================
+    print("\n" + "=" * 80)
+    print("SUMMARY: Data Distribution")
+    print("=" * 80)
+
+    total_items = (
+        len(rust_result["nodes"])
+        + len(rust_result["edges"])
+        + len(rust_result["chunks"])
+        + len(rust_result["symbols"])
+        + len(rust_result["occurrences"])
+    )
+
+    print(f"\nTotal Data: {total_items:,} items")
+    print(f"\n  [Scenario 1] QueryEngine:")
+    print(f"    ✅ Converted: {len(ir_doc.nodes) + len(ir_doc.edges):,} items (Nodes + Edges)")
+    print(f"    Time: {conversion_time:.2f}ms")
+
+    print(f"\n  [Scenario 2] Semantic Search:")
+    print(f"    ❌ NOT converted: {len(chunks):,} chunks")
+    print(f"    Backend: Qdrant")
+
+    print(f"\n  [Scenario 3] Code Navigation:")
+    print(f"    ❌ NOT converted: {len(symbols):,} symbols")
+    print(f"    Backend: PostgreSQL")
+
+    print(f"\n  [Scenario 4] SCIP Export:")
+    print(f"    ❌ NOT converted: {len(occurrences):,} occurrences")
+    print(f"    Backend: SCIP file")
+
+    print(f"\n{'=' * 80}")
+    print("KEY INSIGHT")
+    print("=" * 80)
+    print("✅ QueryEngine은 Nodes/Edges만 필요 → 변환 필요")
+    print("❌ 나머지는 dict 그대로 각 백엔드로 직접 전송")
+    print("   → 변환 불필요, 추가 로직만 작성하면 됨")
+
+    return rust_result, engine
+
+
+if __name__ == "__main__":
+    repo_path = "packages/codegraph-rust/codegraph-ir"
+    repo_name = "codegraph-ir"
+
+    result, engine = index_and_distribute(repo_path, repo_name)
+
+    print("\n" + "=" * 80)
+    print("✅ Complete indexing workflow demonstrated!")
+    print("=" * 80)

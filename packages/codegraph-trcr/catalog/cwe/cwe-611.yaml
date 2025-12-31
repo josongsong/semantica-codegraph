@@ -1,0 +1,132 @@
+# CWE-611: Improper Restriction of XML External Entity Reference
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/611.html
+
+metadata:
+  cwe_id: CWE-611
+  name: "Improper Restriction of XML External Entity Reference"
+  severity: high
+  owasp: "A05:2021-Security Misconfiguration"
+  category: "Injection"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  mitre_abstraction: base
+  likelihood_of_exploit: medium
+
+  references:
+    - https://cwe.mitre.org/data/definitions/611.html
+    - https://owasp.org/www-community/vulnerabilities/XML_External_Entity_(XXE)_Processing
+
+description: |
+  The software processes an XML document that can contain XML entities with URIs that resolve
+  to documents outside of the intended sphere of control, causing the product to embed incorrect
+  documents into its output.
+
+sources:
+  - id: input.file.xml
+    description: "XML file input"
+    patterns:
+      - file: "*.xml"
+
+  - id: input.http.xml
+    description: "HTTP XML body"
+    patterns:
+      - flask.Request.data
+      - flask.Request.get_data
+
+sinks:
+  - id: sink.xml.lxml_parse
+    description: "lxml.etree.parse (unsafe default)"
+    patterns:
+      - call: lxml.etree.parse
+        args: [0]
+      - call: lxml.etree.fromstring
+        args: [0]
+
+  - id: sink.xml.elementtree
+    description: "xml.etree.ElementTree.parse"
+    patterns:
+      - call: xml.etree.ElementTree.parse
+        args: [0]
+      - call: xml.etree.ElementTree.fromstring
+        args: [0]
+
+sanitizers:
+  - id: barrier.xml.safe_parser
+    description: "Safe XML parser configuration"
+    patterns:
+      - XMLParser(resolve_entities=False)
+      - defusedxml.parse
+
+  - id: barrier.xml.defused
+    description: "defusedxml library"
+    patterns:
+      - defusedxml.ElementTree.parse
+      - defusedxml.lxml.parse
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.xml.lxml_parse
+      - id: sink.xml.elementtree
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: safe_xml
+
+validation:
+  min_test_cases: 4
+  required_scenarios:
+    - lxml_default_unsafe
+    - safe_parser_config
+    - defusedxml_safe
+
+  min_precision: 0.85
+  min_recall: 0.80
+  max_false_positive_rate: 0.15
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE611_XXE"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: Default parser allows XXE
+      from lxml import etree
+      tree = etree.parse(xml_path)
+
+  safe:
+    - |
+      # GOOD: Disable external entities
+      from lxml import etree
+      parser = etree.XMLParser(resolve_entities=False)
+      tree = etree.parse(xml_path, parser)
+
+fix:
+  priority: 2
+  effort: low
+
+  recommendations:
+    - title: "Use defusedxml"
+      severity: best
+      example: |
+        import defusedxml.ElementTree as ET
+        tree = ET.parse(xml_path)
+
+    - title: "Configure safe parser"
+      severity: recommended
+      example: |
+        parser = etree.XMLParser(resolve_entities=False)
+        tree = etree.parse(xml_path, parser)

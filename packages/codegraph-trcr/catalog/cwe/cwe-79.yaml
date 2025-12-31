@@ -1,0 +1,96 @@
+# CWE-79: Cross-site Scripting (XSS)
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/79.html
+
+metadata:
+  cwe_id: CWE-79
+  name: "Improper Neutralization of Input During Web Page Generation"
+  severity: high
+  owasp: "A03:2021-Injection"
+  category: "Injection"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-17"
+
+  mitre_abstraction: variant
+  likelihood_of_exploit: high
+
+  references:
+    - https://cwe.mitre.org/data/definitions/79.html
+    - https://owasp.org/www-community/attacks/xss/
+
+description: |
+  The software does not neutralize or incorrectly neutralizes user-controllable input
+  before it is placed in output that is used as a web page that is served to other users.
+
+sources:
+  - id: input.http.request
+    patterns:
+      - flask.Request.args
+      - flask.Request.form
+      - django.http.HttpRequest.GET
+
+sinks:
+  - id: sink.html.flask
+    patterns:
+      - call: flask.render_template_string
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+  - id: sink.html.django
+    patterns:
+      - base_type: django.http.HttpResponse
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+sanitizers:
+  - id: barrier.html.escape
+    patterns:
+      - html.escape()
+      - cgi.escape()
+      - markupsafe.Markup.escape()
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.html.flask
+      - id: sink.html.django
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: html
+
+validation:
+  min_test_cases: 8
+  required_scenarios:
+    - reflected_xss
+    - stored_xss
+    - dom_xss
+    - escape_safe
+
+  min_precision: 0.85
+  min_recall: 0.80
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE79_XSS"
+
+examples:
+  vulnerable:
+    - |
+      # BAD: Unescaped user input
+      name = request.args.get("name")
+      return f"<h1>Hello {name}</h1>"
+
+  safe:
+    - |
+      # GOOD: HTML escape
+      name = request.args.get("name")
+      safe_name = html.escape(name)
+      return f"<h1>Hello {safe_name}</h1>"

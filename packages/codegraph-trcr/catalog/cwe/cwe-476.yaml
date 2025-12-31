@@ -1,0 +1,113 @@
+# CWE-476: NULL Pointer Dereference
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/476.html
+
+metadata:
+  cwe_id: CWE-476
+  name: "NULL Pointer Dereference"
+  severity: medium
+  owasp: "A04:2021-Insecure Design"
+  category: "Memory Safety"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-20"
+
+  mitre_abstraction: base
+  likelihood_of_exploit: medium
+
+  references:
+    - https://cwe.mitre.org/data/definitions/476.html
+
+description: |
+  A NULL pointer dereference occurs when the application dereferences a pointer
+  that it expects to be valid, but is NULL, typically causing a crash or exit.
+  In Python, this manifests as accessing None or uninitialized Optional values.
+
+sources:
+  - id: source.nullable.return
+    description: "Functions that may return None"
+    patterns:
+      - call: dict.get
+      - call: list.pop
+      - call: re.match
+      - call: re.search
+      - call: find
+      - "Optional[T]"
+
+  - id: source.nullable.input
+    description: "Optional function parameters"
+    patterns:
+      - "param: Optional[T] = None"
+      - "param: T | None = None"
+
+sinks:
+  - id: sink.null.dereference
+    description: "Accessing attributes/methods without null check"
+    patterns:
+      - "nullable.attribute"
+      - "nullable.method()"
+      - "nullable[index]"
+
+sanitizers:
+  - id: barrier.null.check
+    description: "Null/None checks"
+    patterns:
+      - "if x is not None"
+      - "if x is None: return"
+      - "if x:"
+      - "assert x is not None"
+
+  - id: barrier.null.default
+    description: "Default value assignment"
+    patterns:
+      - "x or default"
+      - "x if x else default"
+      - "getattr(obj, attr, default)"
+
+policy:
+  grammar:
+    WHEN:
+      tag: nullable
+    FLOWS:
+      - id: sink.null.dereference
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: null_check
+
+validation:
+  min_test_cases: 4
+  min_precision: 0.80
+  min_recall: 0.75
+
+test_suite:
+  directory: "test-suite/CWE476_NULL_Dereference"
+  cases:
+    - bad_01.py
+    - good_01.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: No null check
+      match = re.search(pattern, text)
+      result = match.group(1)  # Crash if no match
+
+    - |
+      # BAD: dict.get without check
+      value = data.get("key")
+      length = len(value)  # Crash if key not found
+
+  safe:
+    - |
+      # GOOD: Null check before use
+      match = re.search(pattern, text)
+      if match:
+          result = match.group(1)
+
+    - |
+      # GOOD: Default value
+      value = data.get("key", "")
+      length = len(value)

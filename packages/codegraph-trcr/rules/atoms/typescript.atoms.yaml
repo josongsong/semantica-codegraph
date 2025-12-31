@@ -1,0 +1,339 @@
+# TypeScript Taint Analysis Atoms
+# Language: TypeScript
+# Focus: Type-specific patterns, decorators, generics
+
+atoms:
+# ============================================================================
+# Sources - TypeScript-specific Input
+# ============================================================================
+- id: input.http.nestjs
+  kind: source
+  tags: [untrusted, web, http, nestjs]
+  severity: high
+  description: NestJS controller input
+  match:
+  - base_type: "@nestjs/common.Request"
+    read: query
+  - base_type: "@nestjs/common.Request"
+    read: body
+  - base_type: "@nestjs/common.Request"
+    read: params
+  - call: "@Query()"
+  - call: "@Body()"
+  - call: "@Param()"
+
+- id: input.graphql.typescript
+  kind: source
+  tags: [untrusted, graphql, api]
+  severity: high
+  description: GraphQL resolver input
+  match:
+  - call: "@Args()"
+  - call: "@Context()"
+  - base_type: GraphQLResolveInfo
+    read: variableValues
+
+- id: input.trpc
+  kind: source
+  tags: [untrusted, rpc, api, trpc]
+  severity: high
+  description: tRPC procedure input
+  match:
+  - base_type: TRPCContext
+    read: input
+  - call: input.parse
+  - call: ctx.input
+
+# ============================================================================
+# Sinks - SQL Injection (TypeScript ORMs)
+# ============================================================================
+- id: sink.sql.injection.typeorm
+  kind: sink
+  tags: [injection, sql, database, typeorm]
+  severity: critical
+  cwe: [CWE-89]
+  owasp: A03:2021-Injection
+  description: TypeORM raw query execution
+  match:
+  - base_type: TypeORM.Repository
+    call: query
+  - base_type: TypeORM.EntityManager
+    call: query
+  - base_type: TypeORM.Connection
+    call: query
+  - call: createQueryBuilder().where
+  - call: getRepository().query
+
+- id: sink.sql.injection.prisma
+  kind: sink
+  tags: [injection, sql, database, prisma]
+  severity: critical
+  cwe: [CWE-89]
+  owasp: A03:2021-Injection
+  description: Prisma raw query execution
+  match:
+  - call: prisma.$queryRaw
+  - call: prisma.$executeRaw
+  - call: prisma.$queryRawUnsafe
+  - call: prisma.$executeRawUnsafe
+
+- id: sink.sql.injection.sequelize
+  kind: sink
+  tags: [injection, sql, database, sequelize]
+  severity: critical
+  cwe: [CWE-89]
+  owasp: A03:2021-Injection
+  description: Sequelize raw query execution
+  match:
+  - base_type: Sequelize
+    call: query
+  - call: sequelize.query
+  - call: Model.sequelize.query
+
+# ============================================================================
+# Sinks - NoSQL Injection (TypeScript)
+# ============================================================================
+- id: sink.nosql.injection.mongodb-ts
+  kind: sink
+  tags: [injection, nosql, mongodb]
+  severity: high
+  cwe: [CWE-943]
+  owasp: A03:2021-Injection
+  description: MongoDB TypeScript driver injection
+  match:
+  - base_type: Collection<T>
+    call: find
+  - base_type: Collection<T>
+    call: findOne
+  - base_type: Collection<T>
+    call: updateOne
+  - base_type: Collection<T>
+    call: deleteOne
+
+- id: sink.nosql.injection.mongoose-ts
+  kind: sink
+  tags: [injection, nosql, mongoose]
+  severity: high
+  cwe: [CWE-943]
+  owasp: A03:2021-Injection
+  description: Mongoose TypeScript model queries
+  match:
+  - base_type: Model<T>
+    call: find
+  - base_type: Model<T>
+    call: findOne
+  - base_type: Model<T>
+    call: where
+
+# ============================================================================
+# Sinks - Command Injection (TypeScript)
+# ============================================================================
+- id: sink.command.injection.child-process-ts
+  kind: sink
+  tags: [injection, command, os]
+  severity: critical
+  cwe: [CWE-78]
+  owasp: A03:2021-Injection
+  description: Node.js child process execution
+  match:
+  - call: child_process.exec
+  - call: child_process.execSync
+  - call: child_process.spawn
+  - call: util.promisify(exec)
+
+# ============================================================================
+# Sinks - XSS (TypeScript React/Angular)
+# ============================================================================
+- id: sink.xss.react.dangerouslySetInnerHTML
+  kind: sink
+  tags: [xss, html, react]
+  severity: high
+  cwe: [CWE-79]
+  owasp: A03:2021-Injection
+  description: React dangerouslySetInnerHTML
+  match:
+  - read: dangerouslySetInnerHTML
+  - call: dangerouslySetInnerHTML
+
+- id: sink.xss.angular.bypassSecurityTrust
+  kind: sink
+  tags: [xss, html, angular]
+  severity: high
+  cwe: [CWE-79]
+  owasp: A03:2021-Injection
+  description: Angular security bypass
+  match:
+  - call: bypassSecurityTrustHtml
+  - call: bypassSecurityTrustScript
+  - call: bypassSecurityTrustUrl
+  - call: bypassSecurityTrustResourceUrl
+
+# ============================================================================
+# Sinks - Path Traversal (TypeScript)
+# ============================================================================
+- id: sink.path.traversal.fs-ts
+  kind: sink
+  tags: [path, traversal, file]
+  severity: high
+  cwe: [CWE-22]
+  owasp: A01:2021-Broken Access Control
+  description: Node.js filesystem operations
+  match:
+  - call: fs.readFile
+  - call: fs.writeFile
+  - call: fs.unlink
+  - call: fs.promises.readFile
+  - call: fs.promises.writeFile
+  - call: fs.promises.unlink
+
+# ============================================================================
+# Sinks - SSRF (TypeScript)
+# ============================================================================
+- id: sink.ssrf.fetch-ts
+  kind: sink
+  tags: [ssrf, http, request]
+  severity: high
+  cwe: [CWE-918]
+  owasp: A10:2021-SSRF
+  description: HTTP request with user-controlled URL
+  match:
+  - call: fetch
+  - call: axios.get
+  - call: axios.post
+  - call: http.get
+  - call: https.get
+
+# ============================================================================
+# Sanitizers - TypeScript Type Guards
+# ============================================================================
+- id: sanitizer.validation.zod
+  kind: sanitizer
+  tags: [validation, schema, zod]
+  description: Zod schema validation
+  match:
+  - call: z.parse
+  - call: z.safeParse
+  - call: schema.parse
+  - call: schema.safeParse
+
+- id: sanitizer.validation.joi
+  kind: sanitizer
+  tags: [validation, schema, joi]
+  description: Joi schema validation
+  match:
+  - call: Joi.validate
+  - call: schema.validate
+  - call: schema.validateAsync
+
+- id: sanitizer.validation.yup
+  kind: sanitizer
+  tags: [validation, schema, yup]
+  description: Yup schema validation
+  match:
+  - call: yup.validate
+  - call: schema.validate
+  - call: schema.validateSync
+
+- id: sanitizer.validation.class-validator
+  kind: sanitizer
+  tags: [validation, decorator, class-validator]
+  description: class-validator decorators
+  match:
+  - call: validate
+  - call: validateSync
+  - call: "@IsString()"
+  - call: "@IsNumber()"
+  - call: "@IsEmail()"
+
+- id: sanitizer.sql.parameterized.typeorm
+  kind: sanitizer
+  tags: [sql, prepared-statement, typeorm]
+  description: TypeORM parameterized queries
+  match:
+  - call: createQueryBuilder().setParameter
+  - call: query(sql, parameters)
+
+- id: sanitizer.sql.parameterized.prisma
+  kind: sanitizer
+  tags: [sql, prepared-statement, prisma]
+  description: Prisma parameterized queries
+  match:
+  - call: prisma.user.findMany
+  - call: prisma.user.findUnique
+  - call: prisma.user.create
+  - call: prisma.user.update
+
+- id: sanitizer.html.escape.ts
+  kind: sanitizer
+  tags: [escape, html, xss]
+  description: HTML escaping functions
+  match:
+  - call: escapeHtml
+  - call: sanitizeHtml
+  - call: DOMPurify.sanitize
+
+- id: sanitizer.path.normalize.ts
+  kind: sanitizer
+  tags: [path-safe, canonicalization]
+  description: Path normalization
+  match:
+  - call: path.normalize
+  - call: path.resolve
+  - call: path.join
+
+# ============================================================================
+# Propagators - TypeScript Utilities
+# ============================================================================
+- id: propagator.string.template
+  kind: propagator
+  tags: [string, template]
+  description: Template string propagates taint
+  match:
+  - call: String.raw
+  - call: template
+
+- id: propagator.array.map
+  kind: propagator
+  tags: [array, transform]
+  description: Array methods propagate taint
+  match:
+  - call: Array.map
+  - call: Array.filter
+  - call: Array.reduce
+
+- id: propagator.promise.then
+  kind: propagator
+  tags: [async, promise]
+  description: Promise chain propagates taint
+  match:
+  - call: Promise.then
+  - call: Promise.catch
+  - call: async/await
+
+# ============================================================================
+# Metadata
+# ============================================================================
+metadata:
+  language: typescript
+  supported_versions: ["4.x", "5.x"]
+  total_atoms: 30
+  frameworks:
+    - NestJS
+    - TypeORM
+    - Prisma
+    - Sequelize
+    - React
+    - Angular
+    - tRPC
+    - Zod
+  coverage:
+    cwe:
+      - CWE-78   # Command Injection
+      - CWE-89   # SQL Injection
+      - CWE-79   # XSS
+      - CWE-22   # Path Traversal
+      - CWE-918  # SSRF
+      - CWE-943  # NoSQL Injection
+  last_updated: "2025-12-20"
+  maintainer: "Semantica Security Team"
+

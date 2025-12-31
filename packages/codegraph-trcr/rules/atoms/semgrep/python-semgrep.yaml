@@ -1,0 +1,3188 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.semgrep.require-encryption
+  kind: sink
+  tags: ['semgrep', 'require-encryption', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Initializing a security context for Dask (`distributed`) without \"require_encryption\" keyword argume"
+  match:
+  - base_type: distributed.security
+    call: Security
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.jwt-python-exposed-credentials
+  kind: sink
+  tags: ['semgrep', 'jwt-python-exposed-credentials', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-522"]
+  owasp: "A02:2017"
+  description: Password is exposed through JWT token payload. This is not encrypted and the password could be compr
+  match:
+  - base_type: jwt
+    call: encode
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.jwt-python-none-alg
+  kind: sink
+  tags: ['semgrep', 'jwt-python-none-alg', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: "Detected use of the 'none' algorithm in a JWT token. The 'none' algorithm assumes the integrity of t"
+  match:
+  - base_type: jwt
+    call: encode
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: jwt
+    call: decode
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.unverified-jwt-decode
+  kind: sink
+  tags: ['semgrep', 'unverified-jwt-decode', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-287"]
+  owasp: "A02:2017"
+  description: "Detected JWT token decoded with 'verify=False'. This bypasses any integrity checks for the token whi"
+  match:
+  - call: unverified-jwt-decode
+
+- id: sink.semgrep.jwt-python-hardcoded-secret
+  kind: sink
+  tags: ['semgrep', 'jwt-python-hardcoded-secret', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-522"]
+  owasp: "A02:2017"
+  description: Hardcoded JWT secret or private key is used. This is a Insufficiently Protected Credentials weakness
+  match:
+  - base_type: jwt
+    call: encode
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.jwt-python-exposed-data
+  kind: sink
+  tags: ['semgrep', 'jwt-python-exposed-data', 'vulnerability']
+  severity: high
+  cwe: ["CWE-522"]
+  owasp: "A02:2017"
+  description: The object is passed strictly to jwt.encode(...) Make sure that sensitive information is not exposed
+  match:
+  - base_type: jwt
+    call: encode
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.open-redirect
+  kind: sink
+  tags: ['semgrep', 'open-redirect', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-601"]
+  owasp: "A01:2021"
+  description: Data from request is passed to redirect(). This is an open redirect and could be exploited. Consider
+  match:
+  - call: open-redirect
+
+- id: sink.semgrep.insecure-deserialization
+  kind: sink
+  tags: ['semgrep', 'insecure-deserialization', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: Detected the use of an insecure deserialization library in a Flask route. These libraries are prone 
+  match:
+  - call: insecure-deserialization
+
+- id: sink.semgrep.avoid_send_file_without_path_sanitization
+  kind: sink
+  tags: ['semgrep', 'avoid_send_file_without_path_sanitization', 'vulnerability']
+  severity: high
+  cwe: ["CWE-73"]
+  owasp: "A04:2021"
+  description: "Detected a user-controlled `filename` that could flow to `flask.send_file()` function. This could le"
+  match:
+  - base_type: flask
+    call: send_file
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.flask-api-method-string-format
+  kind: sink
+  tags: ['semgrep', 'flask-api-method-string-format', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-134"]
+  description: Method $METHOD in API controller $CLASS provides user arg $ARG to requests method $REQMETHOD
+  match:
+  - call: flask-api-method-string-format
+
+- id: sink.semgrep.response-contains-unsanitized-input
+  kind: sink
+  tags: ['semgrep', 'response-contains-unsanitized-input', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Flask response reflects unsanitized user input. This could lead to a cross-site scripting vulnerabil
+  match:
+  - base_type: flask.request.args
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: flask
+    call: make_response
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: format
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.unescaped-template-extension
+  kind: sink
+  tags: ['semgrep', 'unescaped-template-extension', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Flask does not automatically escape Jinja templates unless they have .html, .htm, .xml, or .xhtml ex
+  match:
+  - call: unescaped-template-extension
+
+- id: sink.semgrep.dangerous-template-string
+  kind: sink
+  tags: ['semgrep', 'dangerous-template-string', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-96"]
+  owasp: "A03:2021"
+  description: Found a template created with string formatting. This is susceptible to server-side template injecti
+  match:
+  - base_type: flask
+    call: render_template_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: format
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.hashids-with-flask-secret
+  kind: sink
+  tags: ['semgrep', 'hashids-with-flask-secret', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  owasp: "A02:2021"
+  description: The Flask secret key is used as salt in HashIDs. The HashID mechanism is not secure. By observing su
+  match:
+  - base_type: hashids
+    call: Hashids
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.debug-enabled
+  kind: sink
+  tags: ['semgrep', 'debug-enabled', 'vulnerability']
+  severity: high
+  cwe: ["CWE-489"]
+  owasp: "A06:2017"
+  description: Detected Flask app with debug=True. Do not deploy to production with this flag enabled as it will le
+  match:
+  - base_type: APP
+    call: run
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.flask-cors-misconfiguration
+  kind: sink
+  tags: ['semgrep', 'flask-cors-misconfiguration', 'vulnerability']
+  severity: high
+  cwe: ["CWE-942"]
+  owasp: "A07:2021"
+  description: "Setting 'support_credentials=True' together with 'origin=\"*\"' is a CORS misconfiguration that can al"
+  match:
+  - call: flask-cors-misconfiguration
+
+- id: sink.semgrep.avoid_app_run_with_bad_host
+  kind: sink
+  tags: ['semgrep', 'avoid_app_run_with_bad_host', 'vulnerability']
+  severity: high
+  cwe: ["CWE-668"]
+  owasp: "A01:2021"
+  description: Running flask app with host 0.0.0.0 could expose the server publicly.
+  match:
+  - base_type: app
+    call: run
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.flask-url-for-external-true
+  kind: sink
+  tags: ['semgrep', 'flask-url-for-external-true', 'vulnerability']
+  severity: high
+  cwe: ["CWE-673"]
+  owasp: "A03:2021"
+  description: "Function `flask.url_for` with `_external=True` argument will generate URLs using the `Host` header o"
+  match:
+  - call: flask-url-for-external-true
+
+- id: sink.semgrep.secure-set-cookie
+  kind: sink
+  tags: ['semgrep', 'secure-set-cookie', 'vulnerability']
+  severity: high
+  cwe: ["CWE-614"]
+  owasp: "A05:2021"
+  description: Found a Flask cookie with insecurely configured properties.  By default the secure, httponly and sam
+  match:
+  - base_type: RESP
+    call: set_cookie
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.flask-wtf-csrf-disabled
+  kind: sink
+  tags: ['semgrep', 'flask-wtf-csrf-disabled', 'vulnerability']
+  severity: high
+  cwe: ["CWE-352"]
+  owasp: "A01:2021"
+  description: "Setting 'WTF_CSRF_ENABLED' to 'False' explicitly disables CSRF protection."
+  match:
+  - call: flask-wtf-csrf-disabled
+
+- id: sink.semgrep.avoid_using_app_run_directly
+  kind: sink
+  tags: ['semgrep', 'avoid_using_app_run_directly', 'vulnerability']
+  severity: high
+  cwe: ["CWE-668"]
+  owasp: "A01:2021"
+  description: top-level app.run(...) is ignored by flask. Consider putting app.run(...) behind a guard, like insid
+  match:
+  - base_type: app
+    call: run
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.avoid_hardcoded_config_TESTING
+  kind: sink
+  tags: ['semgrep', 'avoid_hardcoded_config_TESTING', 'vulnerability']
+  severity: high
+  cwe: ["CWE-489"]
+  owasp: "A05:2021"
+  description: "Hardcoded variable `TESTING` detected. Use environment variables or config files instead"
+  match:
+  - base_type: M
+    call: update
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.avoid_hardcoded_config_SECRET_KEY
+  kind: sink
+  tags: ['semgrep', 'avoid_hardcoded_config_SECRET_KEY', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-489"]
+  owasp: "A05:2021"
+  description: "Hardcoded variable `SECRET_KEY` detected. Use environment variables or config files instead"
+  match:
+  - base_type: M
+    call: update
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.avoid_hardcoded_config_ENV
+  kind: sink
+  tags: ['semgrep', 'avoid_hardcoded_config_ENV', 'vulnerability']
+  severity: high
+  cwe: ["CWE-489"]
+  owasp: "A05:2021"
+  description: "Hardcoded variable `ENV` detected. Set this by using FLASK_ENV environment variable"
+  match:
+  - base_type: M
+    call: update
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.avoid_hardcoded_config_DEBUG
+  kind: sink
+  tags: ['semgrep', 'avoid_hardcoded_config_DEBUG', 'vulnerability']
+  severity: high
+  cwe: ["CWE-489"]
+  owasp: "A05:2021"
+  description: "Hardcoded variable `DEBUG` detected. Set this by using FLASK_DEBUG environment variable"
+  match:
+  - base_type: M
+    call: update
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.directly-returned-format-string
+  kind: sink
+  tags: ['semgrep', 'directly-returned-format-string', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Detected Flask route directly returning a formatted string. This is subject to cross-site scripting 
+  match:
+  - call: directly-returned-format-string
+
+- id: sink.semgrep.render-template-string
+  kind: sink
+  tags: ['semgrep', 'render-template-string', 'vulnerability']
+  severity: high
+  cwe: ["CWE-96"]
+  owasp: "A03:2021"
+  description: Found a template created with string formatting. This is susceptible to server-side template injecti
+  match:
+  - base_type: flask
+    call: render_template_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.raw-html-format
+  kind: sink
+  tags: ['semgrep', 'raw-html-format', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassi
+  match:
+  - call: raw-html-format
+
+- id: sink.semgrep.nan-injection
+  kind: sink
+  tags: ['semgrep', 'nan-injection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-704"]
+  description: Found user input going directly into typecast for bool(), float(), or complex(). This allows an atta
+  match:
+  - call: nan-injection
+
+- id: sink.semgrep.tainted-sql-string
+  kind: sink
+  tags: ['semgrep', 'tainted-sql-string', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-704"]
+  owasp: "A01:2017"
+  description: Detected user input used to manually construct a SQL string. This is usually bad practice because ma
+  match:
+  - call: tainted-sql-string
+
+- id: sink.semgrep.path-traversal-open
+  kind: sink
+  tags: ['semgrep', 'path-traversal-open', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-22"]
+  owasp: "A05:2017"
+  description: "Found request data in a call to 'open'. Ensure the request data is validated or sanitized, otherwise"
+  match:
+  - read: W
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: W
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.tainted-url-host
+  kind: sink
+  tags: ['semgrep', 'tainted-url-host', 'vulnerability']
+  severity: high
+  cwe: ["CWE-918"]
+  owasp: "A10:2021"
+  description: User data flows into the host portion of this manually-constructed URL. This could allow an attacker
+  match:
+  - call: tainted-url-host
+
+- id: sink.semgrep.ssrf-requests
+  kind: sink
+  tags: ['semgrep', 'ssrf-requests', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-918"]
+  owasp: "A10:2021"
+  description: Data from request object is passed to a new server-side request. This could lead to a server-side re
+  match:
+  - read: W
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: W
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.eval-injection
+  kind: sink
+  tags: ['semgrep', 'eval-injection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: Detected user data flowing into eval. This is code injection and should be avoided.
+  match:
+  - read: W
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: W
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: eval
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.exec-injection
+  kind: sink
+  tags: ['semgrep', 'exec-injection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: Detected user data flowing into exec. This is code injection and should be avoided.
+  match:
+  - read: W
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: W
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.csv-writer-injection
+  kind: sink
+  tags: ['semgrep', 'csv-writer-injection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1236"]
+  owasp: "A01:2017"
+  description: "Detected user input into a generated CSV file using the built-in `csv` module. If user data is used "
+  match:
+  - call: csv-writer-injection
+
+- id: sink.semgrep.subprocess-injection
+  kind: sink
+  tags: ['semgrep', 'subprocess-injection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected user input entering a `subprocess` call unsafely. This could result in a command injection "
+  match:
+  - call: subprocess-injection
+
+- id: sink.semgrep.os-system-injection
+  kind: sink
+  tags: ['semgrep', 'os-system-injection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: User data detected in os.system. This could be vulnerable to a command injection and should be avoid
+  match:
+  - read: W
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: W
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: os
+    call: system
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.direct-use-of-jinja2
+  kind: sink
+  tags: ['semgrep', 'direct-use-of-jinja2', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Detected direct use of jinja2. If not done properly, this may bypass HTML escaping which opens up th
+  match:
+  - base_type: jinja2
+    call: Environment
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: jinja2.Template
+    call: render
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.template-unquoted-attribute-var
+  kind: sink
+  tags: ['semgrep', 'template-unquoted-attribute-var', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Detected a unquoted template variable as an attribute. If unquoted, a malicious actor could inject c
+  match:
+  - call: template-unquoted-attribute-var
+
+- id: sink.semgrep.explicit-unescape-with-markup
+  kind: sink
+  tags: ['semgrep', 'explicit-unescape-with-markup', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "Detected explicitly unescaped content using 'Markup()'. This permits the unescaped data to include u"
+  match:
+  - base_type: MARKUPOBJ
+    call: unescape
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: flask.Markup
+    call: unescape
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.template-unescaped-with-safe
+  kind: sink
+  tags: ['semgrep', 'template-unescaped-with-safe', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "Detected a segment of a Flask template where autoescaping is explicitly disabled with '| safe' filte"
+  match:
+  - call: template-unescaped-with-safe
+
+- id: sink.semgrep.template-autoescape-off
+  kind: sink
+  tags: ['semgrep', 'template-autoescape-off', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "Detected a segment of a Flask template where autoescaping is explicitly disabled with '{% autoescape"
+  match:
+  - call: template-autoescape-off
+
+- id: sink.semgrep.make-response-with-unknown-content
+  kind: sink
+  tags: ['semgrep', 'make-response-with-unknown-content', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "Be careful with `flask.make_response()`. If this response is rendered onto a webpage, this could cre"
+  match:
+  - base_type: flask
+    call: make_response
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.crypto-mode-without-authentication
+  kind: sink
+  tags: ['semgrep', 'crypto-mode-without-authentication', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: An encryption mode of operation is being used without proper message authentication. This can potent
+  match:
+  - call: crypto-mode-without-authentication
+
+- id: sink.semgrep.insecure-hash-algorithm-md4
+  kind: sink
+  tags: ['semgrep', 'insecure-hash-algorithm-md4', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected MD4 hash algorithm which is considered insecure. MD4 is not collision resistant and is ther
+  match:
+  - base_type: Crypto.Hash.MD4
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Cryptodome.Hash.MD4
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insufficient-rsa-key-size
+  kind: sink
+  tags: ['semgrep', 'insufficient-rsa-key-size', 'vulnerability']
+  severity: high
+  cwe: ["CWE-326"]
+  owasp: "A03:2017"
+  description: Detected an insufficient key size for RSA. NIST recommends a key size of 3072 or higher.
+  match:
+  - call: insufficient-rsa-key-size
+
+- id: sink.semgrep.insecure-hash-algorithm-md5
+  kind: sink
+  tags: ['semgrep', 'insecure-hash-algorithm-md5', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is ther
+  match:
+  - base_type: Cryptodome.Hash.MD5
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Crypto.Hash.MD5
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-cipher-algorithm-rc2
+  kind: sink
+  tags: ['semgrep', 'insecure-cipher-algorithm-rc2', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected RC2 cipher algorithm which is considered insecure. This algorithm is not cryptographically 
+  match:
+  - base_type: Crypto.Cipher.ARC2
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Cryptodome.Cipher.ARC2
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-cipher-algorithm-blowfish
+  kind: sink
+  tags: ['semgrep', 'insecure-cipher-algorithm-blowfish', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected Blowfish cipher algorithm which is considered insecure. This algorithm is not cryptographic
+  match:
+  - base_type: Cryptodome.Cipher.Blowfish
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Crypto.Cipher.Blowfish
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-hash-algorithm-md2
+  kind: sink
+  tags: ['semgrep', 'insecure-hash-algorithm-md2', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected MD2 hash algorithm which is considered insecure. MD2 is not collision resistant and is ther
+  match:
+  - base_type: Crypto.Hash.MD2
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Cryptodome.Hash.MD2
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-cipher-algorithm-xor
+  kind: sink
+  tags: ['semgrep', 'insecure-cipher-algorithm-xor', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected XOR cipher algorithm which is considered insecure. This algorithm is not cryptographically 
+  match:
+  - base_type: Cryptodome.Cipher.XOR
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Crypto.Cipher.XOR
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-cipher-algorithm-rc4
+  kind: sink
+  tags: ['semgrep', 'insecure-cipher-algorithm-rc4', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected ARC4 cipher algorithm which is considered insecure. This algorithm is not cryptographically
+  match:
+  - base_type: Crypto.Cipher.ARC4
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Cryptodome.Cipher.ARC4
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insufficient-dsa-key-size
+  kind: sink
+  tags: ['semgrep', 'insufficient-dsa-key-size', 'vulnerability']
+  severity: high
+  cwe: ["CWE-326"]
+  owasp: "A03:2017"
+  description: Detected an insufficient key size for DSA. NIST recommends a key size of 2048 or higher.
+  match:
+  - call: insufficient-dsa-key-size
+
+- id: sink.semgrep.insecure-hash-algorithm-sha1
+  kind: sink
+  tags: ['semgrep', 'insecure-hash-algorithm-sha1', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected SHA1 hash algorithm which is considered insecure. SHA1 is not collision resistant and is th
+  match:
+  - base_type: Crypto.Hash.SHA
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Cryptodome.Hash.SHA
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-cipher-algorithm-des
+  kind: sink
+  tags: ['semgrep', 'insecure-cipher-algorithm-des', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected DES cipher or Triple DES algorithm which is considered insecure. This algorithm is not cryp
+  match:
+  - base_type: Cryptodome.Cipher.DES3
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Crypto.Cipher.DES
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Cryptodome.Cipher.DES
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: Crypto.Cipher.DES3
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.docker-arbitrary-container-run
+  kind: sink
+  tags: ['semgrep', 'docker-arbitrary-container-run', 'vulnerability']
+  severity: high
+  cwe: ["CWE-250"]
+  description: "If unverified user data can reach the `run` or `create` method it can result in running arbitrary co"
+  match:
+  - call: docker-arbitrary-container-run
+
+- id: sink.semgrep.incorrect-autoescape-disabled
+  kind: sink
+  tags: ['semgrep', 'incorrect-autoescape-disabled', 'vulnerability']
+  severity: high
+  cwe: ["CWE-116"]
+  owasp: "A03:2021"
+  description: "Detected a Jinja2 environment with 'autoescaping' disabled. This is dangerous if you are rendering t"
+  match:
+  - base_type: jinja2
+    call: Environment
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.missing-autoescape-disabled
+  kind: sink
+  tags: ['semgrep', 'missing-autoescape-disabled', 'vulnerability']
+  severity: high
+  cwe: ["CWE-116"]
+  owasp: "A03:2021"
+  description: Detected a Jinja2 environment without autoescaping. Jinja2 does not autoescape by default. This is d
+  match:
+  - base_type: jinja2
+    call: Environment
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.crypto-mode-without-authentication
+  kind: sink
+  tags: ['semgrep', 'crypto-mode-without-authentication', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: An encryption mode of operation is being used without proper message authentication. This can potent
+  match:
+  - call: crypto-mode-without-authentication
+
+- id: sink.semgrep.insufficient-rsa-key-size
+  kind: sink
+  tags: ['semgrep', 'insufficient-rsa-key-size', 'vulnerability']
+  severity: high
+  cwe: ["CWE-326"]
+  owasp: "A03:2017"
+  description: Detected an insufficient key size for RSA. NIST recommends a key size of 2048 or higher.
+  match:
+  - call: insufficient-rsa-key-size
+
+- id: sink.semgrep.insufficient-ec-key-size
+  kind: sink
+  tags: ['semgrep', 'insufficient-ec-key-size', 'vulnerability']
+  severity: high
+  cwe: ["CWE-326"]
+  owasp: "A03:2017"
+  description: Detected an insufficient curve size for EC. NIST recommends a key size of 224 or higher. For example
+  match:
+  - call: insufficient-ec-key-size
+
+- id: sink.semgrep.insecure-hash-algorithm-sha1
+  kind: sink
+  tags: ['semgrep', 'insecure-hash-algorithm-sha1', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected SHA1 hash algorithm which is considered insecure. SHA1 is not collision resistant and is th
+  match:
+  - read: SHA
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-cipher-mode-ecb
+  kind: sink
+  tags: ['semgrep', 'insecure-cipher-mode-ecb', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: ECB (Electronic Code Book) is the simplest mode of operation for block ciphers.  Each block of data 
+  match:
+  - base_type: cryptography.hazmat.primitives.ciphers.modes
+    read: ECB
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-cipher-algorithm-blowfish
+  kind: sink
+  tags: ['semgrep', 'insecure-cipher-algorithm-blowfish', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Blowfish is a block cipher developed by Bruce Schneier. It is known to be susceptible to attacks whe
+  match:
+  - read: BLOWFISH
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-cipher-algorithm-arc4
+  kind: sink
+  tags: ['semgrep', 'insecure-cipher-algorithm-arc4', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: ARC4 (Alleged RC4) is a stream cipher with serious weaknesses in its initial stream output.  Its use
+  match:
+  - read: ARC4
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insufficient-dsa-key-size
+  kind: sink
+  tags: ['semgrep', 'insufficient-dsa-key-size', 'vulnerability']
+  severity: high
+  cwe: ["CWE-326"]
+  owasp: "A03:2017"
+  description: Detected an insufficient key size for DSA. NIST recommends a key size of 2048 or higher.
+  match:
+  - call: insufficient-dsa-key-size
+
+- id: sink.semgrep.insecure-hash-algorithm-md5
+  kind: sink
+  tags: ['semgrep', 'insecure-hash-algorithm-md5', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is ther
+  match:
+  - read: MD5
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.empty-aes-key
+  kind: sink
+  tags: ['semgrep', 'empty-aes-key', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  description: Potential empty AES encryption key. Using an empty key in AES encryption can result in weak encrypti
+  match:
+  - base_type: AES
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-cipher-algorithm-idea
+  kind: sink
+  tags: ['semgrep', 'insecure-cipher-algorithm-idea', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: IDEA (International Data Encryption Algorithm) is a block cipher created in 1991.  It is an optional
+  match:
+  - read: IDEA
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.pyramid-csrf-check-disabled-globally
+  kind: sink
+  tags: ['semgrep', 'pyramid-csrf-check-disabled-globally', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-352"]
+  owasp: "A01:2021"
+  description: Automatic check of cross-site request forgery tokens has been explicitly disabled globally, which mi
+  match:
+  - call: pyramid-csrf-check-disabled-globally
+
+- id: sink.semgrep.pyramid-direct-use-of-response
+  kind: sink
+  tags: ['semgrep', 'pyramid-direct-use-of-response', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "Detected data rendered directly to the end user via 'Response'. This bypasses Pyramid's built-in cro"
+  match:
+  - call: pyramid-direct-use-of-response
+
+- id: sink.semgrep.pyramid-sqlalchemy-sql-injection
+  kind: sink
+  tags: ['semgrep', 'pyramid-sqlalchemy-sql-injection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: Distinct, Having, Group_by, Order_by, and Filter in SQLAlchemy can cause sql injections if the devel
+  match:
+  - call: pyramid-sqlalchemy-sql-injection
+
+- id: sink.semgrep.pyramid-authtkt-cookie-secure-unsafe-default
+  kind: sink
+  tags: ['semgrep', 'pyramid-authtkt-cookie-secure-unsafe-default', 'vulnerability']
+  severity: high
+  cwe: ["CWE-614"]
+  owasp: "A05:2021"
+  description: Found a Pyramid Authentication Ticket cookie using an unsafe default for the secure option. Pyramid 
+  match:
+  - call: pyramid-authtkt-cookie-secure-unsafe-default
+
+- id: sink.semgrep.pyramid-authtkt-cookie-secure-unsafe-value
+  kind: sink
+  tags: ['semgrep', 'pyramid-authtkt-cookie-secure-unsafe-value', 'vulnerability']
+  severity: high
+  cwe: ["CWE-614"]
+  owasp: "A05:2021"
+  description: Found a Pyramid Authentication Ticket cookie without the secure option correctly set. Pyramid cookie
+  match:
+  - call: pyramid-authtkt-cookie-secure-unsafe-value
+
+- id: sink.semgrep.pyramid-authtkt-cookie-httponly-unsafe-value
+  kind: sink
+  tags: ['semgrep', 'pyramid-authtkt-cookie-httponly-unsafe-value', 'vulnerability']
+  severity: high
+  cwe: ["CWE-1004"]
+  owasp: "A05:2021"
+  description: Found a Pyramid Authentication Ticket cookie without the httponly option correctly set. Pyramid cook
+  match:
+  - call: pyramid-authtkt-cookie-httponly-unsafe-value
+
+- id: sink.semgrep.pyramid-authtkt-cookie-httponly-unsafe-default
+  kind: sink
+  tags: ['semgrep', 'pyramid-authtkt-cookie-httponly-unsafe-default', 'vulnerability']
+  severity: high
+  cwe: ["CWE-1004"]
+  owasp: "A05:2021"
+  description: Found a Pyramid Authentication Ticket cookie without the httponly option correctly set. Pyramid cook
+  match:
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.pyramid-authtkt-cookie-samesite
+  kind: sink
+  tags: ['semgrep', 'pyramid-authtkt-cookie-samesite', 'vulnerability']
+  severity: high
+  cwe: ["CWE-1275"]
+  owasp: "A01:2021"
+  description: Found a Pyramid Authentication Ticket without the samesite option correctly set. Pyramid cookies sho
+  match:
+  - call: pyramid-authtkt-cookie-samesite
+
+- id: sink.semgrep.pymssql-sqli
+  kind: sink
+  tags: ['semgrep', 'pymssql-sqli', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "Detected SQL statement that is tainted by `event` object. This could lead to SQL injection if the va"
+  match:
+  - call: pymssql-sqli
+
+- id: sink.semgrep.tainted-sql-string
+  kind: sink
+  tags: ['semgrep', 'tainted-sql-string', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: Detected user input used to manually construct a SQL string. This is usually bad practice because ma
+  match:
+  - call: tainted-sql-string
+
+- id: sink.semgrep.mysql-sqli
+  kind: sink
+  tags: ['semgrep', 'mysql-sqli', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "Detected SQL statement that is tainted by `event` object. This could lead to SQL injection if the va"
+  match:
+  - call: mysql-sqli
+
+- id: sink.semgrep.dynamodb-filter-injection
+  kind: sink
+  tags: ['semgrep', 'dynamodb-filter-injection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-943"]
+  owasp: "A01:2017"
+  description: "Detected DynamoDB query filter that is tainted by `$EVENT` object. This could lead to NoSQL injectio"
+  match:
+  - call: dynamodb-filter-injection
+
+- id: sink.semgrep.tainted-pickle-deserialization
+  kind: sink
+  tags: ['semgrep', 'tainted-pickle-deserialization', 'vulnerability']
+  severity: high
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: "Avoid using `pickle`, which is known to lead to code execution vulnerabilities. When unpickling, the"
+  match:
+  - call: tainted-pickle-deserialization
+
+- id: sink.semgrep.dangerous-system-call
+  kind: sink
+  tags: ['semgrep', 'dangerous-system-call', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected `os` function with argument tainted by `event` object. This is dangerous if external data c"
+  match:
+  - call: dangerous-system-call
+
+- id: sink.semgrep.dangerous-asyncio-shell
+  kind: sink
+  tags: ['semgrep', 'dangerous-asyncio-shell', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected asyncio subprocess function with argument tainted by `event` object. If this data can be co"
+  match:
+  - call: dangerous-asyncio-shell
+
+- id: sink.semgrep.tainted-html-response
+  kind: sink
+  tags: ['semgrep', 'tainted-html-response', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Detected user input flowing into an HTML response. You may be accidentally bypassing secure methods 
+  match:
+  - call: tainted-html-response
+
+- id: sink.semgrep.pymysql-sqli
+  kind: sink
+  tags: ['semgrep', 'pymysql-sqli', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "Detected SQL statement that is tainted by `event` object. This could lead to SQL injection if the va"
+  match:
+  - call: pymysql-sqli
+
+- id: sink.semgrep.dangerous-subprocess-use
+  kind: sink
+  tags: ['semgrep', 'dangerous-subprocess-use', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected subprocess function with argument tainted by an `event` object.  If this data can be contro"
+  match:
+  - call: dangerous-subprocess-use
+
+- id: sink.semgrep.tainted-code-exec
+  kind: sink
+  tags: ['semgrep', 'tainted-code-exec', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: "Detected the use of `exec/eval`.This can be dangerous if used to evaluate dynamic content. If this c"
+  match:
+  - call: tainted-code-exec
+
+- id: sink.semgrep.dangerous-spawn-process
+  kind: sink
+  tags: ['semgrep', 'dangerous-spawn-process', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected `os` function with argument tainted by `event` object. This is dangerous if external data c"
+  match:
+  - call: dangerous-spawn-process
+
+- id: sink.semgrep.sqlalchemy-sqli
+  kind: sink
+  tags: ['semgrep', 'sqlalchemy-sqli', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "Detected SQL statement that is tainted by `event` object. This could lead to SQL injection if the va"
+  match:
+  - call: sqlalchemy-sqli
+
+- id: sink.semgrep.dangerous-asyncio-create-exec
+  kind: sink
+  tags: ['semgrep', 'dangerous-asyncio-create-exec', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected 'create_subprocess_exec' function with argument tainted by `event` object. If this data can"
+  match:
+  - call: dangerous-asyncio-create-exec
+
+- id: sink.semgrep.dangerous-asyncio-exec
+  kind: sink
+  tags: ['semgrep', 'dangerous-asyncio-exec', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected subprocess function '$LOOP.subprocess_exec' with argument tainted by `event` object. If thi"
+  match:
+  - call: dangerous-asyncio-exec
+
+- id: sink.semgrep.tainted-html-string
+  kind: sink
+  tags: ['semgrep', 'tainted-html-string', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassi
+  match:
+  - call: tainted-html-string
+
+- id: sink.semgrep.psycopg-sqli
+  kind: sink
+  tags: ['semgrep', 'psycopg-sqli', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "Detected SQL statement that is tainted by `event` object. This could lead to SQL injection if the va"
+  match:
+  - call: psycopg-sqli
+
+- id: sink.semgrep.sqlalchemy-execute-raw-query
+  kind: sink
+  tags: ['semgrep', 'sqlalchemy-execute-raw-query', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL"
+  match:
+  - base_type: SQL
+    call: format
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: CONNECTION
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.sqlalchemy-sql-injection
+  kind: sink
+  tags: ['semgrep', 'sqlalchemy-sql-injection', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: Distinct, Having, Group_by, Order_by, and Filter in SQLAlchemy can cause sql injections if the devel
+  match:
+  - call: sqlalchemy-sql-injection
+
+- id: sink.semgrep.avoid-sqlalchemy-text
+  kind: sink
+  tags: ['semgrep', 'avoid-sqlalchemy-text', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: sqlalchemy.text passes the constructed SQL statement to the database mostly unchanged. This means th
+  match:
+  - call: avoid-sqlalchemy-text
+
+- id: sink.semgrep.mongo-client-bad-auth
+  kind: sink
+  tags: ['semgrep', 'mongo-client-bad-auth', 'vulnerability']
+  severity: high
+  cwe: ["CWE-477"]
+  description: Warning MONGODB-CR was deprecated with the release of MongoDB 3.6 and is no longer supported by Mong
+  match:
+  - base_type: pymongo
+    call: MongoClient
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.disabled-cert-validation
+  kind: sink
+  tags: ['semgrep', 'disabled-cert-validation', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-295"]
+  owasp: "A03:2017"
+  description: Certificate verification has been explicitly disabled. This permits insecure connections to insecure
+  match:
+  - base_type: requests
+    call: put
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: requests
+    call: patch
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: requests
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: requests
+    call: post
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: requests
+    call: head
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: requests
+    call: options
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: requests
+    call: delete
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: requests
+    call: request
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.no-auth-over-http
+  kind: sink
+  tags: ['semgrep', 'no-auth-over-http', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-523"]
+  owasp: "A02:2017"
+  description: Authentication detected over HTTP. HTTP does not provide any encryption or protection for these auth
+  match:
+  - read: W
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.formatted-string-bashoperator
+  kind: sink
+  tags: ['semgrep', 'formatted-string-bashoperator', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Found a formatted string in BashOperator: $CMD. This could be vulnerable to injection. Be extra sure"
+  match:
+  - base_type: airflow.operators.bash_operator
+    call: BashOperator
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: STR
+    call: format
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: format
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.unverified-ssl-context
+  kind: sink
+  tags: ['semgrep', 'unverified-ssl-context', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-295"]
+  owasp: "A03:2017"
+  description: Unverified SSL context detected. This will permit insecure connections without verifying SSL certifi
+  match:
+  - call: unverified-ssl-context
+
+- id: sink.semgrep.use-defused-xml-parse
+  kind: sink
+  tags: ['semgrep', 'use-defused-xml-parse', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-611"]
+  owasp: "A04:2017"
+  description: "The native Python `xml` library is vulnerable to XML External Entity (XXE) attacks.  These attacks c"
+  match:
+  - base_type: xml.etree.ElementTree
+    call: parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-os-exec
+  kind: sink
+  tags: ['semgrep', 'dangerous-os-exec', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Found user controlled content when spawning a process. This is dangerous because it allows a malicio
+  match:
+  - call: dangerous-os-exec
+
+- id: sink.semgrep.insecure-hash-algorithm-sha1
+  kind: sink
+  tags: ['semgrep', 'insecure-hash-algorithm-sha1', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected SHA1 hash algorithm which is considered insecure. SHA1 is not collision resistant and is th
+  match:
+  - base_type: hashlib
+    call: sha1
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-globals-use
+  kind: sink
+  tags: ['semgrep', 'dangerous-globals-use', 'vulnerability']
+  severity: high
+  cwe: ["CWE-96"]
+  owasp: "A03:2021"
+  description: "Found non static data as an index to 'globals()'. This is extremely dangerous because it allows an a"
+  match:
+  - call: dangerous-globals-use
+
+- id: sink.semgrep.dangerous-subinterpreters-run-string
+  kind: sink
+  tags: ['semgrep', 'dangerous-subinterpreters-run-string', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: "Found user controlled content in `run_string`. This is dangerous because it allows a malicious actor"
+  match:
+  - call: dangerous-subinterpreters-run-string
+
+- id: sink.semgrep.use-defused-xmlrpc
+  kind: sink
+  tags: ['semgrep', 'use-defused-xmlrpc', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-776"]
+  owasp: "A04:2017"
+  description: Detected use of xmlrpc. xmlrpc is not inherently safe from vulnerabilities. Use defusedxml.xmlrpc in
+  match:
+  - call: use-defused-xmlrpc
+
+- id: sink.semgrep.insecure-uuid-version
+  kind: sink
+  tags: ['semgrep', 'insecure-uuid-version', 'vulnerability']
+  severity: high
+  cwe: ["CWE-330"]
+  owasp: "A02:2021"
+  description: Using UUID version 1 for UUID generation can lead to predictable UUIDs based on system information (
+  match:
+  - base_type: uuid
+    call: uuid1
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-system-call
+  kind: sink
+  tags: ['semgrep', 'dangerous-system-call', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Found user-controlled data used in a system call. This could allow a malicious actor to execute comm
+  match:
+  - call: dangerous-system-call
+
+- id: sink.semgrep.dangerous-subprocess-use
+  kind: sink
+  tags: ['semgrep', 'dangerous-subprocess-use', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected subprocess function '$FUNC' with user controlled data. A malicious actor could leverage thi"
+  match:
+  - call: dangerous-subprocess-use
+
+- id: sink.semgrep.use-defused-xml
+  kind: sink
+  tags: ['semgrep', 'use-defused-xml', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-611"]
+  owasp: "A04:2017"
+  description: "The Python documentation recommends using `defusedxml` instead of `xml` because the native Python `x"
+  match:
+  - call: use-defused-xml
+
+- id: sink.semgrep.dangerous-spawn-process
+  kind: sink
+  tags: ['semgrep', 'dangerous-spawn-process', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Found user controlled content when spawning a process. This is dangerous because it allows a malicio
+  match:
+  - call: dangerous-spawn-process
+
+- id: sink.semgrep.dangerous-testcapi-run-in-subinterp
+  kind: sink
+  tags: ['semgrep', 'dangerous-testcapi-run-in-subinterp', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: "Found user controlled content in `run_in_subinterp`. This is dangerous because it allows a malicious"
+  match:
+  - call: dangerous-testcapi-run-in-subinterp
+
+- id: sink.semgrep.dangerous-interactive-code-run
+  kind: sink
+  tags: ['semgrep', 'dangerous-interactive-code-run', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: Found user controlled data inside InteractiveConsole/InteractiveInterpreter method. This is dangerou
+  match:
+  - call: dangerous-interactive-code-run
+
+- id: sink.semgrep.insecure-hash-algorithm-md5
+  kind: sink
+  tags: ['semgrep', 'insecure-hash-algorithm-md5', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is ther
+  match:
+  - base_type: hashlib
+    call: md5
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-hash-function
+  kind: sink
+  tags: ['semgrep', 'insecure-hash-function', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: Detected use of an insecure MD4 or MD5 hash function. These functions have known vulnerabilities and
+  match:
+  - base_type: hashlib
+    call: new
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.telnetlib
+  kind: sink
+  tags: ['semgrep', 'telnetlib', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: Telnet does not encrypt communications. Use SSH instead.
+  match:
+  - read: ANYTHING
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.exec-detected
+  kind: sink
+  tags: ['semgrep', 'exec-detected', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: Detected the use of exec(). exec() can be dangerous if used to evaluate dynamic content. If this con
+  match:
+  - call: exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-asyncio-shell-tainted-env-args
+  kind: sink
+  tags: ['semgrep', 'dangerous-asyncio-shell-tainted-env-args', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected asyncio subprocess function with user controlled data. You may consider using 'shlex.escape"
+  match:
+  - call: dangerous-asyncio-shell-tainted-env-args
+
+- id: sink.semgrep.dangerous-asyncio-shell-audit
+  kind: sink
+  tags: ['semgrep', 'dangerous-asyncio-shell-audit', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Detected asyncio subprocess function without a static string. If this data can be controlled by a ma
+  match:
+  - call: dangerous-asyncio-shell-audit
+
+- id: sink.semgrep.non-literal-import
+  kind: sink
+  tags: ['semgrep', 'non-literal-import', 'vulnerability']
+  severity: high
+  cwe: ["CWE-706"]
+  owasp: "A01:2021"
+  description: "Untrusted user input in `importlib.import_module()` function allows an attacker to load arbitrary co"
+  match:
+  - base_type: importlib
+    call: import_module
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-asyncio-create-exec-audit
+  kind: sink
+  tags: ['semgrep', 'dangerous-asyncio-create-exec-audit', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected 'create_subprocess_exec' function without a static string. If this data can be controlled b"
+  match:
+  - call: dangerous-asyncio-create-exec-audit
+
+- id: sink.semgrep.subprocess-shell-true
+  kind: sink
+  tags: ['semgrep', 'subprocess-shell-true', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Found 'subprocess' function '$FUNC' with 'shell=True'. This is dangerous because this call will spaw"
+  match:
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-subinterpreters-run-string-tainted-env-args
+  kind: sink
+  tags: ['semgrep', 'dangerous-subinterpreters-run-string-tainted-env-args', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: "Found user controlled content in `run_string`. This is dangerous because it allows a malicious actor"
+  match:
+  - call: dangerous-subinterpreters-run-string-tainted-env-args
+
+- id: sink.semgrep.marshal-usage
+  kind: sink
+  tags: ['semgrep', 'marshal-usage', 'vulnerability']
+  severity: high
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: The marshal module is not intended to be secure against erroneous or maliciously constructed data. N
+  match:
+  - base_type: marshal
+    call: load
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: marshal
+    call: loads
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: marshal
+    call: dump
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: marshal
+    call: dumps
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-os-exec-tainted-env-args
+  kind: sink
+  tags: ['semgrep', 'dangerous-os-exec-tainted-env-args', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Found user controlled content when spawning a process. This is dangerous because it allows a malicio
+  match:
+  - call: dangerous-os-exec-tainted-env-args
+
+- id: sink.semgrep.dangerous-subinterpreters-run-string-audit
+  kind: sink
+  tags: ['semgrep', 'dangerous-subinterpreters-run-string-audit', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: "Found dynamic content in `run_string`. This is dangerous if external data can reach this function ca"
+  match:
+  - base_type: _xxsubinterpreters
+    call: run_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.hardcoded-password-default-argument
+  kind: sink
+  tags: ['semgrep', 'hardcoded-password-default-argument', 'vulnerability']
+  severity: high
+  cwe: ["CWE-798"]
+  owasp: "A07:2021"
+  description: "Hardcoded password is used as a default argument to '$FUNC'. This could be dangerous if a real passw"
+  match:
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-interactive-code-run-tainted-env-args
+  kind: sink
+  tags: ['semgrep', 'dangerous-interactive-code-run-tainted-env-args', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: Found user controlled data inside InteractiveConsole/InteractiveInterpreter method. This is dangerou
+  match:
+  - call: dangerous-interactive-code-run-tainted-env-args
+
+- id: sink.semgrep.dangerous-subprocess-use-audit
+  kind: sink
+  tags: ['semgrep', 'dangerous-subprocess-use-audit', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected subprocess function '$FUNC' without a static string. If this data can be controlled by a ma"
+  match:
+  - call: dangerous-subprocess-use-audit
+
+- id: sink.semgrep.python-reverse-shell
+  kind: sink
+  tags: ['semgrep', 'python-reverse-shell', 'vulnerability']
+  severity: high
+  cwe: ["CWE-553"]
+  description: Semgrep found a Python reverse shell using $BINPATH to $IP at $PORT
+  match:
+  - call: python-reverse-shell
+
+- id: sink.semgrep.dangerous-testcapi-run-in-subinterp-tainted-env-args
+  kind: sink
+  tags: ['semgrep', 'dangerous-testcapi-run-in-subinterp-tainted-env-args', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: "Found user controlled content in `run_in_subinterp`. This is dangerous because it allows a malicious"
+  match:
+  - call: dangerous-testcapi-run-in-subinterp-tainted-env-args
+
+- id: sink.semgrep.formatted-sql-query
+  kind: sink
+  tags: ['semgrep', 'formatted-sql-query', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: Detected possible formatted SQL query. Use parameterized queries instead.
+  match:
+  - base_type: DB
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: format
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.weak-ssl-version
+  kind: sink
+  tags: ['semgrep', 'weak-ssl-version', 'vulnerability']
+  severity: high
+  cwe: ["CWE-326"]
+  owasp: "A03:2017"
+  description: An insecure SSL version was detected. TLS versions 1.0, 1.1, and all SSL versions are considered wea
+  match:
+  - call: weak-ssl-version
+
+- id: sink.semgrep.httpsconnection-detected
+  kind: sink
+  tags: ['semgrep', 'httpsconnection-detected', 'vulnerability']
+  severity: high
+  cwe: ["CWE-295"]
+  owasp: "A03:2017"
+  description: The HTTPSConnection API has changed frequently with minor releases of Python. Ensure you are using t
+  match:
+  - base_type: httplib
+    call: HTTPSConnection
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: http.client
+    call: HTTPSConnection
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: six.moves.http_client
+    call: HTTPSConnection
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-subprocess-use-tainted-env-args
+  kind: sink
+  tags: ['semgrep', 'dangerous-subprocess-use-tainted-env-args', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected subprocess function '$FUNC' with user controlled data. A malicious actor could leverage thi"
+  match:
+  - call: dangerous-subprocess-use-tainted-env-args
+
+- id: sink.semgrep.md5-used-as-password
+  kind: sink
+  tags: ['semgrep', 'md5-used-as-password', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: It looks like MD5 is used as a password hash. MD5 is not considered a secure password hash because i
+  match:
+  - call: md5-used-as-password
+
+- id: sink.semgrep.insecure-file-permissions
+  kind: sink
+  tags: ['semgrep', 'insecure-file-permissions', 'vulnerability']
+  severity: high
+  cwe: ["CWE-276"]
+  owasp: "A01:2021"
+  description: "These permissions `$BITS` are widely permissive and grant access to more people than may be necessar"
+  match:
+  - call: insecure-file-permissions
+
+- id: sink.semgrep.dangerous-testcapi-run-in-subinterp-audit
+  kind: sink
+  tags: ['semgrep', 'dangerous-testcapi-run-in-subinterp-audit', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: "Found dynamic content in `run_in_subinterp`. This is dangerous if external data can reach this funct"
+  match:
+  - call: dangerous-testcapi-run-in-subinterp-audit
+
+- id: sink.semgrep.ssl-wrap-socket-is-deprecated
+  kind: sink
+  tags: ['semgrep', 'ssl-wrap-socket-is-deprecated', 'vulnerability']
+  severity: high
+  cwe: ["CWE-326"]
+  owasp: "A03:2017"
+  description: "'ssl.wrap_socket()' is deprecated. This function creates an insecure socket without server name indi"
+  match:
+  - base_type: ssl
+    call: wrap_socket
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-asyncio-exec-tainted-env-args
+  kind: sink
+  tags: ['semgrep', 'dangerous-asyncio-exec-tainted-env-args', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected subprocess function '$LOOP.subprocess_exec' with user controlled data. You may consider usi"
+  match:
+  - call: dangerous-asyncio-exec-tainted-env-args
+
+- id: sink.semgrep.paramiko-implicit-trust-host-key
+  kind: sink
+  tags: ['semgrep', 'paramiko-implicit-trust-host-key', 'vulnerability']
+  severity: high
+  cwe: ["CWE-322"]
+  owasp: "A02:2021"
+  description: "Detected a paramiko host key policy that implicitly trusts a server's host key. Host keys should be "
+  match:
+  - call: paramiko-implicit-trust-host-key
+
+- id: sink.semgrep.sha224-hash
+  kind: sink
+  tags: ['semgrep', 'sha224-hash', 'vulnerability']
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A03:2017"
+  description: This code uses a 224-bit hash function, which is deprecated or disallowed in some security policies.
+  match:
+  - base_type: hashlib
+    call: sha3_224
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: hashlib
+    call: sha224
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-os-exec-audit
+  kind: sink
+  tags: ['semgrep', 'dangerous-os-exec-audit', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Found dynamic content when spawning a process. This is dangerous if external data can reach this fun
+  match:
+  - call: dangerous-os-exec-audit
+
+- id: sink.semgrep.dangerous-system-call-audit
+  kind: sink
+  tags: ['semgrep', 'dangerous-system-call-audit', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Found dynamic content used in a system call. This is dangerous if external data can reach this funct
+  match:
+  - call: dangerous-system-call-audit
+
+- id: sink.semgrep.dangerous-spawn-process-tainted-env-args
+  kind: sink
+  tags: ['semgrep', 'dangerous-spawn-process-tainted-env-args', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Found user controlled content when spawning a process. This is dangerous because it allows a malicio
+  match:
+  - call: dangerous-spawn-process-tainted-env-args
+
+- id: sink.semgrep.eval-detected
+  kind: sink
+  tags: ['semgrep', 'eval-detected', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: Detected the use of eval(). eval() can be dangerous if used to evaluate dynamic content. If this con
+  match:
+  - call: eval
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-spawn-process-audit
+  kind: sink
+  tags: ['semgrep', 'dangerous-spawn-process-audit', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Found dynamic content when spawning a process. This is dangerous if external data can reach this fun
+  match:
+  - call: dangerous-spawn-process-audit
+
+- id: sink.semgrep.multiprocessing-recv
+  kind: sink
+  tags: ['semgrep', 'multiprocessing-recv', 'vulnerability']
+  severity: high
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: The Connection.recv() method automatically unpickles the data it receives, which can be a security r
+  match:
+  - base_type: multiprocessing.connection
+    call: Client
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: multiprocessing.connection.Connection
+    call: recv
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: C
+    call: recv
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: multiprocessing.connection.Client
+    call: recv
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.dangerous-system-call-tainted-env-args
+  kind: sink
+  tags: ['semgrep', 'dangerous-system-call-tainted-env-args', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Found user-controlled data used in a system call. This could allow a malicious actor to execute comm
+  match:
+  - call: dangerous-system-call-tainted-env-args
+
+- id: sink.semgrep.dangerous-interactive-code-run-audit
+  kind: sink
+  tags: ['semgrep', 'dangerous-interactive-code-run-audit', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: Found dynamic content inside InteractiveConsole/InteractiveInterpreter method. This is dangerous if 
+  match:
+  - call: dangerous-interactive-code-run-audit
+
+- id: sink.semgrep.dynamic-urllib-use-detected
+  kind: sink
+  tags: ['semgrep', 'dynamic-urllib-use-detected', 'vulnerability']
+  severity: high
+  cwe: ["CWE-939"]
+  owasp: "A01:2017"
+  description: "Detected a dynamic value being used with urllib. urllib supports 'file://' schemes, so a dynamic val"
+  match:
+  - call: dynamic-urllib-use-detected
+
+- id: sink.semgrep.system-wildcard-detected
+  kind: sink
+  tags: ['semgrep', 'system-wildcard-detected', 'vulnerability']
+  severity: high
+  cwe: ["CWE-155"]
+  owasp: "A01:2017"
+  description: Detected use of the wildcard character in a system call that spawns a shell. This subjects the wildc
+  match:
+  - call: system-wildcard-detected
+
+- id: sink.semgrep.dangerous-asyncio-create-exec-tainted-env-args
+  kind: sink
+  tags: ['semgrep', 'dangerous-asyncio-create-exec-tainted-env-args', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected 'create_subprocess_exec' function with user controlled data. You may consider using 'shlex."
+  match:
+  - call: dangerous-asyncio-create-exec-tainted-env-args
+
+- id: sink.semgrep.dangerous-asyncio-exec-audit
+  kind: sink
+  tags: ['semgrep', 'dangerous-asyncio-exec-audit', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected subprocess function '$LOOP.subprocess_exec' without a static string. If this data can be co"
+  match:
+  - call: dangerous-asyncio-exec-audit
+
+- id: sink.semgrep.avoid-jsonpickle
+  kind: sink
+  tags: ['semgrep', 'avoid-jsonpickle', 'vulnerability']
+  severity: high
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: "Avoid using `jsonpickle`, which is known to lead to code execution vulnerabilities. When unpickling,"
+  match:
+  - base_type: jsonpickle
+    call: decode
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.avoid-unsafe-ruamel
+  kind: sink
+  tags: ['semgrep', 'avoid-unsafe-ruamel', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: "Avoid using unsafe `ruamel.yaml.YAML()`. `ruamel.yaml.YAML` can create arbitrary Python objects. A m"
+  match:
+  - base_type: ruamel.yaml
+    read: YAML
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.avoid-pyyaml-load
+  kind: sink
+  tags: ['semgrep', 'avoid-pyyaml-load', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: "Detected a possible YAML deserialization vulnerability. `yaml.unsafe_load`, `yaml.Loader`, `yaml.CLo"
+  match:
+  - call: avoid-pyyaml-load
+
+- id: sink.semgrep.avoid-pickle
+  kind: sink
+  tags: ['semgrep', 'avoid-pickle', 'vulnerability']
+  severity: high
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: "Avoid using `pickle`, which is known to lead to code execution vulnerabilities. When unpickling, the"
+  match:
+  - call: avoid-pickle
+
+- id: sink.semgrep.avoid-cPickle
+  kind: sink
+  tags: ['semgrep', 'avoid-cPickle', 'vulnerability']
+  severity: high
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: "Avoid using `cPickle`, which is known to lead to code execution vulnerabilities. When unpickling, th"
+  match:
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.avoid-dill
+  kind: sink
+  tags: ['semgrep', 'avoid-dill', 'vulnerability']
+  severity: high
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: "Avoid using `dill`, which uses `pickle`, which is known to lead to code execution vulnerabilities. W"
+  match:
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.avoid-shelve
+  kind: sink
+  tags: ['semgrep', 'avoid-shelve', 'vulnerability']
+  severity: high
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: "Avoid using `shelve`, which uses `pickle`, which is known to lead to code execution vulnerabilities."
+  match:
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.paramiko-exec-command
+  kind: sink
+  tags: ['semgrep', 'paramiko-exec-command', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Unverified SSL context detected. This will permit insecure connections without verifying SSL certifi
+  match:
+  - base_type: CLIENT
+    call: exec_command
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.asyncpg-sqli
+  kind: sink
+  tags: ['semgrep', 'asyncpg-sqli', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: Detected string concatenation with a non-literal variable in a asyncpg Python SQL statement. This co
+  match:
+  - call: asyncpg-sqli
+
+- id: sink.semgrep.pg8000-sqli
+  kind: sink
+  tags: ['semgrep', 'pg8000-sqli', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: Detected string concatenation with a non-literal variable in a pg8000 Python SQL statement. This cou
+  match:
+  - call: pg8000-sqli
+
+- id: sink.semgrep.psycopg-sqli
+  kind: sink
+  tags: ['semgrep', 'psycopg-sqli', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: Detected string concatenation with a non-literal variable in a psycopg2 Python SQL statement. This c
+  match:
+  - call: psycopg-sqli
+
+- id: sink.semgrep.aiopg-sqli
+  kind: sink
+  tags: ['semgrep', 'aiopg-sqli', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: Detected string concatenation with a non-literal variable in an aiopg Python SQL statement. This cou
+  match:
+  - call: aiopg-sqli
+
+- id: sink.semgrep.http-not-https-connection
+  kind: sink
+  tags: ['semgrep', 'http-not-https-connection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: Detected HTTPConnectionPool. This will transmit data in cleartext. It is recommended to use HTTPSCon
+  match:
+  - base_type: urllib3
+    call: HTTPConnectionPool
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: urllib3.connectionpool
+    call: HTTPConnectionPool
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.disabled-cert-validation
+  kind: sink
+  tags: ['semgrep', 'disabled-cert-validation', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-295"]
+  owasp: "A03:2017"
+  description: certificate verification explicitly disabled, insecure connections possible
+  match:
+  - call: disabled-cert-validation
+
+- id: sink.semgrep.python-logger-credential-disclosure
+  kind: sink
+  tags: ['semgrep', 'python-logger-credential-disclosure', 'vulnerability']
+  severity: high
+  cwe: ["CWE-532"]
+  owasp: "A09:2021"
+  description: Detected a python logger call with a potential hardcoded secret $FORMAT_STRING being logged. This ma
+  match:
+  - read: LOGGER_CALL
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.listen-eval
+  kind: sink
+  tags: ['semgrep', 'listen-eval', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: Because portions of the logging configuration are passed through eval(), use of this function may op
+  match:
+  - base_type: logging.config
+    call: listen
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.no-set-ciphers
+  kind: sink
+  tags: ['semgrep', 'no-set-ciphers', 'vulnerability']
+  severity: high
+  cwe: ["CWE-326"]
+  owasp: "A03:2017"
+  description: "The 'ssl' module disables insecure cipher suites by default. Therefore, use of 'set_ciphers()' shoul"
+  match:
+  - base_type: CONTEXT
+    call: set_ciphers
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-request-object-ftp
+  kind: sink
+  tags: ['semgrep', 'insecure-request-object-ftp', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected a 'urllib.request.Request()' object using an insecure transport protocol, 'ftp://'. This co"
+  match:
+  - base_type: urllib.request
+    call: Request
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-openerdirector-open-ftp
+  kind: sink
+  tags: ['semgrep', 'insecure-openerdirector-open-ftp', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected an unsecured transmission channel. 'OpenerDirector.open(...)' is being used with 'ftp://'. "
+  match:
+  - base_type: urllib.request
+    call: OpenerDirector
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-request-object
+  kind: sink
+  tags: ['semgrep', 'insecure-request-object', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected a 'urllib.request.Request()' object using an insecure transport protocol, 'http://'. This c"
+  match:
+  - base_type: urllib.request
+    call: Request
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-urlopen-ftp
+  kind: sink
+  tags: ['semgrep', 'insecure-urlopen-ftp', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected 'urllib.urlopen()' using 'ftp://'. This request will not be encrypted. Consider using SFTP "
+  match:
+  - base_type: urllib.request
+    call: urlopen
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-urlopener-retrieve
+  kind: sink
+  tags: ['semgrep', 'insecure-urlopener-retrieve', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected an unsecured transmission channel. 'URLopener.retrieve(...)' is being used with 'http://'. "
+  match:
+  - base_type: urllib.request
+    call: URLopener
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: retrieve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-openerdirector-open
+  kind: sink
+  tags: ['semgrep', 'insecure-openerdirector-open', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected an unsecured transmission channel. 'OpenerDirector.open(...)' is being used with 'http://'."
+  match:
+  - base_type: urllib.request
+    call: OpenerDirector
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-urlopener-open
+  kind: sink
+  tags: ['semgrep', 'insecure-urlopener-open', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected an unsecured transmission channel. 'URLopener.open(...)' is being used with 'http://'. Use "
+  match:
+  - base_type: urllib.request
+    call: URLopener
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-urlopener-open-ftp
+  kind: sink
+  tags: ['semgrep', 'insecure-urlopener-open-ftp', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected an insecure transmission channel. 'URLopener.open(...)' is being used with 'ftp://'. Use SF"
+  match:
+  - base_type: urllib.request
+    call: URLopener
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-urlretrieve
+  kind: sink
+  tags: ['semgrep', 'insecure-urlretrieve', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected 'urllib.urlretrieve()' using 'http://'. This request will not be encrypted. Use 'https://' "
+  match:
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: urllib.request
+    call: urlretrieve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-urlopener-retrieve-ftp
+  kind: sink
+  tags: ['semgrep', 'insecure-urlopener-retrieve-ftp', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected an insecure transmission channel. 'URLopener.retrieve(...)' is being used with 'ftp://'. Us"
+  match:
+  - base_type: urllib.request
+    call: URLopener
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: retrieve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-urlretrieve-ftp
+  kind: sink
+  tags: ['semgrep', 'insecure-urlretrieve-ftp', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected 'urllib.urlretrieve()' using 'ftp://'. This request will not be encrypted. Use SFTP instead"
+  match:
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: urllib.request
+    call: urlretrieve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.insecure-urlopen
+  kind: sink
+  tags: ['semgrep', 'insecure-urlopen', 'vulnerability']
+  severity: high
+  cwe: ["CWE-319"]
+  owasp: "A03:2017"
+  description: "Detected 'urllib.urlopen()' using 'http://'. This request will not be encrypted. Use 'https://' inst"
+  match:
+  - base_type: urllib.request
+    call: urlopen
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - read: FUNC
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.string-concat
+  kind: sink
+  tags: ['semgrep', 'string-concat', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected string concatenation or formatting in a call to a command via 'sh'. This could be a command"
+  match:
+  - base_type: X
+    call: format
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - read: BIN
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.wildcard-cors
+  kind: sink
+  tags: ['semgrep', 'wildcard-cors', 'vulnerability']
+  severity: high
+  cwe: ["CWE-942"]
+  owasp: "A05:2021"
+  description: "CORS policy allows any origin (using wildcard '*'). This is insecure and should be avoided."
+  match:
+  - call: wildcard-cors
+
+- id: sink.semgrep.hashids-with-django-secret
+  kind: sink
+  tags: ['semgrep', 'hashids-with-django-secret', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  owasp: "A02:2021"
+  description: The Django secret key is used as salt in HashIDs. The HashID mechanism is not secure. By observing s
+  match:
+  - base_type: hashids
+    call: Hashids
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.nan-injection
+  kind: sink
+  tags: ['semgrep', 'nan-injection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-704"]
+  description: Found user input going directly into typecast for bool(), float(), or complex(). This allows an atta
+  match:
+  - call: nan-injection
+
+- id: sink.semgrep.locals-as-template-context
+  kind: sink
+  tags: ['semgrep', 'locals-as-template-context', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-96"]
+  owasp: "A03:2021"
+  description: "Using 'locals()' as a context to 'render(...)' is extremely dangerous. This exposes Python functions"
+  match:
+  - base_type: django.template.Template
+    call: render
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: django.shortcuts
+    call: render
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: locals
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.globals-as-template-context
+  kind: sink
+  tags: ['semgrep', 'globals-as-template-context', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-96"]
+  owasp: "A03:2021"
+  description: "Using 'globals()' as a context to 'render(...)' is extremely dangerous. This exposes Python function"
+  match:
+  - base_type: django.template.Template
+    call: render
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: django.shortcuts
+    call: render
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: globals
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.password-empty-string
+  kind: sink
+  tags: ['semgrep', 'password-empty-string', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-521"]
+  owasp: "A07:2021"
+  description: "'$VAR' is the empty string and is being used to set the password on '$MODEL'. If you meant to set an"
+  match:
+  - call: password-empty-string
+
+- id: sink.semgrep.use-none-for-password-default
+  kind: sink
+  tags: ['semgrep', 'use-none-for-password-default', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-521"]
+  owasp: "A07:2021"
+  description: "'$VAR' is using the empty string as its default and is being used to set the password on '$MODEL'. I"
+  match:
+  - call: use-none-for-password-default
+
+- id: sink.semgrep.avoid-mark-safe
+  kind: sink
+  tags: ['semgrep', 'avoid-mark-safe', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "'mark_safe()' is used to mark a string as \"safe\" for HTML output. This disables escaping and could t"
+  match:
+  - base_type: django.utils.safestring
+    call: mark_safe
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.custom-expression-as-sql
+  kind: sink
+  tags: ['semgrep', 'custom-expression-as-sql', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "Detected a Custom Expression ''$EXPRESSION'' calling ''as_sql(...).'' This could lead to SQL injecti"
+  match:
+  - base_type: EXPRESSION
+    call: as_sql
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.extends-custom-expression
+  kind: sink
+  tags: ['semgrep', 'extends-custom-expression', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "Found extension of custom expression: $CLASS. Extending expressions in this way could inadvertently "
+  match:
+  - read: CLASS
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.django-secure-set-cookie
+  kind: sink
+  tags: ['semgrep', 'django-secure-set-cookie', 'vulnerability']
+  severity: high
+  cwe: ["CWE-614"]
+  owasp: "A05:2021"
+  description: "Django cookies should be handled securely by setting secure=True, httponly=True, and samesite='Lax' "
+  match:
+  - base_type: response
+    call: set_cookie
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.no-csrf-exempt
+  kind: sink
+  tags: ['semgrep', 'no-csrf-exempt', 'vulnerability']
+  severity: high
+  cwe: ["CWE-352"]
+  owasp: "A01:2021"
+  description: "Detected usage of @csrf_exempt, which indicates that there is no CSRF token set for this route. This"
+  match:
+  - read: R
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.avoid-query-set-extra
+  kind: sink
+  tags: ['semgrep', 'avoid-query-set-extra', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "QuerySet.extra' does not provide safeguards against SQL injection and requires very careful use. SQL"
+  match:
+  - base_type: MODEL
+    call: extra
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.avoid-raw-sql
+  kind: sink
+  tags: ['semgrep', 'avoid-raw-sql', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "Detected the use of 'RawSQL' or 'raw' indicating the execution of a non-parameterized SQL query. Thi"
+  match:
+  - call: avoid-raw-sql
+
+- id: sink.semgrep.unvalidated-password
+  kind: sink
+  tags: ['semgrep', 'unvalidated-password', 'vulnerability']
+  severity: high
+  cwe: ["CWE-521"]
+  owasp: "A07:2021"
+  description: "The password on '$MODEL' is being set without validating the password. Call django.contrib.auth.pass"
+  match:
+  - base_type: MODEL
+    call: set_password
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.avoid-insecure-deserialization
+  kind: sink
+  tags: ['semgrep', 'avoid-insecure-deserialization', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  owasp: "A08:2017"
+  description: "Avoid using insecure deserialization library, backed by `pickle`, `_pickle`, `cpickle`, `dill`, `she"
+  match:
+  - call: avoid-insecure-deserialization
+
+- id: sink.semgrep.open-redirect
+  kind: sink
+  tags: ['semgrep', 'open-redirect', 'vulnerability']
+  severity: high
+  cwe: ["CWE-601"]
+  owasp: "A01:2021"
+  description: Data from request ($DATA) is passed to redirect(). This is an open redirect and could be exploited. 
+  match:
+  - call: open-redirect
+
+- id: sink.semgrep.reflected-data-httpresponse
+  kind: sink
+  tags: ['semgrep', 'reflected-data-httpresponse', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Found user-controlled request data passed into HttpResponse. This could be vulnerable to XSS, leadin
+  match:
+  - call: reflected-data-httpresponse
+
+- id: sink.semgrep.mass-assignment
+  kind: sink
+  tags: ['semgrep', 'mass-assignment', 'vulnerability']
+  severity: high
+  cwe: ["CWE-915"]
+  owasp: "A08:2021"
+  description: Mass assignment detected. This can result in assignment to model fields that are unintended and can 
+  match:
+  - base_type: OBJ
+    call: update
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: MODEL.objects
+    call: create
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: OBJ
+    call: save
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.tainted-sql-string
+  kind: sink
+  tags: ['semgrep', 'tainted-sql-string', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-915"]
+  owasp: "A08:2021"
+  description: Detected user input used to manually construct a SQL string. This is usually bad practice because ma
+  match:
+  - call: tainted-sql-string
+
+- id: sink.semgrep.tainted-url-host
+  kind: sink
+  tags: ['semgrep', 'tainted-url-host', 'vulnerability']
+  severity: high
+  cwe: ["CWE-918"]
+  owasp: "A10:2021"
+  description: User data flows into the host portion of this manually-constructed URL. This could allow an attacker
+  match:
+  - call: tainted-url-host
+
+- id: sink.semgrep.reflected-data-httpresponsebadrequest
+  kind: sink
+  tags: ['semgrep', 'reflected-data-httpresponsebadrequest', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Found user-controlled request data passed into a HttpResponseBadRequest. This could be vulnerable to
+  match:
+  - call: reflected-data-httpresponsebadrequest
+
+- id: sink.semgrep.request-data-fileresponse
+  kind: sink
+  tags: ['semgrep', 'request-data-fileresponse', 'vulnerability']
+  severity: high
+  cwe: ["CWE-22"]
+  owasp: "A05:2017"
+  description: Found user-controlled request data being passed into a file open, which is them passed as an argumen
+  match:
+  - call: request-data-fileresponse
+
+- id: sink.semgrep.csv-writer-injection
+  kind: sink
+  tags: ['semgrep', 'csv-writer-injection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1236"]
+  owasp: "A01:2017"
+  description: "Detected user input into a generated CSV file using the built-in `csv` module. If user data is used "
+  match:
+  - call: csv-writer-injection
+
+- id: sink.semgrep.raw-html-format
+  kind: sink
+  tags: ['semgrep', 'raw-html-format', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassi
+  match:
+  - call: raw-html-format
+
+- id: sink.semgrep.request-data-write
+  kind: sink
+  tags: ['semgrep', 'request-data-write', 'vulnerability']
+  severity: high
+  cwe: ["CWE-93"]
+  owasp: "A03:2021"
+  description: "Found user-controlled request data passed into '.write(...)'. This could be dangerous if a malicious"
+  match:
+  - read: W
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - read: C
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: F
+    call: write
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: W
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.direct-use-of-httpresponse
+  kind: sink
+  tags: ['semgrep', 'direct-use-of-httpresponse', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "Detected data rendered directly to the end user via 'HttpResponse' or a similar object. This bypasse"
+  match:
+  - call: direct-use-of-httpresponse
+
+- id: sink.semgrep.formathtml-fstring-parameter
+  kind: sink
+  tags: ['semgrep', 'formathtml-fstring-parameter', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "Passing a formatted string as first parameter to `format_html` disables the proper encoding of varia"
+  match:
+  - call: format_html
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: format
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.template-var-unescaped-with-safeseq
+  kind: sink
+  tags: ['semgrep', 'template-var-unescaped-with-safeseq', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "Detected a template variable where autoescaping is explicitly disabled with '| safeseq' filter. This"
+  match:
+  - call: template-var-unescaped-with-safeseq
+
+- id: sink.semgrep.html-safe
+  kind: sink
+  tags: ['semgrep', 'html-safe', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "`html_safe()` add the `__html__` magic method to the provided class. The `__html__` method indicates"
+  match:
+  - read: CLASS
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: django.utils.html
+    call: html_safe
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.class-extends-safestring
+  kind: sink
+  tags: ['semgrep', 'class-extends-safestring', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "Found a class extending 'SafeString', 'SafeText' or 'SafeData'. These classes are for bypassing the "
+  match:
+  - read: CLASS
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.context-autoescape-off
+  kind: sink
+  tags: ['semgrep', 'context-autoescape-off', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Detected a Context with autoescape disabled. If you are rendering any web pages, this exposes your a
+  match:
+  - call: context-autoescape-off
+
+- id: sink.semgrep.template-autoescape-off
+  kind: sink
+  tags: ['semgrep', 'template-autoescape-off', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "Detected a template block where autoescaping is explicitly disabled with '{% autoescape off %}'. Thi"
+  match:
+  - call: template-autoescape-off
+
+- id: sink.semgrep.html-magic-method
+  kind: sink
+  tags: ['semgrep', 'html-magic-method', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "The `__html__` method indicates to the Django template engine that the value is 'safe' for rendering"
+  match:
+  - call: __html__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.global-autoescape-off
+  kind: sink
+  tags: ['semgrep', 'global-autoescape-off', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: Autoescape is globally disbaled for this Django application. If you are rendering any web pages, thi
+  match:
+  - call: global-autoescape-off
+
+- id: sink.semgrep.filter-with-is-safe
+  kind: sink
+  tags: ['semgrep', 'filter-with-is-safe', 'vulnerability']
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A07:2017"
+  description: "Detected Django filters flagged with 'is_safe'. 'is_safe' tells Django not to apply escaping on the "
+  match:
+  - base_type: register
+    call: filter
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - read: FILTER
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.semgrep.missing-throttle-config
+  kind: sink
+  tags: ['semgrep', 'missing-throttle-config', 'vulnerability']
+  severity: high
+  cwe: ["CWE-770"]
+  owasp: "A05:2021"
+  description: Django REST framework configuration is missing default rate- limiting options. This could inadverten
+  match:
+  - call: missing-throttle-config
+
+- id: sink.semgrep.debug-template-tag
+  kind: sink
+  tags: ['semgrep', 'debug-template-tag', 'vulnerability']
+  severity: high
+  cwe: ["CWE-489"]
+  owasp: "A06:2017"
+  description: Detected a debug template tag in a Django template. This dumps debugging information to the page whe
+  match:
+  - call: debug-template-tag
+
+- id: sink.semgrep.ssrf-injection-requests
+  kind: sink
+  tags: ['semgrep', 'ssrf-injection-requests', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-918"]
+  owasp: "A10:2021"
+  description: Data from request object is passed to a new server-side request. This could lead to a server-side re
+  match:
+  - call: ssrf-injection-requests
+
+- id: sink.semgrep.ssrf-injection-urllib
+  kind: sink
+  tags: ['semgrep', 'ssrf-injection-urllib', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-918"]
+  owasp: "A10:2021"
+  description: Data from request object is passed to a new server-side request. This could lead to a server-side re
+  match:
+  - call: ssrf-injection-urllib
+
+- id: sink.semgrep.globals-misuse-code-execution
+  kind: sink
+  tags: ['semgrep', 'globals-misuse-code-execution', 'vulnerability']
+  severity: high
+  cwe: ["CWE-96"]
+  owasp: "A03:2021"
+  description: "Found request data as an index to 'globals()'. This is extremely dangerous because it allows an atta"
+  match:
+  - call: globals-misuse-code-execution
+
+- id: sink.semgrep.user-eval
+  kind: sink
+  tags: ['semgrep', 'user-eval', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: "Found user data in a call to 'eval'. This is extremely dangerous because it can enable an attacker t"
+  match:
+  - call: user-eval
+
+- id: sink.semgrep.user-exec-format-string
+  kind: sink
+  tags: ['semgrep', 'user-exec-format-string', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: "Found user data in a call to 'exec'. This is extremely dangerous because it can enable an attacker t"
+  match:
+  - call: user-exec-format-string
+
+- id: sink.semgrep.user-exec
+  kind: sink
+  tags: ['semgrep', 'user-exec', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: "Found user data in a call to 'exec'. This is extremely dangerous because it can enable an attacker t"
+  match:
+  - call: user-exec
+
+- id: sink.semgrep.user-eval-format-string
+  kind: sink
+  tags: ['semgrep', 'user-eval-format-string', 'vulnerability']
+  severity: high
+  cwe: ["CWE-95"]
+  owasp: "A03:2021"
+  description: "Found user data in a call to 'eval'. This is extremely dangerous because it can enable an attacker t"
+  match:
+  - call: user-eval-format-string
+
+- id: sink.semgrep.path-traversal-open
+  kind: sink
+  tags: ['semgrep', 'path-traversal-open', 'vulnerability']
+  severity: high
+  cwe: ["CWE-22"]
+  owasp: "A05:2017"
+  description: "Found request data in a call to 'open'. Ensure the request data is validated or sanitized, otherwise"
+  match:
+  - call: path-traversal-open
+
+- id: sink.semgrep.path-traversal-file-name
+  kind: sink
+  tags: ['semgrep', 'path-traversal-file-name', 'vulnerability']
+  severity: high
+  cwe: ["CWE-22"]
+  owasp: "A05:2017"
+  description: "Data from request is passed to a file name `$FILE`. This is a path traversal vulnerability, which ca"
+  match:
+  - call: path-traversal-file-name
+
+- id: sink.semgrep.path-traversal-join
+  kind: sink
+  tags: ['semgrep', 'path-traversal-join', 'vulnerability']
+  severity: high
+  cwe: ["CWE-22"]
+  owasp: "A05:2017"
+  description: Data from request is passed to os.path.join() and to open(). This is a path traversal vulnerability,
+  match:
+  - call: path-traversal-join
+
+- id: sink.semgrep.command-injection-os-system
+  kind: sink
+  tags: ['semgrep', 'command-injection-os-system', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: Request data detected in os.system. This could be vulnerable to a command injection and should be av
+  match:
+  - call: command-injection-os-system
+
+- id: sink.semgrep.subprocess-injection
+  kind: sink
+  tags: ['semgrep', 'subprocess-injection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A01:2017"
+  description: "Detected user input entering a `subprocess` call unsafely. This could result in a command injection "
+  match:
+  - call: subprocess-injection
+
+- id: sink.semgrep.xss-send-mail-html-message
+  kind: sink
+  tags: ['semgrep', 'xss-send-mail-html-message', 'vulnerability']
+  severity: high
+  cwe: ["CWE-74"]
+  owasp: "A03:2021"
+  description: "Found request data in 'send_mail(...)' that uses 'html_message'. This is dangerous because HTML emai"
+  match:
+  - call: xss-send-mail-html-message
+
+- id: sink.semgrep.xss-html-email-body
+  kind: sink
+  tags: ['semgrep', 'xss-html-email-body', 'vulnerability']
+  severity: high
+  cwe: ["CWE-74"]
+  owasp: "A03:2021"
+  description: Found request data in an EmailMessage that is set to use HTML. This is dangerous because HTML emails
+  match:
+  - call: xss-html-email-body
+
+- id: sink.semgrep.sql-injection-using-extra-where
+  kind: sink
+  tags: ['semgrep', 'sql-injection-using-extra-where', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "User-controlled data from a request is passed to 'extra()'. This could lead to a SQL injection and t"
+  match:
+  - call: sql-injection-using-extra-where
+
+- id: sink.semgrep.sql-injection-using-rawsql
+  kind: sink
+  tags: ['semgrep', 'sql-injection-using-rawsql', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "User-controlled data from request is passed to 'RawSQL()'. This could lead to a SQL injection and th"
+  match:
+  - call: sql-injection-using-rawsql
+
+- id: sink.semgrep.sql-injection-db-cursor-execute
+  kind: sink
+  tags: ['semgrep', 'sql-injection-db-cursor-execute', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "User-controlled data from a request is passed to 'execute()'. This could lead to a SQL injection and"
+  match:
+  - call: sql-injection-db-cursor-execute
+
+- id: sink.semgrep.sql-injection-using-raw
+  kind: sink
+  tags: ['semgrep', 'sql-injection-using-raw', 'vulnerability']
+  severity: high
+  cwe: ["CWE-89"]
+  owasp: "A01:2017"
+  description: "Data that is possible user-controlled from a python request is passed to `raw()`. This could lead to"
+  match:
+  - call: sql-injection-using-raw
+
+- id: sink.semgrep.twiml-injection
+  kind: sink
+  tags: ['semgrep', 'twiml-injection', 'vulnerability']
+  severity: high
+  cwe: ["CWE-91"]
+  owasp: "A03:2021"
+  description: Using non-constant TwiML (Twilio Markup Language) argument when creating a Twilio conversation could
+  match:
+  - call: twiml-injection
+
+- id: sink.semgrep.hardcoded-token
+  kind: sink
+  tags: ['semgrep', 'hardcoded-token', 'vulnerability']
+  severity: high
+  cwe: ["CWE-798"]
+  owasp: "A07:2021"
+  description: A hard-coded credential was detected. It is not recommended to store credentials in source-code, as 
+  match:
+  - call: hardcoded-token

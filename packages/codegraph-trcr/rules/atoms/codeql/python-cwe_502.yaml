@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_502.UnsafeDeserialization
+  kind: sink
+  tags: ['cwe_502', 'UnsafeDeserialization', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  description: Deserializing user-controlled data may allow attackers to execute arbitrary code.
+  match:
+  -     call: UnsafeDeserialization
+
+- id: sink.cwe_502.UnsafeDeserialization
+  kind: sink
+  tags: ['cwe_502', 'UnsafeDeserialization', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-502"]
+  description: Deserializing user-controlled data may allow attackers to execute arbitrary code.
+  match:
+  -     call: UnsafeDeserialization

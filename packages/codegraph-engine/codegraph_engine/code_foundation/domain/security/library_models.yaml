@@ -1,0 +1,191 @@
+# Library Models for Template Sanitization (RFC-051)
+#
+# Defines external library sanitizer functions and their characteristics.
+# Used by TemplateLinkPort.link_escapes() to generate ESCAPES edges.
+#
+# Schema:
+#   - pattern: Function/method name pattern
+#   - sink_type: SlotContextKind targeted
+#   - sanitizer_type: Type of sanitization
+#   - library: Library name
+#   - confidence: 0.0-1.0 (trust level)
+#
+# Author: Semantica Team
+# Version: 1.0.0 (RFC-051)
+
+# ============================================================
+# JavaScript/TypeScript Sanitizers
+# ============================================================
+
+javascript_sanitizers:
+  # DOMPurify (most trusted)
+  - pattern: "DOMPurify.sanitize"
+    sink_type: RAW_HTML
+    sanitizer_type: WHITE_LIST_CLEAN
+    library: "DOMPurify"
+    confidence: 0.95
+    description: "Industry-standard HTML sanitizer"
+  
+  - pattern: "DOMPurify.isSupported"
+    sink_type: null
+    sanitizer_type: VALIDATOR
+    library: "DOMPurify"
+    confidence: 1.0
+  
+  # validator.js
+  - pattern: "validator.escape"
+    sink_type: HTML_TEXT
+    sanitizer_type: ESCAPE_SPECIAL_CHARS
+    library: "validator"
+    confidence: 0.90
+  
+  - pattern: "validator.isURL"
+    sink_type: URL_ATTR
+    sanitizer_type: URL_VALIDATE
+    library: "validator"
+    confidence: 0.90
+  
+  # he (HTML entity encoder)
+  - pattern: "he.encode"
+    sink_type: HTML_TEXT
+    sanitizer_type: ESCAPE_SPECIAL_CHARS
+    library: "he"
+    confidence: 0.85
+  
+  - pattern: "he.escape"
+    sink_type: HTML_TEXT
+    sanitizer_type: ESCAPE_SPECIAL_CHARS
+    library: "he"
+    confidence: 0.85
+
+# ============================================================
+# Python Sanitizers
+# ============================================================
+
+python_sanitizers:
+  # bleach (trusted)
+  - pattern: "bleach.clean"
+    sink_type: RAW_HTML
+    sanitizer_type: WHITE_LIST_CLEAN
+    library: "bleach"
+    confidence: 0.95
+  
+  - pattern: "bleach.linkify"
+    sink_type: RAW_HTML
+    sanitizer_type: WHITE_LIST_CLEAN
+    library: "bleach"
+    confidence: 0.90
+  
+  # html (standard library)
+  - pattern: "html.escape"
+    sink_type: HTML_TEXT
+    sanitizer_type: ESCAPE_SPECIAL_CHARS
+    library: "html"
+    confidence: 0.95
+  
+  # MarkupSafe
+  - pattern: "markupsafe.escape"
+    sink_type: HTML_TEXT
+    sanitizer_type: ESCAPE_SPECIAL_CHARS
+    library: "MarkupSafe"
+    confidence: 0.90
+  
+  - pattern: "Markup"
+    sink_type: HTML_TEXT
+    sanitizer_type: EXPLICIT_SAFE
+    library: "MarkupSafe"
+    confidence: 0.85
+
+# ============================================================
+# Generic/Custom Sanitizers (lower confidence)
+# ============================================================
+
+custom_sanitizers:
+  # Name-based heuristics (low confidence)
+  - pattern: "escapeHtml"
+    sink_type: HTML_TEXT
+    sanitizer_type: ESCAPE_SPECIAL_CHARS
+    library: "custom"
+    confidence: 0.60
+  
+  - pattern: "sanitizeHtml"
+    sink_type: RAW_HTML
+    sanitizer_type: WHITE_LIST_CLEAN
+    library: "custom"
+    confidence: 0.60
+  
+  - pattern: "validateUrl"
+    sink_type: URL_ATTR
+    sanitizer_type: URL_VALIDATE
+    library: "custom"
+    confidence: 0.50
+
+# ============================================================
+# jQuery (legacy but still common)
+# ============================================================
+
+jquery_apis:
+  # Dangerous sinks (NOT sanitizers)
+  - pattern: "$.html"
+    sink_type: RAW_HTML
+    sanitizer_type: null
+    library: "jQuery"
+    confidence: 0.95
+    is_sink: true
+    description: "jQuery .html() is XSS sink"
+  
+  - pattern: ".html"
+    sink_type: RAW_HTML
+    sanitizer_type: null
+    library: "jQuery"
+    confidence: 0.80
+    is_sink: true
+  
+  - pattern: "$.append"
+    sink_type: RAW_HTML
+    sanitizer_type: null
+    library: "jQuery"
+    confidence: 0.75
+    is_sink: true
+
+# ============================================================
+# React Libraries
+# ============================================================
+
+react_libraries:
+  # react-markdown (auto-sanitizes)
+  - pattern: "ReactMarkdown"
+    sink_type: RAW_HTML
+    sanitizer_type: WHITE_LIST_CLEAN
+    library: "react-markdown"
+    confidence: 0.85
+    description: "react-markdown auto-sanitizes by default"
+  
+  # dompurify-react
+  - pattern: "useSanitize"
+    sink_type: RAW_HTML
+    sanitizer_type: WHITE_LIST_CLEAN
+    library: "dompurify-react"
+    confidence: 0.90
+
+# ============================================================
+# Confidence Thresholds
+# ============================================================
+
+confidence_levels:
+  trusted: 0.90  # DOMPurify, bleach, standard libs
+  medium: 0.70   # Well-known third-party
+  low: 0.50      # Custom/heuristic
+  untrusted: 0.30  # Suspicious patterns
+
+# ============================================================
+# Sanitizer Types (for ESCAPES edge attrs)
+# ============================================================
+
+sanitizer_types:
+  WHITE_LIST_CLEAN: "Whitelist-based cleaning (safest)"
+  ESCAPE_SPECIAL_CHARS: "Escape <>&\"' characters"
+  URL_VALIDATE: "Validate URL protocol/format"
+  EXPLICIT_SAFE: "Marked as safe by developer"
+  VALIDATOR: "Validation only (no modification)"
+

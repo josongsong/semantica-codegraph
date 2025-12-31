@@ -1,0 +1,76 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_020.IncompleteHostnameRegExp
+  kind: sink
+  tags: ['cwe_020', 'IncompleteHostnameRegExp', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-020"]
+  description: Matching a URL or hostname against a regular expression that contains an unescaped dot as part of th
+  match:
+  -     call: IncompleteHostnameRegExp
+
+- id: sink.cwe_020.CookieInjection
+  kind: sink
+  tags: ['cwe_020', 'CookieInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-020"]
+  description: Constructing cookies from user input may allow an attacker to perform a Cookie Poisoning attack.
+  match:
+  -     call: CookieInjection
+
+- id: sink.cwe_020.IncompleteUrlSubstringSanitization
+  kind: sink
+  tags: ['cwe_020', 'IncompleteUrlSubstringSanitization', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-020"]
+  description: Security checks on the substrings of an unparsed URL are often vulnerable to bypassing.
+  match:
+  -     call: startswith
+  -     call: endswith
+
+- id: sink.cwe_020.OverlyLargeRange
+  kind: sink
+  tags: ['cwe_020', 'OverlyLargeRange', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-020"]
+  description: Overly permissive regular expression ranges match a wider range of characters than intended.
+  match:
+  -     call: OverlyLargeRange
+
+- id: sink.cwe_020.IncompleteHostnameRegExp
+  kind: sink
+  tags: ['cwe_020', 'IncompleteHostnameRegExp', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-020"]
+  description: Matching a URL or hostname against a regular expression that contains an unescaped dot as part of th
+  match:
+  -     call: IncompleteHostnameRegExp
+
+- id: sink.cwe_020.CookieInjection
+  kind: sink
+  tags: ['cwe_020', 'CookieInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-020"]
+  description: Constructing cookies from user input may allow an attacker to perform a Cookie Poisoning attack.
+  match:
+  -     call: CookieInjection
+
+- id: sink.cwe_020.IncompleteUrlSubstringSanitization
+  kind: sink
+  tags: ['cwe_020', 'IncompleteUrlSubstringSanitization', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-020"]
+  description: Security checks on the substrings of an unparsed URL are often vulnerable to bypassing.
+  match:
+  -     call: startswith
+  -     call: endswith
+
+- id: sink.cwe_020.OverlyLargeRange
+  kind: sink
+  tags: ['cwe_020', 'OverlyLargeRange', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-020"]
+  description: Overly permissive regular expression ranges match a wider range of characters than intended.
+  match:
+  -     call: OverlyLargeRange

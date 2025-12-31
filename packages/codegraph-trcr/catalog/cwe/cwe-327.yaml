@@ -1,0 +1,136 @@
+# CWE-327: Use of Broken or Risky Cryptographic Algorithm
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/327.html
+
+metadata:
+  cwe_id: CWE-327
+  name: "Use of a Broken or Risky Cryptographic Algorithm"
+  severity: high
+  owasp: "A02:2021-Cryptographic Failures"
+  category: "Crypto"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  mitre_abstraction: class
+  likelihood_of_exploit: medium
+
+  references:
+    - https://cwe.mitre.org/data/definitions/327.html
+    - https://owasp.org/Top10/A02_2021-Cryptographic_Failures/
+
+description: |
+  The use of a broken or risky cryptographic algorithm is an unnecessary risk that may
+  result in the exposure of sensitive information.
+
+sources:
+  - id: source.sensitive.password
+    description: "Password data"
+    patterns:
+      - variable: password
+      - variable: passwd
+      - variable: secret
+
+  - id: source.sensitive.token
+    description: "Token/key data"
+    patterns:
+      - variable: token
+      - variable: api_key
+
+sinks:
+  - id: sink.crypto.md5
+    description: "MD5 hash (broken)"
+    patterns:
+      - call: hashlib.md5
+      - call: Crypto.Hash.MD5.new
+
+  - id: sink.crypto.sha1
+    description: "SHA1 hash (broken)"
+    patterns:
+      - call: hashlib.sha1
+      - call: Crypto.Hash.SHA1.new
+
+  - id: sink.crypto.des
+    description: "DES encryption (broken)"
+    patterns:
+      - call: Crypto.Cipher.DES.new
+      - call: Crypto.Cipher.DES3.new
+
+sanitizers:
+  - id: barrier.crypto.strong
+    description: "Strong algorithms"
+    patterns:
+      - hashlib.sha256
+      - hashlib.sha512
+      - hashlib.blake2b
+      - bcrypt.hashpw
+      - argon2.hash_password
+
+policy:
+  grammar:
+    WHEN:
+      tag: sensitive
+    FLOWS:
+      - id: sink.crypto.md5
+      - id: sink.crypto.sha1
+      - id: sink.crypto.des
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: strong_crypto
+
+validation:
+  min_test_cases: 4
+  required_scenarios:
+    - md5_password
+    - sha1_password
+    - bcrypt_safe
+
+  min_precision: 0.90
+  min_recall: 0.85
+  max_false_positive_rate: 0.10
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE327_Broken_Crypto"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: MD5 for password hashing
+      from Crypto.Hash import MD5
+      h = MD5.new()
+      h.update(password.encode())
+      return h.hexdigest()
+
+  safe:
+    - |
+      # GOOD: bcrypt for password hashing
+      import bcrypt
+      hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+      return hashed
+
+fix:
+  priority: 2
+  effort: low
+
+  recommendations:
+    - title: "Use bcrypt for passwords"
+      severity: best
+      example: |
+        import bcrypt
+        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+
+    - title: "Use SHA-256 for general hashing"
+      severity: recommended
+      example: |
+        import hashlib
+        h = hashlib.sha256()
+        h.update(data.encode())

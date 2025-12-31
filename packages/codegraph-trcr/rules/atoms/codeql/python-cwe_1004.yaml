@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_1004.NonHttpOnlyCookie
+  kind: sink
+  tags: ['cwe_1004', 'NonHttpOnlyCookie', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1004"]
+  description: Cookies without the `HttpOnly` attribute set can be accessed by JS scripts, making them more vulnera
+  match:
+  -     call: NonHttpOnlyCookie
+
+- id: sink.cwe_1004.NonHttpOnlyCookie
+  kind: sink
+  tags: ['cwe_1004', 'NonHttpOnlyCookie', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1004"]
+  description: Cookies without the `HttpOnly` attribute set can be accessed by JS scripts, making them more vulnera
+  match:
+  -     call: NonHttpOnlyCookie

@@ -1,0 +1,189 @@
+[project]
+name = "codegraph"
+version = "0.1.0"
+description = "LLM을 위한 코드 저장소 분석 및 지식 전달 시스템"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "psycopg2-binary>=2.9.9",
+    "asyncpg>=0.29.0",
+    "qdrant-client>=1.7.0",
+    "kuzu>=0.1.0",
+    "openai>=1.0.0",
+    "tree-sitter>=0.25.0",
+    "tree-sitter-language-pack>=0.11.0",
+    "tree-sitter-python>=0.21.0",
+    "tree-sitter-javascript>=0.21.0",
+    "tree-sitter-typescript>=0.21.0",
+    "mcp>=1.0.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "granian>=1.6.0",  # Rust-based ASGI server (2-3x faster than uvicorn)
+    "litellm>=1.0.0",
+    "langgraph>=0.2.0",
+    "gitpython>=3.1.0",
+    "e2b-code-interpreter>=1.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.12.0",
+    "numpy>=1.24.0",
+    "networkx>=3.0",
+    "rustworkx>=0.14.0",  # RFC-007: Rust graph engine for 10-50x speedup
+    "z3-solver>=4.12.0",  # RFC-AUDIT-004: SMT-based path verification
+    "tantivy>=0.22.0",  # Python bindings for Tantivy search engine
+    "symspellpy>=6.7.7",  # RFC-020: Typo correction for symbol search (L2)
+    "psutil>=5.9.0",  # Health check: memory/CPU monitoring
+    "redis>=5.0.0",  # Cache: Redis backend
+    "opentelemetry-api>=1.20.0",  # OTEL: Distributed tracing
+    "opentelemetry-sdk>=1.20.0",  # OTEL: SDK
+    "opentelemetry-exporter-otlp>=1.20.0",  # OTEL: OTLP exporter
+    "opentelemetry-exporter-prometheus>=0.44b0",  # OTEL: Prometheus
+    "structlog>=23.1.0",  # Structured logging
+    "watchdog>=3.0.0",  # File system monitoring
+    "tiktoken>=0.5.0",  # Token counting for LLMs
+    "aiohttp>=3.9.0",  # Async HTTP client
+    "anthropic>=0.18.0",  # Anthropic Claude API
+    # RFC-039: Tiered IR Cache Architecture (필수 종속성)
+    "xxhash>=3.0.0",  # RFC-039: Fast non-crypto hashing (10-20x faster than SHA-256)
+    "msgpack>=1.0.0",  # RFC-039: Fast serialization (5-10x faster than pickle)
+    # 원격 빌드용 (CI/CD, Docker)
+    "semantica-task-engine @ git+https://github.com/josongmin/semantica-task-engine.git@main#subdirectory=python-sdk",
+    # 로컬 개발용: pip install -e /path/to/semantica-task-engine/python-sdk
+    # Taint Rule Compiler (로컬 editable install)
+    # 로컬: pip install -e ../taint-rule-compiler
+    # CI: trcr @ git+https://github.com/semantica/taint-rule-compiler.git@main
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+    "pre-commit>=3.5.0",
+    "pyright>=1.1.380",
+    # Type stubs for improved type inference
+    "types-redis>=4.6.0",
+    "types-requests>=2.31.0",
+    "sqlalchemy-stubs>=0.4",
+]
+
+# CWE Fixtures용 Optional Dependencies
+cwe = [
+    # Database drivers
+    "mysql-connector-python>=8.0.0",
+    "pymongo>=4.0.0",
+    # Security libraries
+    "bleach>=6.0.0",
+    "defusedxml>=0.7.0",
+    "python-magic>=0.4.27",
+    "Pillow>=10.0.0",
+    # Validation
+    "jsonschema>=4.0.0",
+    "pycountry>=22.0.0",
+    # Flask extensions
+    "Flask>=3.0.0",
+    "Flask-WTF>=1.2.0",
+    "Jinja2>=3.1.0",
+    "markupsafe>=2.1.0",
+    "werkzeug>=3.0.0",
+    # Django (optional)
+    "Django>=4.0.0",
+    # Sandbox
+    "RestrictedPython>=6.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+# =============================================================================
+# RFC-040: UV Workspace Configuration (Multi-Module Architecture)
+# =============================================================================
+# NOTE: Main workspace config at bottom of file [tool.uv.workspace]
+
+# Dependency resolution for workspace packages
+[dependency-groups]
+workspace = [
+    "codegraph-core",
+    "codegraph-query",
+    "codegraph-taint",
+]
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+exclude = [
+    "benchmark/repo-test/**",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "B008",  # Allow function calls in argument defaults (FastAPI Depends pattern)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/**/*.py" = ["F811", "F841", "B011", "B017", "E402", "F401", "B007", "E731", "E741"]  # Allow redefinitions, unused vars, lambda, and ambiguous names in tests
+"benchmark/**/*.py" = ["E402", "B007"]  # Allow late imports and unused loop vars in benchmarks
+"examples/**/*.py" = ["E402"]  # Allow late imports in examples
+"scripts/**/*.py" = ["E402"]  # Allow late imports in scripts
+"migrations/**/*.py" = ["E402"]  # Allow late imports in migrations
+"server/**/*.py" = ["E402"]  # Allow late imports in server
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=packages --cov=apps --cov-report=term-missing --cov-fail-under=30"
+
+# Monorepo workspace configuration
+[tool.uv.workspace]
+members = [
+    "packages/codegraph-agent",
+    "packages/codegraph-engine",
+    "packages/codegraph-analysis",
+    "packages/codegraph-search",
+    "packages/codegraph-ml",
+    "packages/codegraph-runtime",
+    "packages/codegraph-shared",
+]
+
+[tool.uv.sources]
+codegraph-agent = { workspace = true }
+codegraph-engine = { workspace = true }
+codegraph-analysis = { workspace = true }
+codegraph-search = { workspace = true }
+codegraph-ml = { workspace = true }
+codegraph-runtime = { workspace = true }
+codegraph-shared = { workspace = true }

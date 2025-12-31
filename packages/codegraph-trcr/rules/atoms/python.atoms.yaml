@@ -1,0 +1,1532 @@
+# Python Taint Analysis Atoms
+# SOTA-grade security rules with CWE/OWASP mappings
+
+atoms:
+# =============================================================================
+# SOURCES - Untrusted Input Entry Points
+# =============================================================================
+- id: input.user
+  kind: source
+  tags: [untrusted, user, stdin]
+  severity: high
+  description: Python builtin input() function
+  match:
+  - call: input
+  - call: builtins.input
+  - call: raw_input
+
+- id: input.http.flask
+  kind: source
+  tags: [untrusted, web, http, flask]
+  severity: high
+  frameworks: [flask]
+  description: Flask HTTP request input
+  match:
+  - base_type: flask.Request
+    read: args
+  - base_type: flask.Request
+    read: form
+  - base_type: flask.Request
+    read: values
+  - base_type: flask.Request
+    read: json
+  - base_type: werkzeug.datastructures.ImmutableMultiDict
+    call: get
+  - base_type: werkzeug.datastructures.ImmutableMultiDict
+    call: __getitem__
+  - call: request.args.get
+  - call: request.form.get
+  - call: request.json.get
+  - call: request.get_json
+  - call: request.values.get
+  - call: request.get_data
+  - call: request.data
+  - base_type: flask.Request
+    call: get_json
+  - base_type: flask.Request
+    call: get_data
+
+- id: input.http.django
+  kind: source
+  tags: [untrusted, web, http, django]
+  severity: high
+  frameworks: [django]
+  description: Django HTTP request input
+  match:
+  - base_type: django.http.HttpRequest
+    read: GET
+  - base_type: django.http.HttpRequest
+    read: POST
+  - base_type: django.http.QueryDict
+    call: get
+  - base_type: django.http.QueryDict
+    call: __getitem__
+  - call: request.GET.get
+  - call: request.POST.get
+  - call: request.GET.__getitem__
+  - call: request.POST.__getitem__
+
+- id: input.http.fastapi
+  kind: source
+  tags: [untrusted, web, http, fastapi]
+  severity: high
+  frameworks: [fastapi, starlette]
+  description: FastAPI request input
+  match:
+  - base_type: fastapi.Request
+    read: query_params
+  - base_type: fastapi.Request
+    read: path_params
+  - base_type: starlette.datastructures.QueryParams
+    call: get
+
+- id: input.file.read
+  kind: source
+  tags: [untrusted, file, io]
+  severity: medium
+  description: File read operations
+  match:
+  - base_type: builtins.file
+    call: read
+  - base_type: io.TextIOWrapper
+    call: read
+  - base_type: io.BufferedReader
+    call: read
+  - call: f.read
+  - call: file.read
+  - base_type: pathlib.Path
+    call: read_text
+  - base_type: pathlib.Path
+    call: read_bytes
+
+- id: input.env
+  kind: source
+  tags: [untrusted, env, config]
+  severity: medium
+  description: Environment variable access
+  match:
+  - base_type: os._Environ
+    call: get
+  - base_type: os._Environ
+    call: __getitem__
+  - call: os.getenv
+  - call: os.environ.get
+
+# =============================================================================
+# SINKS - SQL Injection (CWE-89)
+# =============================================================================
+- id: sink.sql.sqlite3
+  kind: sink
+  tags: [injection, db, sql, sqlite]
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  description: SQLite3 SQL execution
+  match:
+  - base_type: sqlite3.Cursor
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+  - base_type: sqlite3.Cursor
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+  - base_type: sqlite3.Cursor
+    call: executescript
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: sqlite3.Connection
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+  - base_type: sqlite3.Connection
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+  - base_type: sqlite3.Connection
+    call: executescript
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: cursor.execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+  - call: conn.execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+  - call: engine.execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+
+- id: sink.sql.psycopg2
+  kind: sink
+  tags: [injection, db, sql, postgresql]
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [psycopg2]
+  description: PostgreSQL SQL execution (psycopg2)
+  match:
+  - base_type: psycopg2.extensions.cursor
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: psycopg2.extensions.cursor
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sql.pymysql
+  kind: sink
+  tags: [injection, db, sql, mysql]
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [pymysql]
+  description: MySQL SQL execution (pymysql)
+  match:
+  - base_type: pymysql.cursors.Cursor
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sql.sqlalchemy
+  kind: sink
+  tags: [injection, db, sql, orm]
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [sqlalchemy]
+  description: SQLAlchemy text SQL execution
+  match:
+  - base_type: sqlalchemy.engine.Connection
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: sqlalchemy.text
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - Command Injection (CWE-78)
+# =============================================================================
+- id: sink.command.os
+  kind: sink
+  tags: [injection, os, command]
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  description: OS command execution
+  match:
+  - call: os.system
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: os.popen
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.command.subprocess
+  kind: sink
+  tags: [injection, os, command]
+  severity: high
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  description: Subprocess command execution (shell=True)
+  match:
+  - call: subprocess.call
+    args: [0]
+    constraints:
+      arg_type: not_const
+      kwarg_shell: true
+  - call: subprocess.run
+    args: [0]
+    constraints:
+      arg_type: not_const
+      kwarg_shell: true
+  - call: subprocess.Popen
+    args: [0]
+    constraints:
+      arg_type: not_const
+      kwarg_shell: true
+  - call: subprocess.check_output
+    args: [0]
+    constraints:
+      arg_type: not_const
+      kwarg_shell: true
+
+- id: sink.command.asyncio
+  kind: sink
+  tags: [injection, os, command, async]
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  description: Asyncio subprocess
+  match:
+  - call: create_subprocess_shell
+    args: [0]
+  - call: create_subprocess_exec
+
+- id: sink.command.shell
+  kind: sink
+  tags: [injection, os, command, shell]
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  description: Shell-based commands (legacy)
+  match:
+  - call: getoutput
+    args: [0]
+  - call: getstatusoutput
+    args: [0]
+
+- id: sink.command.ssh
+  kind: sink
+  tags: [injection, os, command, ssh, remote]
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  frameworks: [paramiko]
+  description: SSH remote command execution
+  match:
+  - call: exec_command
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - Deserialization (CWE-502)
+# =============================================================================
+- id: sink.deserialize.pickle
+  kind: sink
+  tags: [deserialize, rce, dangerous]
+  severity: critical
+  cwe: ["CWE-502"]
+  owasp: "A08:2021-Software and Data Integrity Failures"
+  description: Insecure pickle deserialization
+  match:
+  - call: pickle.loads
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: pickle.load
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.deserialize.yaml
+  kind: sink
+  tags: [deserialize, rce, dangerous]
+  severity: critical
+  cwe: ["CWE-502"]
+  owasp: "A08:2021-Software and Data Integrity Failures"
+  description: Insecure YAML deserialization
+  match:
+  - call: yaml.load
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: yaml.unsafe_load
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.deserialize.jsonpickle
+  kind: sink
+  tags: [deserialize, rce, dangerous]
+  severity: critical
+  cwe: ["CWE-502"]
+  owasp: "A08:2021-Software and Data Integrity Failures"
+  frameworks: [jsonpickle]
+  description: Insecure jsonpickle deserialization
+  match:
+  - call: jsonpickle.decode
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.deserialize.dill
+  kind: sink
+  tags: [deserialize, rce, dangerous]
+  severity: critical
+  cwe: ["CWE-502"]
+  owasp: "A08:2021-Software and Data Integrity Failures"
+  frameworks: [dill]
+  description: Dill deserialization (pickle-compatible)
+  match:
+  - call: dill.load
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: dill.loads
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.deserialize.shelve
+  kind: sink
+  tags: [deserialize, rce, dangerous]
+  severity: critical
+  cwe: ["CWE-502"]
+  owasp: "A08:2021-Software and Data Integrity Failures"
+  description: Shelve deserialization (pickle-based)
+  match:
+  - call: shelve.open
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - Code Injection (CWE-94)
+# =============================================================================
+- id: sink.code.eval
+  kind: sink
+  tags: [injection, code, dangerous]
+  severity: critical
+  cwe: ["CWE-94"]
+  owasp: "A03:2021-Injection"
+  description: Code evaluation
+  match:
+  - call: eval
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: compile
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: __import__
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - XSS (CWE-79)
+# =============================================================================
+- id: sink.html.flask
+  kind: sink
+  tags: [xss, web, html, flask]
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A03:2021-Injection"
+  frameworks: [flask]
+  description: Flask HTML output
+  match:
+  - call: render_template_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: flask.render_template_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.html.markup
+  kind: sink
+  tags: [xss, web, html]
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A03:2021-Injection"
+  frameworks: [markupsafe]
+  description: MarkupSafe Markup - marks string as safe HTML
+  match:
+  - call: Markup
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: markupsafe.Markup
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.html.django
+  kind: sink
+  tags: [xss, web, html, django]
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A03:2021-Injection"
+  frameworks: [django]
+  description: Django HTML output
+  match:
+  - base_type: django.http.HttpResponse
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: django.template.Template
+    call: render
+
+# =============================================================================
+# SINKS - SSTI (CWE-1336)
+# =============================================================================
+- id: sink.ssti.jinja2
+  kind: sink
+  tags: [injection, ssti, template, rce]
+  severity: critical
+  cwe: ["CWE-1336"]
+  owasp: "A03:2021-Injection"
+  frameworks: [jinja2]
+  description: Jinja2 template injection
+  match:
+  - base_type: jinja2.Template
+    call: render
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: jinja2.Template
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: jinja2.Environment
+    call: from_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: render_template_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.ssti.mako
+  kind: sink
+  tags: [injection, ssti, template, rce]
+  severity: critical
+  cwe: ["CWE-1336"]
+  owasp: "A03:2021-Injection"
+  frameworks: [mako]
+  description: Mako template injection
+  match:
+  - base_type: mako.template.Template
+    call: render
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: mako.template.Template
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - Path Traversal (CWE-22)
+# =============================================================================
+- id: sink.path.traversal
+  kind: sink
+  tags: [traversal, file, path]
+  severity: high
+  cwe: ["CWE-22"]
+  owasp: "A01:2021-Broken Access Control"
+  description: File path operations
+  match:
+  - call: open
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: pathlib.Path
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: os.path.join
+    constraints:
+      arg_type: not_const
+  - call: send_file
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: flask.send_file
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - XXE (CWE-611)
+# =============================================================================
+- id: sink.xxe.lxml
+  kind: sink
+  tags: [xxe, xml, lxml]
+  severity: critical
+  cwe: ["CWE-611"]
+  owasp: "A05:2021-Security Misconfiguration"
+  frameworks: [lxml]
+  description: lxml XML parsing (XXE vulnerable)
+  match:
+  - base_type: lxml.etree._ElementTree
+    call: parse
+    args: [0]
+  - call: lxml.etree.parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: lxml.etree.fromstring
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.xxe.xml
+  kind: sink
+  tags: [xxe, xml, stdlib]
+  severity: critical
+  cwe: ["CWE-611"]
+  owasp: "A05:2021-Security Misconfiguration"
+  description: Python stdlib XML parsing (XXE vulnerable)
+  match:
+  - call: xml.etree.ElementTree.parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: xml.etree.ElementTree.fromstring
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: xml.dom.minidom.parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: xml.dom.minidom.parseString
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - SSRF (CWE-918)
+# =============================================================================
+- id: sink.ssrf.requests
+  kind: sink
+  tags: [ssrf, http, network]
+  severity: critical
+  cwe: ["CWE-918"]
+  owasp: "A10:2021-Server-Side Request Forgery"
+  frameworks: [requests]
+  description: SSRF via requests library
+  match:
+  - call: requests.get
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: requests.post
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: requests.put
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: requests.delete
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: requests.request
+    args: [1]
+    constraints:
+      arg_type: not_const
+
+- id: sink.ssrf.urllib
+  kind: sink
+  tags: [ssrf, http, network]
+  severity: critical
+  cwe: ["CWE-918"]
+  owasp: "A10:2021-Server-Side Request Forgery"
+  description: SSRF via urllib
+  match:
+  - call: urllib.request.urlopen
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: urllib.request.urlretrieve
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - NoSQL Injection (CWE-943)
+# =============================================================================
+- id: sink.nosql.mongodb
+  kind: sink
+  tags: [injection, db, nosql, mongodb]
+  severity: critical
+  cwe: ["CWE-943"]
+  owasp: "A03:2021-Injection"
+  frameworks: [pymongo, motor]
+  description: MongoDB query injection
+  match:
+  - base_type: pymongo.collection.Collection
+    call: find
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: pymongo.collection.Collection
+    call: find_one
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: pymongo.collection.Collection
+    call: aggregate
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: motor.motor_asyncio.AsyncIOMotorCollection
+    call: find
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.nosql.redis
+  kind: sink
+  tags: [injection, db, nosql, redis]
+  severity: high
+  cwe: ["CWE-94"]
+  owasp: "A03:2021-Injection"
+  frameworks: [redis]
+  description: Redis Lua script injection
+  match:
+  - base_type: redis.Redis
+    call: eval
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: redis.Redis
+    call: evalsha
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - LDAP Injection (CWE-90)
+# =============================================================================
+- id: sink.ldap.search
+  kind: sink
+  tags: [injection, ldap]
+  severity: critical
+  cwe: ["CWE-90"]
+  owasp: "A03:2021-Injection"
+  frameworks: [ldap3, python-ldap]
+  description: LDAP Injection via search
+  match:
+  - call: ldap3.Connection.search
+    args: [1]
+    constraints:
+      arg_type: not_const
+  - call: search_s
+    args: [2]
+    constraints:
+      arg_type: not_const
+  - call: search
+    args: [2]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - XPath Injection (CWE-643)
+# =============================================================================
+- id: sink.xpath
+  kind: sink
+  tags: [injection, xpath, xml]
+  severity: high
+  cwe: ["CWE-643"]
+  owasp: "A03:2021-Injection"
+  description: XPath query execution
+  match:
+  - call: lxml.etree.XPath
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: lxml.etree._Element
+    call: xpath
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - ReDoS (CWE-1333)
+# =============================================================================
+- id: sink.redos.compile
+  kind: sink
+  tags: [redos, dos, regex]
+  severity: medium
+  cwe: ["CWE-1333"]
+  owasp: "A03:2021-Injection"
+  description: User-controlled regex pattern (ReDoS)
+  match:
+  - call: re.compile
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: re.search
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: re.match
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: re.findall
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: re.sub
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - Log Injection (CWE-117)
+# =============================================================================
+- id: sink.log.injection
+  kind: sink
+  tags: [injection, log, monitoring]
+  severity: medium
+  cwe: ["CWE-117"]
+  owasp: "A09:2021-Security Logging and Monitoring Failures"
+  description: Log injection via unescaped input
+  match:
+  - call: logging.info
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logging.warning
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logging.error
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logging.debug
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logging.critical
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logger.info
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logger.warning
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logger.error
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - JWT (CWE-347)
+# =============================================================================
+- id: sink.jwt.none_algorithm
+  kind: sink
+  tags: [jwt, authentication, bypass]
+  severity: critical
+  cwe: ["CWE-347"]
+  owasp: "A02:2021-Cryptographic Failures"
+  frameworks: [pyjwt]
+  description: JWT none algorithm vulnerability
+  match:
+  - call: jwt.decode
+    kwargs: [verify]
+    constraints:
+      kwarg_verify: false
+  - call: jwt.decode
+    kwargs: [options]
+
+# =============================================================================
+# SINKS - GraphQL Injection (CWE-943)
+# =============================================================================
+- id: sink.graphql.query
+  kind: sink
+  tags: [injection, graphql, api]
+  severity: high
+  cwe: ["CWE-943"]
+  owasp: "A03:2021-Injection"
+  frameworks: [graphene, graphql-core]
+  description: GraphQL query injection
+  match:
+  - call: graphql_sync
+    args: [1]
+    constraints:
+      arg_type: not_const
+  - base_type: graphene.Schema
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: execute_graphql
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - HTTP Header Injection (CWE-113)
+# =============================================================================
+- id: sink.header.injection
+  kind: sink
+  tags: [injection, http, header]
+  severity: high
+  cwe: ["CWE-113"]
+  owasp: "A03:2021-Injection"
+  description: HTTP header injection
+  match:
+  - base_type: flask.Response
+    write: headers
+    constraints:
+      arg_type: not_const
+  - base_type: django.http.HttpResponse
+    write: headers
+    constraints:
+      arg_type: not_const
+  - call: response.headers.__setitem__
+    args: [1]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - Hardcoded Secrets (CWE-798)
+# =============================================================================
+- id: sink.hardcoded_secret
+  kind: sink
+  tags: [secret, hardcoded, credential]
+  severity: critical
+  cwe: ["CWE-798"]
+  owasp: "A07:2021-Identification and Authentication Failures"
+  description: Hardcoded secrets in source code
+  match:
+  - call: set_password
+    args: [0]
+    constraints:
+      arg_type: const_string
+  - call: authenticate
+    kwargs: [password]
+    constraints:
+      arg_type: const_string
+
+- id: sink.secret.config
+  kind: sink
+  tags: [secret, hardcoded, config]
+  severity: high
+  cwe: ["CWE-798"]
+  owasp: "A07:2021-Identification and Authentication Failures"
+  description: Hardcoded secret in configuration
+  match:
+  - call: os.environ.setdefault
+    args: [1]
+    constraints:
+      arg_type: const
+  - call: settings.configure
+    kwargs: [SECRET_KEY]
+    constraints:
+      arg_type: const
+  - call: app.config.update
+    kwargs: [SECRET_KEY, DATABASE_PASSWORD, API_KEY]
+    constraints:
+      arg_type: const
+
+# =============================================================================
+# SINKS - Weak Cryptography (CWE-327)
+# =============================================================================
+- id: sink.crypto.weak_algorithm
+  kind: sink
+  tags: [crypto, weak, deprecated]
+  severity: high
+  cwe: ["CWE-327"]
+  owasp: "A02:2021-Cryptographic Failures"
+  description: Weak cryptographic algorithms
+  match:
+  - call: hashlib.md5
+  - call: hashlib.sha1
+  - call: Crypto.Cipher.DES.new
+  - call: Crypto.Cipher.ARC4.new
+  - call: Crypto.Cipher.Blowfish.new
+
+# =============================================================================
+# SINKS - Weak Random (CWE-330)
+# =============================================================================
+- id: sink.random.weak
+  kind: sink
+  tags: [random, weak, predictable]
+  severity: medium
+  cwe: ["CWE-330"]
+  owasp: "A02:2021-Cryptographic Failures"
+  description: Weak random number generator
+  match:
+  - call: random.random
+  - call: random.randint
+  - call: random.choice
+  - call: random.shuffle
+
+- id: sink.random.seed
+  kind: sink
+  tags: [random, seed, predictable]
+  severity: medium
+  cwe: ["CWE-330"]
+  owasp: "A02:2021-Cryptographic Failures"
+  description: Random seed with predictable value
+  match:
+  - call: random.seed
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SINKS - Access Control (CWE-639, CWE-284, CWE-269)
+# =============================================================================
+- id: sink.idor.db_query
+  kind: sink
+  tags: [access_control, idor, db]
+  severity: high
+  cwe: ["CWE-639"]
+  owasp: "A01:2021-Broken Access Control"
+  description: Database query with user-controlled ID
+  match:
+  - base_type: django.db.models.Manager
+    call: get
+    kwargs: [id, pk]
+    constraints:
+      arg_type: not_const
+  - base_type: django.db.models.QuerySet
+    call: filter
+    kwargs: [id, pk]
+    constraints:
+      arg_type: not_const
+  - base_type: sqlalchemy.orm.query.Query
+    call: filter_by
+    kwargs: [id]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sensitive_operation
+  kind: sink
+  tags: [access_control, sensitive]
+  severity: high
+  cwe: ["CWE-284"]
+  owasp: "A01:2021-Broken Access Control"
+  description: Sensitive operations requiring authentication
+  match:
+  - base_type: django.db.models.Model
+    call: delete
+  - base_type: django.db.models.QuerySet
+    call: delete
+  - call: os.remove
+  - call: shutil.rmtree
+
+- id: sink.privilege_operation
+  kind: sink
+  tags: [access_control, privilege]
+  severity: high
+  cwe: ["CWE-269"]
+  owasp: "A01:2021-Broken Access Control"
+  description: Operations requiring authorization
+  match:
+  - base_type: django.contrib.auth.models.User
+    call: set_password
+  - base_type: django.contrib.auth.models.User
+    call: save
+  - call: os.chmod
+  - call: os.chown
+
+# =============================================================================
+# SINKS - Information Leakage (CWE-532, CWE-209)
+# =============================================================================
+- id: sink.info_leak.logging
+  kind: sink
+  tags: [info_leak, logging, exposure]
+  severity: medium
+  cwe: ["CWE-532"]
+  owasp: "A09:2021-Security Logging and Monitoring Failures"
+  description: Sensitive data in logs
+  match:
+  - call: logging.info
+    args: [0]
+  - call: logging.debug
+    args: [0]
+  - call: logging.warning
+    args: [0]
+  - call: print
+    args: [0]
+
+- id: sink.error.full_exception
+  kind: sink
+  tags: [error, exception, leak]
+  severity: medium
+  cwe: ["CWE-209"]
+  owasp: "A09:2021-Security Logging and Monitoring Failures"
+  description: Full exception details exposed
+  match:
+  - call: traceback.format_exc
+  - call: sys.exc_info
+  - base_type: flask.Flask
+    write: debug
+
+# =============================================================================
+# SANITIZERS - SQL
+# =============================================================================
+- id: barrier.sql.escape
+  kind: sanitizer
+  tags: [safety, db, sql]
+  description: SQL escaping functions
+  scope: return
+  match:
+  - call: escape_sql
+    scope: return
+  - call: sql_escape
+    scope: return
+  - base_type: sqlalchemy.engine.Connection
+    call: escape
+    scope: return
+
+- id: barrier.sql.parameterized_sqlite
+  kind: sanitizer
+  tags: [safety, db, sql, sqlite]
+  description: SQLite parameterized query
+  match:
+  - base_type: sqlite3.Cursor
+    call: execute
+    constraints:
+      arg_count: 2
+  - base_type: sqlite3.Connection
+    call: execute
+    constraints:
+      arg_count: 2
+
+- id: barrier.sql.parameterized_psycopg2
+  kind: sanitizer
+  tags: [safety, db, sql, postgresql]
+  description: PostgreSQL parameterized query
+  match:
+  - base_type: psycopg2.extensions.cursor
+    call: execute
+    constraints:
+      arg_count: 2
+  - base_type: psycopg2.extras.DictCursor
+    call: execute
+    constraints:
+      arg_count: 2
+
+- id: barrier.sql.parameterized_pymysql
+  kind: sanitizer
+  tags: [safety, db, sql, mysql]
+  description: MySQL parameterized query
+  match:
+  - base_type: pymysql.cursors.Cursor
+    call: execute
+    constraints:
+      arg_count: 2
+
+# =============================================================================
+# SANITIZERS - XSS
+# =============================================================================
+- id: barrier.html.escape
+  kind: sanitizer
+  tags: [safety, web, html]
+  description: HTML escaping functions
+  scope: return
+  match:
+  - call: html.escape
+    scope: return
+  - call: cgi.escape
+    scope: return
+  - base_type: markupsafe.Markup
+    call: escape
+    scope: return
+  - call: escape
+    scope: return
+  - call: markupsafe.escape
+    scope: return
+
+# =============================================================================
+# SANITIZERS - Command
+# =============================================================================
+- id: barrier.command.quote
+  kind: sanitizer
+  tags: [safety, os, command]
+  description: Command argument quoting
+  scope: return
+  match:
+  - call: shlex.quote
+    scope: return
+  - call: pipes.quote
+    scope: return
+
+# =============================================================================
+# SANITIZERS - Path
+# =============================================================================
+- id: barrier.path.validation
+  kind: sanitizer
+  tags: [safety, path, file]
+  description: Path validation functions
+  scope: return
+  match:
+  - call: os.path.realpath
+    scope: return
+  - call: realpath
+    scope: return
+  - call: os.path.abspath
+    scope: return
+  - call: abspath
+    scope: return
+  - call: secure_filename
+    scope: return
+  - call: werkzeug.utils.secure_filename
+    scope: return
+
+# =============================================================================
+# SANITIZERS - XML/XXE
+# =============================================================================
+- id: barrier.xxe
+  kind: sanitizer
+  tags: [safety, xxe, xml]
+  description: XXE prevention via defusedxml
+  scope: return
+  match:
+  - call: defusedxml.parse
+    scope: return
+  - call: defusedxml.fromstring
+    scope: return
+  - call: defusedxml.ElementTree.parse
+    scope: return
+
+- id: barrier.xpath.escape
+  kind: sanitizer
+  tags: [safety, xpath, xml]
+  description: XPath escaping
+  scope: return
+  match:
+  - call: xml.sax.saxutils.escape
+    scope: return
+
+# =============================================================================
+# SANITIZERS - LDAP
+# =============================================================================
+- id: barrier.ldap
+  kind: sanitizer
+  tags: [safety, ldap, escape]
+  description: LDAP Injection prevention
+  scope: return
+  match:
+  - call: escape_rdn
+    scope: return
+  - call: escape_filter_chars
+    scope: return
+
+# =============================================================================
+# SANITIZERS - NoSQL
+# =============================================================================
+- id: barrier.nosql
+  kind: sanitizer
+  tags: [safety, nosql, escape]
+  description: NoSQL injection prevention via ObjectId
+  scope: return
+  match:
+  - call: bson.ObjectId
+    scope: return
+  - call: ObjectId
+    scope: return
+
+# =============================================================================
+# SANITIZERS - SSRF
+# =============================================================================
+- id: barrier.ssrf
+  kind: sanitizer
+  tags: [safety, ssrf, validation]
+  description: SSRF prevention via URL validation
+  scope: return
+  match:
+  - call: urllib.parse.urlparse
+    scope: return
+
+# =============================================================================
+# SANITIZERS - SSTI
+# =============================================================================
+- id: barrier.ssti.autoescape
+  kind: sanitizer
+  tags: [safety, ssti, template]
+  description: Template autoescape enabled
+  scope: return
+  match:
+  - call: jinja2.Environment
+    kwargs: [autoescape]
+    scope: return
+
+# =============================================================================
+# SANITIZERS - JWT
+# =============================================================================
+- id: barrier.jwt.algorithm_whitelist
+  kind: sanitizer
+  tags: [safety, jwt, authentication]
+  description: JWT with explicit algorithm whitelist
+  scope: return
+  match:
+  - call: jwt.decode
+    kwargs: [algorithms]
+    scope: return
+
+# =============================================================================
+# SANITIZERS - Code Execution
+# =============================================================================
+- id: barrier.code.restricted
+  kind: sanitizer
+  tags: [safety, code, sandbox]
+  description: Code injection prevention via RestrictedPython
+  scope: return
+  match:
+  - call: compile_restricted
+    scope: return
+  - call: RestrictedPython.compile_restricted
+    scope: return
+
+# =============================================================================
+# SANITIZERS - Access Control
+# =============================================================================
+- id: barrier.authorization
+  kind: sanitizer
+  tags: [safety, authorization, access_control]
+  description: Authorization checks
+  scope: guard
+  match:
+  - call: check_permission
+    scope: guard
+  - call: require_permission
+    scope: guard
+  - call: has_permission
+    scope: guard
+
+- id: barrier.authentication
+  kind: sanitizer
+  tags: [safety, authentication, access_control]
+  description: Authentication checks
+  scope: guard
+  match:
+  - call: is_authenticated
+    scope: guard
+  - call: require_login
+    scope: guard
+  - call: check_auth
+    scope: guard
+
+# =============================================================================
+# SANITIZERS - Cryptography
+# =============================================================================
+- id: barrier.strong_crypto
+  kind: sanitizer
+  tags: [safety, crypto, strong]
+  description: Strong cryptographic algorithms
+  scope: return
+  match:
+  - call: hashlib.sha256
+    scope: return
+  - call: hashlib.sha512
+    scope: return
+  - call: hashlib.blake2b
+    scope: return
+
+- id: barrier.crypto_random
+  kind: sanitizer
+  tags: [safety, random, crypto]
+  description: Cryptographically secure random
+  scope: return
+  match:
+  - call: secrets.token_bytes
+    scope: return
+  - call: secrets.token_hex
+    scope: return
+  - call: secrets.choice
+    scope: return
+  - call: os.urandom
+    scope: return
+
+# =============================================================================
+# SANITIZERS - Configuration
+# =============================================================================
+- id: barrier.config_file
+  kind: sanitizer
+  tags: [safety, config, env]
+  description: Load from config instead of hardcoding
+  scope: return
+  match:
+  - call: os.getenv
+    scope: return
+  - call: config.get
+    scope: return
+  - call: settings.get
+    scope: return
+
+# =============================================================================
+# SANITIZERS - Logging
+# =============================================================================
+- id: barrier.redaction
+  kind: sanitizer
+  tags: [safety, redaction, privacy]
+  description: Sensitive data redaction
+  scope: return
+  match:
+  - call: redact
+    scope: return
+  - call: mask
+    scope: return
+  - call: sanitize_log
+    scope: return
+
+- id: barrier.error_sanitizer
+  kind: sanitizer
+  tags: [safety, error, sanitize]
+  description: Error message sanitization
+  scope: return
+  match:
+  - call: sanitize_error
+    scope: return
+  - call: safe_error_message
+    scope: return
+
+# =============================================================================
+# PROPAGATORS - String Operations
+# =============================================================================
+- id: prop.string.format
+  kind: propagator
+  tags: [flow, string]
+  description: String formatting propagates taint
+  match:
+  - base_type: str
+    call: format
+    from_args: [0]
+    to: return
+  - base_type: str
+    call: __mod__
+    from_args: [0, 1]
+    to: return
+  - base_type: str
+    call: __add__
+    from_args: [0, 1]
+    to: return
+  - base_type: str
+    call: join
+    from_args: [0]
+    to: return
+  - base_type: str
+    call: replace
+    from_args: [0]
+    to: return
+
+- id: prop.string.fstring
+  kind: propagator
+  tags: [flow, string]
+  description: F-string formatting
+  match:
+  - call: __format__
+    from_args: [0]
+    to: return
+
+# =============================================================================
+# PROPAGATORS - Collections
+# =============================================================================
+- id: prop.list
+  kind: propagator
+  tags: [flow, collection]
+  description: List operations propagate taint
+  match:
+  - base_type: list
+    call: append
+    from_args: [0]
+    to: base
+  - base_type: list
+    call: extend
+    from_args: [0]
+    to: base
+  - base_type: list
+    call: insert
+    from_args: [1]
+    to: base
+  - base_type: list
+    call: __getitem__
+    from_args: [0]
+    to: return
+  - base_type: list
+    call: __setitem__
+    from_args: [1]
+    to: base
+
+- id: prop.dict
+  kind: propagator
+  tags: [flow, collection]
+  description: Dict operations propagate taint
+  match:
+  - base_type: dict
+    call: __setitem__
+    from_args: [1]
+    to: base
+  - base_type: dict
+    call: __getitem__
+    from_args: [0]
+    to: return
+  - base_type: dict
+    call: get
+    from_args: [0]
+    to: return
+  - base_type: dict
+    call: update
+    from_args: [0]
+    to: base
+  - base_type: dict
+    call: setdefault
+    from_args: [1]
+    to: base
+
+- id: prop.set
+  kind: propagator
+  tags: [flow, collection]
+  description: Set operations propagate taint
+  match:
+  - base_type: set
+    call: add
+    from_args: [0]
+    to: base
+  - base_type: set
+    call: update
+    from_args: [0]
+    to: base
+
+# =============================================================================
+# PROPAGATORS - Serialization
+# =============================================================================
+- id: prop.json
+  kind: propagator
+  tags: [flow, serialization]
+  description: JSON operations propagate taint
+  match:
+  - call: json.loads
+    from_args: [0]
+    to: return
+  - call: json.dumps
+    from_args: [0]
+    to: return
+  - base_type: json.JSONDecoder
+    call: decode
+    from_args: [0]
+    to: return
+  - base_type: json.JSONEncoder
+    call: encode
+    from_args: [0]
+    to: return

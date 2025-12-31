@@ -1,0 +1,962 @@
+atoms:
+- id: input.http.rails
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - rails
+  severity: high
+  description: Rails HTTP request input
+  match:
+  - call: params
+  - call: params.fetch
+  - call: params.require
+  - call: params.permit
+  - base_type: ActionController::Parameters
+    call: '[]'
+  - base_type: ActionController::Parameters
+    call: fetch
+  - call: request.params
+  - call: request.query_parameters
+  - call: request.request_parameters
+  - call: request.GET
+  - call: request.POST
+  - call: request.headers
+  - call: request.headers.fetch
+  - call: cookies
+  - call: cookies.signed
+  - call: cookies.encrypted
+  - call: session
+  - call: request.body
+  - call: request.raw_post
+- id: input.http.sinatra
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - sinatra
+  severity: high
+  description: Sinatra HTTP request input
+  match:
+  - call: params
+  - call: request.params
+  - call: request.env
+- id: input.http.rack
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - rack
+  severity: high
+  description: Rack HTTP request input
+  match:
+  - base_type: Rack::Request
+    call: params
+  - base_type: Rack::Request
+    call: GET
+  - base_type: Rack::Request
+    call: POST
+  - call: env.fetch
+    args:
+    - 0
+    constraints:
+      arg_value:
+      - QUERY_STRING
+      - REQUEST_URI
+      - PATH_INFO
+- id: input.file.ruby
+  kind: source
+  tags:
+  - untrusted
+  - file
+  - io
+  severity: medium
+  description: Ruby file read operations
+  match:
+  - call: File.read
+  - call: File.readlines
+  - call: File.open
+  - call: IO.read
+  - call: IO.readlines
+  - base_type: File
+    call: read
+  - base_type: File
+    call: gets
+  - base_type: File
+    call: readline
+  - base_type: IO
+    call: read
+  - base_type: IO
+    call: gets
+- id: input.stdin.ruby
+  kind: source
+  tags:
+  - untrusted
+  - stdin
+  severity: high
+  description: Standard input
+  match:
+  - call: gets
+  - call: STDIN.gets
+  - call: STDIN.read
+  - call: ARGF.read
+  - call: ARGF.gets
+- id: input.env.ruby
+  kind: source
+  tags:
+  - untrusted
+  - env
+  - config
+  severity: medium
+  description: Environment variables
+  match:
+  - call: ENV.fetch
+  - call: ENV.[]
+  - call: ENV.values_at
+- id: sink.sql.activerecord
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - rails
+  severity: critical
+  description: ActiveRecord SQL injection
+  match:
+  - call: find_by_sql
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: execute
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: select_all
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: where
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: order
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: group
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: having
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: joins
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: pluck
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: ActiveRecord::Base.connection
+    call: execute
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: ActiveRecord::Base.connection
+    call: select_value
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: &id001
+  - CWE-89
+  owasp: A03:2021-Injection
+- id: sink.sql.sequel
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - sequel
+  severity: critical
+  description: Sequel SQL injection
+  match:
+  - base_type: Sequel::Database
+    call: run
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Sequel::Database
+    call: execute
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Sequel::Dataset
+    call: where
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+- id: sink.sql.pg
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - postgresql
+  severity: critical
+  description: PostgreSQL (pg gem) SQL injection
+  match:
+  - base_type: PG::Connection
+    call: exec
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: PG::Connection
+    call: exec_params
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: PG::Connection
+    call: query
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+- id: sink.sql.mysql2
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - mysql
+  severity: critical
+  description: MySQL2 SQL injection
+  match:
+  - base_type: Mysql2::Client
+    call: query
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+- id: sink.command.ruby
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: critical
+  description: Ruby command execution
+  match:
+  - call: '`'
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: system
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: exec
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: spawn
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Kernel.system
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Kernel.exec
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Kernel.`
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: IO.popen
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Open3.popen3
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Open3.capture2
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Open3.capture3
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: PTY.spawn
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-78
+  owasp: A03:2021-Injection
+- id: sink.xss.rails
+  kind: sink
+  tags:
+  - xss
+  - web
+  - html
+  - rails
+  severity: high
+  description: Rails XSS via raw/html_safe
+  match:
+  - call: raw
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: html_safe
+  - call: safe_concat
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: content_tag
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  - call: link_to
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  cwe: &id002
+  - CWE-79
+  owasp: A03:2021-Injection
+- id: sink.xss.erb
+  kind: sink
+  tags:
+  - xss
+  - web
+  - template
+  severity: high
+  description: ERB template injection
+  match:
+  - base_type: ERB
+    call: new
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: ERB.new
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id002
+  owasp: A03:2021-Injection
+- id: sink.code.eval
+  kind: sink
+  tags:
+  - injection
+  - code
+  - dangerous
+  severity: critical
+  description: Ruby code evaluation
+  match:
+  - call: eval
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Kernel.eval
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: instance_eval
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: class_eval
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: module_eval
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: binding.eval
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: const_get
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: constantize
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-94
+  owasp: A03:2021-Injection
+- id: sink.path.ruby
+  kind: sink
+  tags:
+  - traversal
+  - file
+  - path
+  severity: high
+  description: File path operations
+  match:
+  - call: File.open
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: File.read
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: File.write
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: File.delete
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: FileUtils.cp
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: FileUtils.mv
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: FileUtils.rm
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: send_file
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: send_data
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-22
+  owasp: A01:2021-Broken Access Control
+- id: sink.ssrf.ruby
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  description: SSRF via HTTP requests
+  match:
+  - call: Net::HTTP.get
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Net::HTTP.get_response
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Net::HTTP
+    call: request
+  - call: open
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: URI.open
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: HTTParty.get
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: HTTParty.post
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Faraday
+    call: get
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Faraday
+    call: post
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: RestClient.get
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: RestClient.post
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-918
+  owasp: A10:2021-Server-Side Request Forgery
+- id: sink.deserialize.ruby
+  kind: sink
+  tags:
+  - deserialize
+  - rce
+  - dangerous
+  severity: critical
+  description: Ruby insecure deserialization
+  match:
+  - call: Marshal.load
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Marshal.restore
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: YAML.load
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: YAML.unsafe_load
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Psych.load
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: JSON.parse
+    kwargs:
+    - symbolize_names
+    - create_additions
+  cwe:
+  - CWE-502
+  owasp: A08:2021-Software and Data Integrity Failures
+- id: sink.redirect.rails
+  kind: sink
+  tags:
+  - redirect
+  - web
+  severity: high
+  description: Rails open redirect
+  match:
+  - call: redirect_to
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-601
+  owasp: A01:2021-Broken Access Control
+- id: sink.mass_assignment.rails
+  kind: sink
+  tags:
+  - mass_assignment
+  - rails
+  - dangerous
+  severity: high
+  description: Rails mass assignment
+  match:
+  - call: update_attributes
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: update
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: assign_attributes
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: new
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: create
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-915
+  owasp: A04:2021-Insecure Design
+- id: sink.redos.ruby
+  kind: sink
+  tags:
+  - redos
+  - dos
+  - regex
+  severity: medium
+  description: User-controlled regex (ReDoS)
+  match:
+  - call: Regexp.new
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: match
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: scan
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: gsub
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: sub
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-1333
+  owasp: A05:2021-Security Misconfiguration
+- id: sink.xxe.ruby
+  kind: sink
+  tags:
+  - xxe
+  - xml
+  severity: critical
+  description: XXE via Nokogiri
+  match:
+  - call: Nokogiri::XML
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Nokogiri::HTML
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: REXML::Document.new
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-611
+  owasp: A05:2021-Security Misconfiguration
+- id: barrier.sql.parameterized
+  kind: sanitizer
+  tags:
+  - safety
+  - db
+  - sql
+  description: Parameterized queries
+  scope: return
+  match:
+  - call: where
+    constraints:
+      arg_count: 2
+    scope: return
+  - call: find_by
+    scope: return
+  - call: sanitize_sql
+    scope: return
+  - call: sanitize_sql_array
+    scope: return
+  - call: quote
+    scope: return
+  - call: connection.quote
+    scope: return
+- id: barrier.xss.escape
+  kind: sanitizer
+  tags:
+  - safety
+  - web
+  - html
+  description: HTML escaping
+  scope: return
+  match:
+  - call: h
+    scope: return
+  - call: html_escape
+    scope: return
+  - call: ERB::Util.html_escape
+    scope: return
+  - call: CGI.escapeHTML
+    scope: return
+  - call: sanitize
+    scope: return
+- id: barrier.path.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - path
+  - file
+  description: Path validation
+  scope: return
+  match:
+  - call: File.expand_path
+    scope: return
+  - call: File.realpath
+    scope: return
+  - call: Pathname.new
+    scope: return
+- id: barrier.yaml.safe
+  kind: sanitizer
+  tags:
+  - safety
+  - yaml
+  - deserialize
+  description: Safe YAML loading
+  scope: return
+  match:
+  - call: YAML.safe_load
+    scope: return
+  - call: Psych.safe_load
+    scope: return
+- id: barrier.redirect.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - redirect
+  - url
+  description: Redirect URL validation
+  scope: return
+  match:
+  - call: url_for
+    scope: return
+  - call: URI.parse
+    scope: return
+- id: prop.string.ruby
+  kind: propagator
+  tags:
+  - flow
+  - string
+  description: String operations propagate taint
+  match:
+  - base_type: String
+    call: +
+    from_args:
+    - 0
+    to: return
+  - base_type: String
+    call: concat
+    from_args:
+    - 0
+    to: return
+  - base_type: String
+    call: '<<'
+    from_args:
+    - 0
+    to: base
+  - base_type: String
+    call: gsub
+    from_args:
+    - 0
+    to: return
+  - base_type: String
+    call: sub
+    from_args:
+    - 0
+    to: return
+  - base_type: String
+    call: slice
+    from_args:
+    - 0
+    to: return
+  - base_type: String
+    call: strip
+    from_args:
+    - 0
+    to: return
+  - base_type: String
+    call: downcase
+    from_args:
+    - 0
+    to: return
+  - base_type: String
+    call: upcase
+    from_args:
+    - 0
+    to: return
+  - call: sprintf
+    from_args:
+    - 1
+    to: return
+  - call: format
+    from_args:
+    - 1
+    to: return
+- id: prop.array.ruby
+  kind: propagator
+  tags:
+  - flow
+  - collection
+  description: Array operations propagate taint
+  match:
+  - base_type: Array
+    call: push
+    from_args:
+    - 0
+    to: base
+  - base_type: Array
+    call: '<<'
+    from_args:
+    - 0
+    to: base
+  - base_type: Array
+    call: concat
+    from_args:
+    - 0
+    to: base
+  - base_type: Array
+    call: '[]'
+    from_args:
+    - 0
+    to: return
+  - base_type: Array
+    call: first
+    from_args:
+    - 0
+    to: return
+  - base_type: Array
+    call: last
+    from_args:
+    - 0
+    to: return
+  - base_type: Array
+    call: join
+    from_args:
+    - 0
+    to: return
+- id: prop.hash.ruby
+  kind: propagator
+  tags:
+  - flow
+  - collection
+  description: Hash operations propagate taint
+  match:
+  - base_type: Hash
+    call: '[]='
+    from_args:
+    - 1
+    to: base
+  - base_type: Hash
+    call: '[]'
+    from_args:
+    - 0
+    to: return
+  - base_type: Hash
+    call: fetch
+    from_args:
+    - 0
+    to: return
+  - base_type: Hash
+    call: merge
+    from_args:
+    - 0
+    to: return
+  - base_type: Hash
+    call: values
+    from_args:
+    - 0
+    to: return
+- id: prop.json.ruby
+  kind: propagator
+  tags:
+  - flow
+  - json
+  description: JSON operations propagate taint
+  match:
+  - call: JSON.parse
+    from_args:
+    - 0
+    to: return
+  - call: JSON.generate
+    from_args:
+    - 0
+    to: return
+  - call: to_json
+    from_args:
+    - 0
+    to: return

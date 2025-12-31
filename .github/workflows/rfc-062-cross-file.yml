@@ -1,0 +1,184 @@
+name: RFC-062 Cross-File Resolution
+
+on:
+  push:
+    branches: [main, develop, 'feature/agent-automation*', 'feature/*cross-file*']
+    paths:
+      - 'packages/codegraph-rust/codegraph-ir/**'
+      - 'tests/unit/shared/handlers/test_cross_file*.py'
+      - '.github/workflows/rfc-062-cross-file.yml'
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-and-test:
+    name: Build and Test RFC-062
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/codegraph-rust/codegraph-ir/target
+          key: ${{ runner.os }}-cargo-ir-${{ hashFiles('packages/codegraph-rust/codegraph-ir/Cargo.lock') }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install maturin pytest msgpack
+
+      - name: Install Python packages
+        run: |
+          pip install -e packages/codegraph-shared
+          pip install -e packages/codegraph-engine
+
+      - name: Build Rust codegraph-ir
+        working-directory: packages/codegraph-rust/codegraph-ir
+        run: |
+          maturin build --release
+          maturin develop
+
+      - name: Test import
+        run: |
+          python -c "import codegraph_ir; print('✅ Import successful'); print('Functions:', [x for x in dir(codegraph_ir) if 'context' in x.lower()])"
+
+      - name: Run RFC-062 tests
+        run: |
+          pytest tests/unit/shared/handlers/test_cross_file_rust.py -v
+
+      - name: Benchmark Performance
+        run: |
+          python -c "
+          import time
+          import codegraph_ir
+          from dataclasses import asdict
+
+          # Generate test data
+          ir_docs = [
+              {
+                  'file_path': f'src/module_{i}.py',
+                  'nodes': [{
+                      'id': f'node_{i}',
+                      'kind': 'function',
+                      'fqn': f'module_{i}.func',
+                      'file_path': f'src/module_{i}.py',
+                      'span': {'start_line': 1, 'start_col': 0, 'end_line': 10, 'end_col': 0},
+                      'language': 'python',
+                  }],
+                  'edges': []
+              }
+              for i in range(1000)
+          ]
+
+          # Benchmark
+          start = time.perf_counter()
+          result = codegraph_ir.build_global_context_py(ir_docs)
+          duration = time.perf_counter() - start
+
+          print(f'✅ Processed {result[\"total_symbols\"]} symbols in {duration*1000:.2f}ms')
+          print(f'✅ Throughput: {result[\"total_symbols\"] / duration:,.0f} symbols/sec')
+
+          # Performance assertion
+          assert result['total_symbols'] / duration >= 100000, 'Performance regression detected'
+          "
+
+      - name: Upload wheel (Linux only)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: codegraph-ir-wheel
+          path: packages/codegraph-rust/codegraph-ir/target/wheels/*.whl
+          retention-days: 7
+
+  performance-benchmark:
+    name: Performance Benchmark
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install maturin pytest pytest-benchmark msgpack
+          pip install -e packages/codegraph-shared
+          pip install -e packages/codegraph-engine
+
+      - name: Build codegraph-ir (Release)
+        working-directory: packages/codegraph-rust/codegraph-ir
+        run: maturin develop --release
+
+      - name: Run performance benchmark
+        run: |
+          python << 'EOF'
+          import time
+          import codegraph_ir
+
+          # Large-scale benchmark
+          print("🔬 RFC-062 Performance Benchmark")
+          print("=" * 70)
+
+          for num_files in [100, 500, 1000]:
+              ir_docs = [
+                  {
+                      'file_path': f'src/module_{i}.py',
+                      'nodes': [{
+                          'id': f'node_{i}',
+                          'kind': 'function',
+                          'fqn': f'module_{i}.func',
+                          'file_path': f'src/module_{i}.py',
+                          'span': {'start_line': 1, 'start_col': 0, 'end_line': 10, 'end_col': 0},
+                          'language': 'python',
+                      }],
+                      'edges': []
+                  }
+                  for i in range(num_files)
+              ]
+
+              start = time.perf_counter()
+              result = codegraph_ir.build_global_context_py(ir_docs)
+              duration = time.perf_counter() - start
+
+              throughput = result['total_symbols'] / duration
+              print(f"{num_files:,} files: {duration*1000:.2f}ms ({throughput:,.0f} symbols/sec)")
+
+          print("\n✅ Performance benchmark complete")
+          EOF
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ RFC-062 performance benchmark passed! See job logs for details.'
+            })

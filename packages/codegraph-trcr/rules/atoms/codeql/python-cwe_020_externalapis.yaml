@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_020_externalapis.UntrustedDataToExternalAPI
+  kind: sink
+  tags: ['cwe_020_externalapis', 'UntrustedDataToExternalAPI', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-020"]
+  description: Data provided remotely is used in this external API without sanitization, which could be a security 
+  match:
+  -     call: UntrustedDataToExternalAPI
+
+- id: sink.cwe_020_externalapis.UntrustedDataToExternalAPI
+  kind: sink
+  tags: ['cwe_020_externalapis', 'UntrustedDataToExternalAPI', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-020"]
+  description: Data provided remotely is used in this external API without sanitization, which could be a security 
+  match:
+  -     call: UntrustedDataToExternalAPI

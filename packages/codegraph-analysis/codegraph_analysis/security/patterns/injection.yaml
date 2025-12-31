@@ -1,0 +1,99 @@
+# Injection Vulnerability Patterns
+# L24: Injection Analysis (SQL, Command, XSS, etc.)
+
+patterns:
+  sql_injection:
+    severity: CRITICAL
+    cwe: CWE-89
+    description: "SQL Injection vulnerability"
+    sinks:
+      - cursor.execute
+      - cursor.executemany
+      - QuerySet.raw
+      - QuerySet.extra
+      - db.execute
+    sources:
+      - request.GET
+      - request.POST
+      - request.args
+      - request.form
+    remediation: "Use parameterized queries or ORM"
+
+  command_injection:
+    severity: CRITICAL
+    cwe: CWE-78
+    description: "Command Injection vulnerability"
+    sinks:
+      - os.system
+      - subprocess.call
+      - subprocess.Popen
+      - subprocess.run
+      - os.popen
+      - eval
+      - exec
+    sources:
+      - request.*  # Any user input
+    remediation: "Avoid shell=True, use command arrays, validate input"
+
+  xss:
+    severity: HIGH
+    cwe: CWE-79
+    description: "Cross-Site Scripting (XSS)"
+    sinks:
+      - render_template_string
+      - HttpResponse  # Django
+      - make_response  # Flask
+      - innerHTML  # JavaScript
+      - dangerouslySetInnerHTML  # React
+    sources:
+      - request.*
+      - Query(...)  # FastAPI
+    remediation: "Use template auto-escaping, sanitize output"
+
+  path_traversal:
+    severity: HIGH
+    cwe: CWE-22
+    description: "Path Traversal vulnerability"
+    sinks:
+      - open
+      - os.path.join
+      - send_file
+      - send_from_directory
+    sources:
+      - request.*
+    patterns:
+      - "\\.\\./"
+      - "%2e%2e/"
+    remediation: "Validate and sanitize file paths, use whitelists"
+
+  ldap_injection:
+    severity: HIGH
+    cwe: CWE-90
+    description: "LDAP Injection"
+    sinks:
+      - ldap.search
+      - ldap.bind
+    sources:
+      - request.*
+    remediation: "Escape LDAP special characters"
+
+  xxe:
+    severity: HIGH
+    cwe: CWE-611
+    description: "XML External Entity (XXE) Injection"
+    patterns:
+      - "XMLParser.*resolve_entities\\s*=\\s*True"
+      - "parse.*DTDHandler"
+    remediation: "Disable external entity processing in XML parser"
+
+  template_injection:
+    severity: CRITICAL
+    cwe: CWE-94
+    description: "Server-Side Template Injection (SSTI)"
+    sinks:
+      - Template(...).render
+      - render_template_string
+      - jinja2.Template
+    sources:
+      - request.*
+    remediation: "Never render templates from user input"

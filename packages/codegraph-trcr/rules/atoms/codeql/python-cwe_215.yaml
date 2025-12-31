@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_215.FlaskDebug
+  kind: sink
+  tags: ['cwe_215', 'FlaskDebug', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-215"]
+  description: Running a Flask app in debug mode may allow an attacker to run arbitrary code through the Werkzeug d
+  match:
+  -     call: FlaskDebug
+
+- id: sink.cwe_215.FlaskDebug
+  kind: sink
+  tags: ['cwe_215', 'FlaskDebug', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-215"]
+  description: Running a Flask app in debug mode may allow an attacker to run arbitrary code through the Werkzeug d
+  match:
+  -     call: FlaskDebug

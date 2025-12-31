@@ -1,0 +1,174 @@
+# CWE-918: Server-Side Request Forgery (SSRF)
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/918.html
+
+metadata:
+  cwe_id: CWE-918
+  name: "Server-Side Request Forgery (SSRF)"
+  severity: high
+  owasp: "A10:2021-Server-Side Request Forgery"
+  category: "Injection"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  mitre_abstraction: base
+  likelihood_of_exploit: medium
+
+  references:
+    - https://cwe.mitre.org/data/definitions/918.html
+    - https://owasp.org/Top10/A10_2021-Server-Side_Request_Forgery_%28SSRF%29/
+
+description: |
+  The web server receives a URL or similar request from an upstream component and retrieves
+  the contents of this URL, but it does not sufficiently ensure that the request is being
+  sent to the expected destination.
+
+sources:
+  - id: input.http.flask
+    description: "Flask HTTP request parameters"
+    patterns:
+      - flask.Request.args
+      - flask.Request.form
+      - flask.Request.json
+
+  - id: input.http.django
+    description: "Django HTTP request parameters"
+    patterns:
+      - django.http.HttpRequest.GET
+      - django.http.HttpRequest.POST
+
+  - id: input.http.fastapi
+    description: "FastAPI request parameters"
+    patterns:
+      - fastapi.Request.query_params
+
+sinks:
+  - id: sink.http.requests
+    description: "requests.get/post"
+    patterns:
+      - call: requests.get
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - call: requests.post
+        args: [0]
+      - call: requests.request
+        args: [1]
+
+  - id: sink.http.urllib
+    description: "urllib.request.urlopen"
+    patterns:
+      - call: urllib.request.urlopen
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+  - id: sink.http.httpx
+    description: "httpx.get/post"
+    patterns:
+      - call: httpx.get
+        args: [0]
+      - call: httpx.post
+        args: [0]
+
+sanitizers:
+  - id: barrier.url.allowlist
+    description: "URL allowlist validation"
+    patterns:
+      - startswith("https://api.example.com")
+      - domain in ALLOWED_DOMAINS
+
+  - id: barrier.url.scheme
+    description: "Scheme validation"
+    patterns:
+      - urlparse().scheme in ["http", "https"]
+
+  - id: barrier.url.ip_block
+    description: "Block internal IPs"
+    patterns:
+      - not is_private_ip()
+      - ip_address not in PRIVATE_RANGES
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.http.requests
+      - id: sink.http.urllib
+      - id: sink.http.httpx
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: url_validation
+
+validation:
+  min_test_cases: 6
+  required_scenarios:
+    - unvalidated_url
+    - redirect_url
+    - allowlist_safe
+    - scheme_check
+
+  min_precision: 0.85
+  min_recall: 0.80
+  max_false_positive_rate: 0.15
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE918_SSRF"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - bad_03_redirect.py
+      - good_01.py
+      - good_02.py
+      - good_03_scheme_check.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: Unvalidated URL fetch
+      url = request.args.get("url")
+      response = requests.get(url)
+      return response.text
+
+  safe:
+    - |
+      # GOOD: Allowlist validation
+      url = request.args.get("url")
+      if not url.startswith("https://api.example.com"):
+          raise ValueError("Invalid URL")
+      response = requests.get(url)
+      return response.text
+
+fix:
+  priority: 2
+  effort: medium
+
+  recommendations:
+    - title: "Use URL allowlist"
+      severity: best
+      example: |
+        ALLOWED_DOMAINS = ["api.example.com"]
+        parsed = urlparse(url)
+        if parsed.netloc not in ALLOWED_DOMAINS:
+            raise ValueError("Forbidden domain")
+
+    - title: "Block private IPs"
+      severity: recommended
+      example: |
+        import ipaddress
+        ip = socket.gethostbyname(parsed.hostname)
+        if ipaddress.ip_address(ip).is_private:
+            raise ValueError("Private IP forbidden")
+
+    - title: "Validate URL scheme"
+      severity: fallback
+      example: |
+        parsed = urlparse(url)
+        if parsed.scheme not in ["http", "https"]:
+            raise ValueError("Invalid scheme")

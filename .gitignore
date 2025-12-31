@@ -1,0 +1,155 @@
+# Rust build artifacts
+target/
+Cargo.lock
+
+# Git backups (temporary)
+.git_backup/
+
+# Zoekt cache (legacy)
+.zoekt_cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+.claude/*
+!.claude/hooks/
+!.claude/test-config.json
+.serena/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Docker
+*.log
+logs/
+backups/
+
+# Project specific
+.temp/
+*.db
+*.sqlite
+*.sqlite3
+.experience.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Kùzu embedded database
+data/
+
+# Deprecated repos directory (Zoekt legacy)
+repos/
+
+# Runtime workspace
+/workspace/
+/htmlcov/
+/logs/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Benchmark artifacts (generated)
+benchmark/artifacts/
+.benchmarks/
+tools/benchmark/
+
+# CWE test results
+cwe/results/
+
+# Test cache
+.hypothesis/
+
+# Profiling
+*.stats
+*.prof
+
+# Temporary/backup files
+*.zip
+*.bak
+*.tmp
+
+# Root test/validation files
+/conftest.py
+/test_*.py
+/debug_*.py
+/restore_*.py
+/delete_*.py
+/check_*.py
+/verify_*.py
+/critical_*.py
+/comprehensive_*.py
+/final_*.py
+/*.java
+*_results.json
+*_results.txt
+
+# Root temporary docs (keep main docs only)
+/*_COMPLETE.md
+/*_STATUS.md
+/*_IMPLEMENTATION.md
+/*_VALIDATION.md
+/*_REVIEW.md
+/*_SUMMARY.md
+/*_PLAN.md
+/*_SETUP.md
+/*_INTEGRATION.md
+/BUGFIX_*.md
+/JAVA_*.md
+/DOCKER_*.md
+/LSP_*.md
+/README_V*.md
+/V*_*.md
+.venv-codegraph/
+docs/_temp/*
+!docs/_temp/README.md

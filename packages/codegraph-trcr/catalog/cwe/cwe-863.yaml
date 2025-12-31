@@ -1,0 +1,116 @@
+# CWE-863: Incorrect Authorization
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/863.html
+
+metadata:
+  cwe_id: CWE-863
+  name: "Incorrect Authorization"
+  severity: critical
+  owasp: "A01:2021-Broken Access Control"
+  category: "Access Control"
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+  mitre_abstraction: class
+  likelihood_of_exploit: high
+  references:
+    - https://cwe.mitre.org/data/definitions/863.html
+    - https://owasp.org/www-community/vulnerabilities/Forced_Browsing
+
+description: |
+  The software performs an authorization check when an actor attempts to
+  access a resource or perform an action, but it does not correctly perform
+  the check. This allows attackers to bypass intended access restrictions.
+
+sources:
+  - id: source.user_id
+    description: "User-provided resource identifiers"
+    patterns:
+      - request.args.get('user_id')
+      - request.form.get('account_id')
+      - path_parameter: id
+
+sinks:
+  - id: sink.authz.resource_access
+    description: "Resource access without proper authorization"
+    patterns:
+      - base_type: Model
+        call: get
+        args: [user_provided_id]
+      - call: get_object_or_404
+      - query: filter_by(id=user_input)
+
+  - id: sink.authz.action
+    description: "Actions without ownership check"
+    patterns:
+      - call: delete
+      - call: update
+      - call: modify
+
+sanitizers:
+  - id: barrier.authz.ownership
+    description: "Ownership verification"
+    patterns:
+      - condition: resource.owner_id == current_user.id
+      - condition: current_user.can_access(resource)
+      - call: check_ownership
+      - decorator: owns_resource
+
+policy:
+  grammar:
+    WHEN:
+      tag: resource_access
+    FLOWS:
+      - id: sink.authz.resource_access
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: ownership_check
+
+validation:
+  min_test_cases: 6
+  min_precision: 0.90
+  min_recall: 0.85
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE863_Incorrect_Authorization"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: IDOR - No ownership check
+      @app.route('/documents/<doc_id>')
+      @login_required
+      def get_document(doc_id):
+          doc = Document.query.get(doc_id)
+          return doc.content
+
+  safe:
+    - |
+      # GOOD: Ownership verification
+      @app.route('/documents/<doc_id>')
+      @login_required
+      def get_document(doc_id):
+          doc = Document.query.get(doc_id)
+          if doc.owner_id != current_user.id:
+              abort(403)
+          return doc.content
+
+fix:
+  priority: 1
+  effort: medium
+  recommendations:
+    - title: "Always verify resource ownership"
+      severity: best
+      example: |
+        doc = Document.query.filter_by(
+            id=doc_id,
+            owner_id=current_user.id
+        ).first_or_404()

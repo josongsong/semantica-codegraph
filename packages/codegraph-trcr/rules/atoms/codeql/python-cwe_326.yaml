@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_326.WeakCryptoKey
+  kind: sink
+  tags: ['cwe_326', 'WeakCryptoKey', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-326"]
+  description: Use of a cryptographic key that is too small may allow the encryption to be broken.
+  match:
+  -     call: WeakCryptoKey
+
+- id: sink.cwe_326.WeakCryptoKey
+  kind: sink
+  tags: ['cwe_326', 'WeakCryptoKey', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-326"]
+  description: Use of a cryptographic key that is too small may allow the encryption to be broken.
+  match:
+  -     call: WeakCryptoKey

@@ -1,0 +1,116 @@
+# CWE-77: Improper Neutralization of Special Elements used in a Command (Command Injection)
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/77.html
+
+metadata:
+  cwe_id: CWE-77
+  name: "Command Injection"
+  severity: critical
+  owasp: "A03:2021-Injection"
+  category: "Injection"
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+  mitre_abstraction: class
+  likelihood_of_exploit: high
+  references:
+    - https://cwe.mitre.org/data/definitions/77.html
+    - https://owasp.org/www-community/attacks/Command_Injection
+
+description: |
+  The software constructs all or part of a command using externally-influenced
+  input from an upstream component, but does not neutralize special elements
+  that could modify the intended command.
+
+  This is a variant/parent of CWE-78 (OS Command Injection) covering more
+  general command execution scenarios.
+
+sources:
+  - id: source.user_input
+    description: "User-provided input"
+    patterns:
+      - flask.Request.args
+      - flask.Request.form
+      - call: input
+
+sinks:
+  - id: sink.command.execution
+    description: "Command execution functions"
+    patterns:
+      - call: os.system
+      - call: os.popen
+      - call: subprocess.call
+      - call: subprocess.run
+      - call: subprocess.Popen
+      - call: subprocess.check_output
+      - call: commands.getoutput
+      - call: popen2.popen2
+
+sanitizers:
+  - id: barrier.command.quote
+    description: "Shell argument quoting"
+    patterns:
+      - call: shlex.quote
+      - call: pipes.quote
+
+  - id: barrier.command.list
+    description: "Using list arguments (no shell)"
+    patterns:
+      - subprocess.run with shell=False
+
+  - id: barrier.command.allowlist
+    description: "Command allowlist"
+    patterns:
+      - condition: command in ALLOWED_COMMANDS
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.command.execution
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: command
+
+validation:
+  min_test_cases: 8
+  min_precision: 0.90
+  min_recall: 0.90
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE77_Command_Injection"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: String formatting in command
+      os.system(f"ping {host}")
+
+  safe:
+    - |
+      # GOOD: Using list args without shell
+      subprocess.run(["ping", "-c", "4", host], shell=False)
+
+fix:
+  priority: 1
+  effort: low
+  recommendations:
+    - title: "Use subprocess with list args"
+      severity: best
+      example: |
+        subprocess.run(["command", arg1, arg2], shell=False)
+
+    - title: "Use shlex.quote"
+      severity: recommended
+      example: |
+        import shlex
+        os.system(f"echo {shlex.quote(user_input)}")

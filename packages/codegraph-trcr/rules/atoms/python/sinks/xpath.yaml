@@ -1,0 +1,24 @@
+# Python XPath Injection Sinks
+# CWE-643: XPath Injection
+# OWASP: A03:2021-Injection
+
+atoms:
+# =============================================================================
+# XPath Query
+# =============================================================================
+- id: sink.xpath
+  kind: sink
+  tags: [injection, xpath, xml]
+  severity: high
+  cwe: ["CWE-643"]
+  description: XPath query execution
+  match:
+  - call: lxml.etree.XPath
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: lxml.etree._Element
+    call: xpath
+    args: [0]
+    constraints:
+      arg_type: not_const

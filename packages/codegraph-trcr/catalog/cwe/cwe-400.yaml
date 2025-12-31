@@ -1,0 +1,105 @@
+# CWE-400: Uncontrolled Resource Consumption
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/400.html
+
+metadata:
+  cwe_id: CWE-400
+  name: "Uncontrolled Resource Consumption"
+  severity: medium
+  owasp: "A05:2021-Security Misconfiguration"
+  category: "Resource Management"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-20"
+
+  mitre_abstraction: class
+  likelihood_of_exploit: high
+
+  references:
+    - https://cwe.mitre.org/data/definitions/400.html
+    - https://owasp.org/Top10/A05_2021-Security_Misconfiguration/
+
+description: |
+  The software does not properly control the allocation and maintenance of a
+  limited resource, thereby enabling an actor to influence the amount of
+  resources consumed, eventually leading to the exhaustion of available resources.
+
+sources:
+  - id: source.resource.user_input
+    description: "User-controlled resource parameters"
+    patterns:
+      - call: input
+      - flask.Request.args
+      - attr: size
+      - attr: count
+      - attr: limit
+
+sinks:
+  - id: sink.resource.allocation
+    description: "Resource allocation without limits"
+    patterns:
+      - call: malloc
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - call: bytearray
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - "range(n)"
+      - "[0] * n"
+
+  - id: sink.resource.file
+    description: "Unbounded file operations"
+    patterns:
+      - call: open
+        args: [0]
+      - call: read
+        args: []  # read() without size limit
+
+  - id: sink.resource.regex
+    description: "ReDoS vulnerable regex"
+    patterns:
+      - call: re.match
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - call: re.search
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+sanitizers:
+  - id: barrier.resource.limit
+    description: "Resource limiting"
+    patterns:
+      - min()
+      - max()
+      - limit()
+      - cap()
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.resource.allocation
+      - id: sink.resource.file
+      - id: sink.resource.regex
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: limit
+
+validation:
+  min_test_cases: 4
+  min_precision: 0.80
+  min_recall: 0.75
+
+test_suite:
+  directory: "test-suite/CWE400_Resource_Consumption"
+  cases:
+    - bad_01.py
+    - good_01.py

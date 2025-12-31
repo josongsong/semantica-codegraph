@@ -1,0 +1,427 @@
+// Multi-Layer Index Orchestrator with DashMap for lock-free parallel updates
+//
+// # Non-Negotiable Contracts
+// - P0-1: TxnWatermark consistency via applied_up_to()
+// - P0-4: DashMap for lock-free concurrent access
+
+use crate::features::multi_index::config;
+use crate::features::multi_index::ports::{
+    DeltaAnalysis, IndexPlugin, IndexType, UpdateStrategy, IndexHealth, QueryType,
+};
+use crate::features::multi_index::ChangeAnalyzer;
+use crate::features::query_engine::infrastructure::{
+    TxnId, TransactionDelta, Snapshot, TransactionalGraphIndex, ChangeOp, AgentSession,
+    CommitResult,
+};
+use dashmap::DashMap;
+use parking_lot::RwLock;
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::Duration;
+
+/// Multi-Layer Index Orchestrator (SOTA)
+///
+/// # P0-4 Correction: DashMap for parallel updates
+/// Uses DashMap instead of HashMap + RwLock for lock-free concurrent access.
+/// This eliminates lock contention during parallel index updates.
+pub struct MultiLayerIndexOrchestrator {
+    /// MVCC transaction index (source of truth)
+    txn_index: Arc<RwLock<TransactionalGraphIndex>>,
+
+    /// Change analyzer (delta intelligence)
+    analyzer: Arc<ChangeAnalyzer>,
+
+    /// P0-4: DashMap for lock-free parallel updates
+    /// No global lock needed - each index can be accessed independently
+    indexes: Arc<DashMap<IndexType, Box<dyn IndexPlugin>>>,
+
+    /// Active agent sessions
+    sessions: Arc<RwLock<HashMap<String, AgentSession>>>,
+
+    /// Update strategy config
+    config: IndexOrchestratorConfig,
+}
+
+#[derive(Debug, Clone)]
+pub struct IndexOrchestratorConfig {
+    /// Skip vector index if impact < threshold
+    pub vector_skip_threshold: f64,  // Default: 0.001 (0.1%)
+
+    /// Full rebuild if impact > threshold
+    pub full_rebuild_threshold: f64,  // Default: 0.5 (50%)
+
+    /// Max cost budget per commit (ms)
+    pub max_commit_cost_ms: u64,  // Default: 5000 (5 seconds)
+
+    /// Enable parallel index updates
+    pub parallel_updates: bool,  // Default: true
+
+    /// Lazy rebuild strategy
+    pub lazy_rebuild_enabled: bool,  // Default: false
+}
+
+impl Default for IndexOrchestratorConfig {
+    fn default() -> Self {
+        Self {
+            vector_skip_threshold: 0.001,
+            full_rebuild_threshold: 0.5,
+            max_commit_cost_ms: 5000,
+            parallel_updates: true,
+            lazy_rebuild_enabled: false,
+        }
+    }
+}
+
+impl MultiLayerIndexOrchestrator {
+    pub fn new(config: IndexOrchestratorConfig) -> Self {
+        Self {
+            txn_index: Arc::new(RwLock::new(TransactionalGraphIndex::new())),
+            analyzer: Arc::new(ChangeAnalyzer::new()),
+            indexes: Arc::new(DashMap::new()),  // P0-4: DashMap
+            sessions: Arc::new(RwLock::new(HashMap::new())),
+            config,
+        }
+    }
+
+    /// Register new index plugin
+    pub fn register_index(&self, plugin: Box<dyn IndexPlugin>) {
+        let index_type = plugin.index_type();
+        self.indexes.insert(index_type, plugin);  // P0-4: No lock needed
+    }
+
+    /// Begin agent session (same as ShadowFSOrchestrator)
+    pub fn begin_session(&self, agent_id: String) -> AgentSession {
+        let txn_index = self.txn_index.read();
+        let txn_id = txn_index.begin_transaction(agent_id.clone());
+        let snapshot = txn_index.get_snapshot(txn_id);
+
+        let session = AgentSession {
+            agent_id: agent_id.clone(),
+            txn_id,
+            snapshot,
+            pending_changes: Vec::new(),
+        };
+
+        self.sessions.write().insert(agent_id, session.clone());
+        session
+    }
+
+    /// Add change to agent's pending changes
+    pub fn add_change(&self, agent_id: &str, change: ChangeOp) -> Result<(), String> {
+        let mut sessions = self.sessions.write();
+        let session = sessions
+            .get_mut(agent_id)
+            .ok_or_else(|| format!("No active session for agent: {}", agent_id))?;
+
+        session.pending_changes.push(change);
+        Ok(())
+    }
+
+    /// Commit with multi-layer index updates
+    pub fn commit(&self, agent_id: &str) -> CommitResult {
+        // 1. Get session
+        let mut sessions = self.sessions.write();
+        let session = match sessions.remove(agent_id) {
+            Some(s) => s,
+            None => {
+                return CommitResult {
+                    success: false,
+                    committed_txn: None,
+                    conflicts: vec!["No active session".to_string()],
+                    delta: None,
+                }
+            }
+        };
+
+        if session.pending_changes.is_empty() {
+            return CommitResult {
+                success: true,
+                committed_txn: Some(session.txn_id),
+                conflicts: Vec::new(),
+                delta: None,
+            };
+        }
+
+        // 2. Commit to TransactionalIndex
+        let txn_index = self.txn_index.write();
+        let commit_result = txn_index.commit_transaction(
+            session.txn_id,
+            session.pending_changes.clone(),
+        );
+
+        match commit_result {
+            Ok(committed_txn) => {
+                // 3. Compute delta
+                let delta = txn_index.compute_delta(session.txn_id, committed_txn);
+
+                drop(txn_index);  // Release lock
+
+                // 4. Analyze delta (SOTA: intelligent scope selection)
+                let analysis = self.analyzer.analyze_delta(&delta, &self.txn_index.read());
+
+                // 5. Apply selective updates to all indexes
+                let update_results = self.apply_selective_updates(&delta, &analysis);
+
+                CommitResult {
+                    success: true,
+                    committed_txn: Some(committed_txn),
+                    conflicts: Vec::new(),
+                    delta: Some(delta),
+                }
+            }
+            Err(conflicts) => {
+                txn_index.rollback_transaction(session.txn_id);
+                CommitResult {
+                    success: false,
+                    committed_txn: None,
+                    conflicts,
+                    delta: None,
+                }
+            }
+        }
+    }
+
+    /// Apply selective updates based on delta analysis
+    ///
+    /// # P0-4: DashMap parallel iteration
+    /// Uses Rayon parallel iterator over DashMap without global lock
+    fn apply_selective_updates(
+        &self,
+        delta: &TransactionDelta,
+        analysis: &DeltaAnalysis,
+    ) -> IndexUpdateResults {
+        use rayon::prelude::*;
+
+        let mut results = IndexUpdateResults::new();
+
+        // P0-4: DashMap supports parallel iteration without global lock
+        let update_results: Vec<_> = analysis
+            .index_impacts
+            .par_iter()
+            .filter(|(_, impact)| impact.requires_update)
+            .map(|(index_type, impact)| {
+                // P0-4: get_mut() only locks this specific entry
+                let mut plugin = self.indexes.get_mut(index_type).unwrap();
+
+                let result = match impact.strategy {
+                    // P0-3: SyncIncremental blocks commit
+                    UpdateStrategy::SyncIncremental => plugin.apply_delta(delta, analysis),
+
+                    // P0-3: AsyncIncremental submits to background
+                    UpdateStrategy::AsyncIncremental => {
+                        self.submit_async_update(*index_type, delta.clone(), analysis.clone());
+                        Ok((true, 0))  // Non-blocking
+                    }
+
+                    // P0-3: FullRebuild always background
+                    UpdateStrategy::FullRebuild => {
+                        self.submit_background_rebuild(*index_type);
+                        Ok((true, 0))  // Non-blocking
+                    }
+
+                    // Lazy: Defer to query time
+                    UpdateStrategy::Lazy => Ok((false, 0)),
+
+                    _ => Ok((false, 0)),
+                };
+
+                (*index_type, result)
+            })
+            .collect();
+
+        // Aggregate results
+        for (typ, res) in update_results {
+            match res {
+                Ok((success, cost)) => results.add_success(typ, cost),
+                Err(e) => results.add_error(typ, &e.to_string()),
+            }
+        }
+
+        results
+    }
+
+    /// Submit async update (background task)
+    fn submit_async_update(
+        &self,
+        index_type: IndexType,
+        delta: TransactionDelta,
+        analysis: DeltaAnalysis,
+    ) {
+        // NOTE: Async updates require integration with async runtime (tokio/async-std)
+        // This will spawn a background task to apply the update without blocking commit
+        // For now, we note the deferred update (production would use a task queue)
+        // DEBUG: Async update queued for {:?}", index_type
+
+        // Future implementation:
+        // tokio::spawn(async move {
+        //     let mut plugin = self.indexes.get_mut(&index_type).unwrap();
+        //     plugin.apply_delta(&delta, &analysis).ok();
+        // });
+    }
+
+    /// Submit background rebuild
+    fn submit_background_rebuild(&self, index_type: IndexType) {
+        // NOTE: Background rebuild requires async runtime integration
+        // This will rebuild the entire index from WAL in the background
+        // DEBUG: Background rebuild queued for {:?}", index_type
+
+        // Future implementation:
+        // tokio::spawn(async move {
+        //     let mut plugin = self.indexes.get_mut(&index_type).unwrap();
+        //     plugin.rebuild().ok();
+        // });
+    }
+
+    /// P0-1: TxnWatermark-based consistency check
+    ///
+    /// # Non-Negotiable Contract 3-1
+    /// Consistency 판단은 applied_up_to() -> TxnId 기준
+    /// health()는 관측용으로만 사용
+    fn wait_for_consistency(&self, required_txn: TxnId) {
+        // P0-4: DashMap iteration without global lock
+        for entry in self.indexes.iter() {
+            let plugin = entry.value();
+
+            // P0-1: IMMUTABLE - Only applied_up_to() determines consistency
+            while plugin.applied_up_to() < required_txn {
+                std::thread::sleep(Duration::from_millis(config::consistency::POLL_INTERVAL_MS));
+            }
+            // health() is for observation only, NOT consistency
+        }
+    }
+
+    /// Query with consistency level
+    pub fn query_with_consistency(&self, query: Query) -> QueryResult {
+        match query.consistency_level {
+            ConsistencyLevel::Strict => {
+                // Get latest committed txn
+                let latest = self.txn_index.read().get_latest_txn();
+
+                // P0-1: Wait for all indexes to catch up via applied_up_to()
+                self.wait_for_consistency(latest);
+
+                // Now execute query
+                self.query(query)
+            }
+            ConsistencyLevel::Eventual => {
+                // Query immediately (may see stale data)
+                self.query(query)
+            }
+        }
+    }
+
+    /// Execute query with routing to appropriate index
+    fn query(&self, query: Query) -> QueryResult {
+        // Route query to appropriate index based on query type
+        let _target_index = match query.query_type {
+            QueryType::SemanticSearch | QueryType::SimilarCode => IndexType::Vector,
+            QueryType::TextSearch => IndexType::Lexical,
+            QueryType::Reachability => IndexType::Graph,
+            QueryType::IdentifierLookup | QueryType::IRDocLookup => IndexType::Vector,
+            QueryType::FQNSearch => IndexType::Lexical,
+            QueryType::ASTLookup => IndexType::Graph,
+            QueryType::MetricsLookup | QueryType::ComplexityAnalysis => IndexType::Graph,
+            QueryType::HybridSearch => IndexType::Vector, // RRF fusion, start with vector
+        };
+
+        // Get the appropriate index plugin - NOTE: query() method not yet in IndexPlugin trait
+        // This is a stub for now until query() is added to the trait
+        QueryResult {
+            results: vec![],
+            total_count: 0,
+            query_time_ms: 0,
+        }
+    }
+
+    /// Health check all indexes
+    pub fn health(&self) -> OrchestratorHealth {
+        // P0-4: DashMap iteration
+        let index_health: HashMap<IndexType, IndexHealth> = self
+            .indexes
+            .iter()
+            .map(|entry| (*entry.key(), entry.value().health()))
+            .collect();
+
+        OrchestratorHealth {
+            is_healthy: index_health.values().all(|h| h.is_healthy),
+            index_health,
+            active_sessions: self.sessions.read().len(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct IndexUpdateResults {
+    pub total_cost_ms: u64,
+    pub updates: Vec<IndexUpdateResult>,
+}
+
+impl IndexUpdateResults {
+    fn new() -> Self {
+        Self {
+            total_cost_ms: 0,
+            updates: Vec::new(),
+        }
+    }
+
+    fn add_success(&mut self, index_type: IndexType, cost_ms: u64) {
+        self.total_cost_ms += cost_ms;
+        self.updates.push(IndexUpdateResult::Success {
+            index_type,
+            cost_ms,
+        });
+    }
+
+    fn add_error(&mut self, index_type: IndexType, error: &str) {
+        self.updates.push(IndexUpdateResult::Error {
+            index_type,
+            error: error.to_string(),
+        });
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum IndexUpdateResult {
+    Success { index_type: IndexType, cost_ms: u64 },
+    Skipped { index_type: IndexType },
+    Deferred { index_type: IndexType, reason: String },
+    Error { index_type: IndexType, error: String },
+}
+
+#[derive(Debug, Clone)]
+pub struct OrchestratorHealth {
+    pub is_healthy: bool,
+    pub index_health: HashMap<IndexType, IndexHealth>,
+    pub active_sessions: usize,
+}
+
+// Stub types for query support
+#[derive(Debug, Clone)]
+pub struct Query {
+    pub text: String,
+    pub query_type: QueryType,
+    pub consistency_level: ConsistencyLevel,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ConsistencyLevel {
+    Strict,
+    Eventual,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct QueryResult {
+    pub results: Vec<SearchResult>,
+    pub total_count: usize,
+    pub query_time_ms: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct SearchResult {
+    pub id: String,
+    pub score: f64,
+}
+
+#[cfg(test)]
+#[path = "orchestrator_test.rs"]
+mod orchestrator_test;

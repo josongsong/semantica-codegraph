@@ -1,0 +1,122 @@
+# Python SQL Injection Sinks
+# CWE-89: SQL Injection
+# OWASP: A03:2021-Injection
+
+atoms:
+# =============================================================================
+# SQLite3
+# =============================================================================
+- id: sink.sql.sqlite3
+  kind: sink
+  tags: [injection, db, sql, sqlite]
+  severity: critical
+  cwe: ["CWE-89"]
+  description: SQLite3 SQL execution
+  match:
+  - base_type: sqlite3.Cursor
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+  - base_type: sqlite3.Cursor
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+  - base_type: sqlite3.Cursor
+    call: executescript
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: sqlite3.Connection
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+  - base_type: sqlite3.Connection
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+  - base_type: sqlite3.Connection
+    call: executescript
+    args: [0]
+    constraints:
+      arg_type: not_const
+  # Call-only fallbacks
+  - call: cursor.execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+  - call: conn.execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false
+
+# =============================================================================
+# PostgreSQL (psycopg2)
+# =============================================================================
+- id: sink.sql.psycopg2
+  kind: sink
+  tags: [injection, db, sql, postgresql]
+  severity: critical
+  cwe: ["CWE-89"]
+  description: PostgreSQL SQL execution (psycopg2)
+  match:
+  - base_type: psycopg2.extensions.cursor
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: psycopg2.extensions.cursor
+    call: executemany
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# MySQL (pymysql)
+# =============================================================================
+- id: sink.sql.pymysql
+  kind: sink
+  tags: [injection, db, sql, mysql]
+  severity: critical
+  cwe: ["CWE-89"]
+  description: MySQL SQL execution (pymysql)
+  match:
+  - base_type: pymysql.cursors.Cursor
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# SQLAlchemy
+# =============================================================================
+- id: sink.sql.sqlalchemy
+  kind: sink
+  tags: [injection, db, sql, orm]
+  severity: critical
+  cwe: ["CWE-89"]
+  description: SQLAlchemy text SQL execution
+  match:
+  - base_type: sqlalchemy.engine.Connection
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: sqlalchemy.text
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: engine.execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+      has_params: false

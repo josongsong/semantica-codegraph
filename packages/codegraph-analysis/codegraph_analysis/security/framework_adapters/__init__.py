@@ -1,0 +1,28 @@
+"""Framework-specific security adapters.
+
+Provides taint sources, sinks, and sanitizers for popular frameworks:
+- Django
+- Flask
+- FastAPI
+"""
+
+from .django import DJANGO_AUTH_DECORATORS, DJANGO_SANITIZERS, DJANGO_TAINT_SINKS, DJANGO_TAINT_SOURCES
+from .fastapi import FASTAPI_AUTH_DEPENDENCIES, FASTAPI_TAINT_SINKS, FASTAPI_TAINT_SOURCES
+from .flask import FLASK_AUTH_DECORATORS, FLASK_SANITIZERS, FLASK_TAINT_SINKS, FLASK_TAINT_SOURCES
+
+__all__ = [
+    # Django
+    "DJANGO_TAINT_SOURCES",
+    "DJANGO_TAINT_SINKS",
+    "DJANGO_SANITIZERS",
+    "DJANGO_AUTH_DECORATORS",
+    # Flask
+    "FLASK_TAINT_SOURCES",
+    "FLASK_TAINT_SINKS",
+    "FLASK_SANITIZERS",
+    "FLASK_AUTH_DECORATORS",
+    # FastAPI
+    "FASTAPI_TAINT_SOURCES",
+    "FASTAPI_TAINT_SINKS",
+    "FASTAPI_AUTH_DEPENDENCIES",
+]

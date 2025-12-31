@@ -1,0 +1,73 @@
+# CI/CD Fast Configuration
+# Use for: GitHub Actions, GitLab CI, pre-commit hooks
+# Performance: <10s latency, <500MB memory
+# Focus: Quick feedback with minimal resource usage
+
+version: 1
+preset: fast
+
+stages:
+  # Essential stages only
+  parsing: true
+  chunking: true
+  cross_file: true
+
+  # Lightweight taint for basic security checks
+  taint: true
+
+  # Disable expensive stages
+  pta: false
+  clone: false
+  repomap: false
+  effects: false
+
+overrides:
+  # Minimal taint analysis
+  taint:
+    max_depth: 10
+    max_paths: 100
+    use_points_to: false
+    field_sensitive: false
+    use_ssa: false
+    detect_sanitizers: true
+    enable_interprocedural: false
+    worklist_max_iterations: 50
+
+  # Small chunks for speed
+  chunking:
+    max_chunk_tokens: 256
+    overlap_tokens: 32
+    enable_semantic_split: true
+    min_chunk_tokens: 50
+
+  # Fast lexical search
+  lexical:
+    enable_fuzzy: false  # Exact match only for speed
+    fuzzy_distance: 0
+    enable_ngram: false
+    ngram_size: 3
+    boost_exact_match: 1.0
+
+  # Limited parallelism for CI environment (typically 2 cores)
+  parallel:
+    workers: 2
+    batch_size: 50
+    enable_rayon: true
+
+  # Minimal caching (CI has limited disk/memory)
+  cache:
+    enable_background_l2_writes: false  # Synchronous for reliability
+    l0:
+      max_entries: 5000
+      enable_bloom_filter: false  # Skip for simplicity
+      expected_items: 50000
+      false_positive_rate: 0.01
+    l1:
+      max_entries: 500
+      max_bytes: 268435456  # 256MB
+      ttl_seconds: 900  # 15 minutes
+    l2:
+      cache_dir: ".cache/codegraph-ci"
+      max_disk_bytes: 1073741824  # 1GB
+      enable_compression: true
+      enable_mmap: false  # Disable mmap in CI

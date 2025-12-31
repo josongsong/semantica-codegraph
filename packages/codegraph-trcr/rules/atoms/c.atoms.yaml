@@ -1,0 +1,498 @@
+# C/C++ Taint Analysis Atoms
+# Language: C, C++
+# Focus: Memory safety, buffer overflow, format string, injection
+
+atoms:
+# ============================================================================
+# Sources - Untrusted Input
+# ============================================================================
+- id: input.user.stdin
+  kind: source
+  tags: [untrusted, user, stdin]
+  severity: high
+  description: Standard input functions
+  match:
+  - call: gets
+  - call: fgets
+  - call: getchar
+  - call: scanf
+  - call: fscanf
+  - call: sscanf
+  - call: getline
+  - call: std::cin
+  - call: std::getline
+
+- id: input.argv
+  kind: source
+  tags: [untrusted, cli, argv]
+  severity: high
+  description: Command line arguments
+  match:
+  - read: argv
+  - call: getopt
+  - call: getopt_long
+
+- id: input.env
+  kind: source
+  tags: [untrusted, env, config]
+  severity: medium
+  description: Environment variables
+  match:
+  - call: getenv
+  - call: secure_getenv
+
+- id: input.file.read
+  kind: source
+  tags: [untrusted, file, io]
+  severity: medium
+  description: File read operations
+  match:
+  - call: fread
+  - call: read
+  - call: fgetc
+  - call: fgets
+  - call: std::ifstream::read
+  - call: std::ifstream::getline
+
+- id: input.network.socket
+  kind: source
+  tags: [untrusted, network, socket]
+  severity: high
+  description: Network socket input
+  match:
+  - call: recv
+  - call: recvfrom
+  - call: recvmsg
+
+# ============================================================================
+# Sinks - Buffer Overflow (CWE-119, CWE-120, CWE-787)
+# ============================================================================
+- id: sink.buffer.overflow.strcpy
+  kind: sink
+  tags: [buffer-overflow, memory-safety, strcpy]
+  severity: critical
+  cwe: [CWE-119, CWE-120, CWE-787]
+  owasp: A04:2021-Insecure Design
+  description: Unsafe string copy without bounds checking
+  match:
+  - call: strcpy
+  - call: wcscpy
+  - call: lstrcpy
+  - call: _tcscpy
+  - call: StrCpy
+
+- id: sink.buffer.overflow.strcat
+  kind: sink
+  tags: [buffer-overflow, memory-safety, strcat]
+  severity: critical
+  cwe: [CWE-119, CWE-120]
+  owasp: A04:2021-Insecure Design
+  description: Unsafe string concatenation
+  match:
+  - call: strcat
+  - call: wcscat
+  - call: lstrcat
+  - call: _tcscat
+  - call: StrCat
+
+- id: sink.buffer.overflow.sprintf
+  kind: sink
+  tags: [buffer-overflow, memory-safety, format]
+  severity: critical
+  cwe: [CWE-119, CWE-120, CWE-134]
+  owasp: A04:2021-Insecure Design
+  description: Unsafe formatted string output
+  match:
+  - call: sprintf
+  - call: vsprintf
+  - call: swprintf
+  - call: _stprintf
+
+- id: sink.buffer.overflow.gets
+  kind: sink
+  tags: [buffer-overflow, memory-safety, deprecated]
+  severity: critical
+  cwe: [CWE-119, CWE-120]
+  owasp: A04:2021-Insecure Design
+  description: Extremely dangerous - no bounds checking
+  match:
+  - call: gets
+
+# ============================================================================
+# Sinks - Format String (CWE-134)
+# ============================================================================
+- id: sink.format.string.printf
+  kind: sink
+  tags: [format-string, injection]
+  severity: critical
+  cwe: [CWE-134]
+  owasp: A03:2021-Injection
+  description: User-controlled format string in printf
+  match:
+  - call: printf
+  - call: fprintf
+  - call: sprintf
+  - call: snprintf
+  - call: vprintf
+  - call: vfprintf
+  - call: vsprintf
+  - call: vsnprintf
+
+- id: sink.format.string.syslog
+  kind: sink
+  tags: [format-string, logging]
+  severity: high
+  cwe: [CWE-134]
+  description: Format string in logging functions
+  match:
+  - call: syslog
+  - call: vsyslog
+
+# ============================================================================
+# Sinks - Command Injection (CWE-78)
+# ============================================================================
+- id: sink.command.injection.system
+  kind: sink
+  tags: [injection, command, os]
+  severity: critical
+  cwe: [CWE-78]
+  owasp: A03:2021-Injection
+  description: OS command execution
+  match:
+  - call: system
+  - call: popen
+  - call: _popen
+  - call: wpopen
+  - call: exec
+  - call: execl
+  - call: execlp
+  - call: execle
+  - call: execv
+  - call: execvp
+  - call: execvpe
+
+# ============================================================================
+# Sinks - SQL Injection (CWE-89)
+# ============================================================================
+- id: sink.sql.injection.mysql
+  kind: sink
+  tags: [injection, sql, database, mysql]
+  severity: critical
+  cwe: [CWE-89]
+  owasp: A03:2021-Injection
+  description: MySQL query execution
+  match:
+  - call: mysql_query
+  - call: mysql_real_query
+
+- id: sink.sql.injection.sqlite
+  kind: sink
+  tags: [injection, sql, database, sqlite]
+  severity: critical
+  cwe: [CWE-89]
+  owasp: A03:2021-Injection
+  description: SQLite query execution
+  match:
+  - call: sqlite3_exec
+  - call: sqlite3_prepare
+  - call: sqlite3_prepare_v2
+
+- id: sink.sql.injection.postgres
+  kind: sink
+  tags: [injection, sql, database, postgres]
+  severity: critical
+  cwe: [CWE-89]
+  owasp: A03:2021-Injection
+  description: PostgreSQL query execution
+  match:
+  - call: PQexec
+  - call: PQexecParams
+
+# ============================================================================
+# Sinks - Path Traversal (CWE-22)
+# ============================================================================
+- id: sink.path.traversal.file
+  kind: sink
+  tags: [path, traversal, file]
+  severity: high
+  cwe: [CWE-22]
+  owasp: A01:2021-Broken Access Control
+  description: File operations with untrusted paths
+  match:
+  - call: fopen
+  - call: open
+  - call: freopen
+  - call: std::ifstream
+  - call: std::ofstream
+  - call: std::fstream
+
+- id: sink.path.traversal.unlink
+  kind: sink
+  tags: [path, traversal, file, delete]
+  severity: critical
+  cwe: [CWE-22]
+  owasp: A01:2021-Broken Access Control
+  description: File deletion with untrusted paths
+  match:
+  - call: unlink
+  - call: remove
+  - call: rmdir
+
+# ============================================================================
+# Sinks - Memory Safety (CWE-416, CWE-415, CWE-476)
+# ============================================================================
+- id: sink.memory.use_after_free
+  kind: sink
+  tags: [memory-safety, use-after-free, uaf]
+  severity: critical
+  cwe: [CWE-416]
+  owasp: A04:2021-Insecure Design
+  description: Use of freed memory (Use After Free)
+  match:
+  - call: free
+  - call: realloc
+  - call: delete
+
+- id: sink.memory.double_free
+  kind: sink
+  tags: [memory-safety, double-free]
+  severity: critical
+  cwe: [CWE-415]
+  owasp: A04:2021-Insecure Design
+  description: Double free vulnerability
+  match:
+  - call: free
+  - call: delete
+
+- id: sink.memory.null_deref
+  kind: sink
+  tags: [memory-safety, null-dereference]
+  severity: high
+  cwe: [CWE-476]
+  owasp: A04:2021-Insecure Design
+  description: NULL pointer dereference
+  match:
+  - call: malloc
+  - call: calloc
+  - call: realloc
+  - call: strdup
+
+- id: sink.memory.heap_overflow
+  kind: sink
+  tags: [memory-safety, heap-overflow]
+  severity: critical
+  cwe: [CWE-122]
+  owasp: A04:2021-Insecure Design
+  description: Heap-based buffer overflow
+  match:
+  - call: malloc
+  - call: realloc
+  - call: calloc
+
+- id: sink.memory.stack_overflow
+  kind: sink
+  tags: [memory-safety, stack-overflow, alloca]
+  severity: critical
+  cwe: [CWE-121]
+  owasp: A04:2021-Insecure Design
+  description: Stack-based buffer overflow
+  match:
+  - call: alloca
+  - call: _alloca
+
+- id: sink.memory.integer_overflow
+  kind: sink
+  tags: [memory-safety, integer-overflow]
+  severity: high
+  cwe: [CWE-190]
+  owasp: A04:2021-Insecure Design
+  description: Integer overflow leading to buffer issues
+  match:
+  - call: malloc
+  - call: calloc
+  - call: realloc
+
+# ============================================================================
+# Sinks - XSS / HTML Injection (CWE-79)
+# ============================================================================
+- id: sink.xss.html.output
+  kind: sink
+  tags: [xss, html, injection, web]
+  severity: high
+  cwe: [CWE-79]
+  owasp: A03:2021-Injection
+  description: HTML output functions
+  match:
+  - call: printf
+  - call: fprintf
+  - call: cout
+
+- id: sink.xss.cgi.output
+  kind: sink
+  tags: [xss, html, cgi, web]
+  severity: high
+  cwe: [CWE-79]
+  owasp: A03:2021-Injection
+  description: CGI output without encoding
+  match:
+  - call: cgiHeaderContentType
+  - call: cgiFormString
+  - call: cgiHtmlEscape
+
+# ============================================================================
+# Sanitizers - Buffer Safety
+# ============================================================================
+- id: sanitizer.buffer.strncpy
+  kind: sanitizer
+  tags: [buffer-safe, bounds-check]
+  description: Bounded string copy
+  match:
+  - call: strncpy
+  - call: wcsncpy
+  - call: _tcsncpy
+  - call: strncpy_s
+  - call: strcpy_s
+
+- id: sanitizer.buffer.strncat
+  kind: sanitizer
+  tags: [buffer-safe, bounds-check]
+  description: Bounded string concatenation
+  match:
+  - call: strncat
+  - call: wcsncat
+  - call: _tcsncat
+  - call: strncat_s
+  - call: strcat_s
+
+- id: sanitizer.buffer.snprintf
+  kind: sanitizer
+  tags: [buffer-safe, bounds-check, format]
+  description: Bounded formatted output
+  match:
+  - call: snprintf
+  - call: vsnprintf
+  - call: swprintf
+  - call: sprintf_s
+  - call: snprintf_s
+
+# ============================================================================
+# Sanitizers - Input Validation
+# ============================================================================
+- id: sanitizer.validation.strlen
+  kind: sanitizer
+  tags: [validation, length-check]
+  description: Length validation
+  match:
+  - call: strlen
+  - call: wcslen
+  - call: strnlen
+
+- id: sanitizer.validation.range
+  kind: sanitizer
+  tags: [validation, range-check]
+  description: Range/bounds checking
+  match:
+  - call: isdigit
+  - call: isalpha
+  - call: isalnum
+  - call: isprint
+
+- id: sanitizer.sql.escape
+  kind: sanitizer
+  tags: [escape, sql]
+  description: SQL escaping functions
+  match:
+  - call: mysql_real_escape_string
+  - call: sqlite3_mprintf
+  - call: PQescapeStringConn
+
+# ============================================================================
+# Sanitizers - Path Safety
+# ============================================================================
+- id: sanitizer.path.realpath
+  kind: sanitizer
+  tags: [path-safe, canonicalization]
+  description: Path canonicalization
+  match:
+  - call: realpath
+  - call: _fullpath
+  - call: GetFullPathName
+
+- id: sanitizer.path.basename
+  kind: sanitizer
+  tags: [path-safe, component]
+  description: Path component extraction
+  match:
+  - call: basename
+  - call: dirname
+
+# ============================================================================
+# Propagators - String Operations
+# ============================================================================
+- id: propagator.string.copy
+  kind: propagator
+  tags: [string, copy]
+  description: String copying propagates taint
+  match:
+  - call: strcpy
+  - call: strncpy
+  - call: strdup
+  - call: strndup
+
+- id: propagator.string.concat
+  kind: propagator
+  tags: [string, concat]
+  description: String concatenation propagates taint
+  match:
+  - call: strcat
+  - call: strncat
+
+- id: propagator.string.format
+  kind: propagator
+  tags: [string, format]
+  description: String formatting propagates taint
+  match:
+  - call: sprintf
+  - call: snprintf
+
+- id: propagator.string.transform
+  kind: propagator
+  tags: [string, transform]
+  description: String transformation propagates taint
+  match:
+  - call: toupper
+  - call: tolower
+  - call: strtok
+  - call: strstr
+  - call: strchr
+
+# ============================================================================
+# Metadata
+# ============================================================================
+metadata:
+  language: c
+  supported_versions: ["C89", "C99", "C11", "C++11", "C++14", "C++17", "C++20"]
+  total_atoms: 37
+  frameworks:
+    - libc
+    - glibc
+    - musl
+    - STL
+  coverage:
+    cwe:
+      - CWE-78   # Command Injection
+      - CWE-89   # SQL Injection
+      - CWE-119  # Buffer Errors
+      - CWE-120  # Buffer Copy without Size Check
+      - CWE-121  # Stack-based Buffer Overflow
+      - CWE-122  # Heap-based Buffer Overflow
+      - CWE-134  # Format String
+      - CWE-22   # Path Traversal
+      - CWE-190  # Integer Overflow
+      - CWE-415  # Double Free
+      - CWE-416  # Use After Free
+      - CWE-476  # NULL Pointer Dereference
+      - CWE-787  # Out-of-bounds Write
+  last_updated: "2025-12-24"
+  maintainer: "Semantica Security Team"
+

@@ -1,0 +1,99 @@
+# CWE-330: Use of Insufficiently Random Values
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/330.html
+
+metadata:
+  cwe_id: CWE-330
+  name: "Use of Insufficiently Random Values"
+  severity: medium
+  owasp: "A02:2021-Cryptographic Failures"
+  category: "Cryptography"
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+  mitre_abstraction: class
+  likelihood_of_exploit: medium
+  references:
+    - https://cwe.mitre.org/data/definitions/330.html
+    - https://owasp.org/www-community/vulnerabilities/Insecure_Randomness
+
+description: |
+  The product uses insufficiently random numbers or values in a security context
+  that depends on unpredictable numbers.
+
+sources:
+  - id: source.security_context
+    description: "Security-sensitive operations"
+    patterns:
+      - context: token_generation
+      - context: session_id
+      - context: password_reset
+
+sinks:
+  - id: sink.random.weak
+    description: "Weak random number generators"
+    patterns:
+      - call: random.random
+      - call: random.randint
+      - call: random.choice
+      - call: random.shuffle
+      - call: random.sample
+      - call: time.time
+
+sanitizers:
+  - id: barrier.random.secure
+    description: "Cryptographically secure random"
+    patterns:
+      - call: secrets.token_bytes
+      - call: secrets.token_hex
+      - call: secrets.token_urlsafe
+      - call: secrets.choice
+      - call: os.urandom
+      - call: SystemRandom
+
+policy:
+  grammar:
+    WHEN:
+      tag: security_context
+    FLOWS:
+      - id: sink.random.weak
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: crypto_random
+
+validation:
+  min_test_cases: 6
+  min_precision: 0.85
+  min_recall: 0.80
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE330_Weak_Random"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: random.random for token
+      token = ''.join(random.choices(string.ascii_letters, k=32))
+
+  safe:
+    - |
+      # GOOD: secrets module
+      token = secrets.token_hex(32)
+
+fix:
+  priority: 2
+  effort: low
+  recommendations:
+    - title: "Use secrets module"
+      severity: best
+      example: |
+        import secrets
+        token = secrets.token_urlsafe(32)

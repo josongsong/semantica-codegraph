@@ -1,0 +1,572 @@
+# Java Taint Analysis Atoms
+# Language: Java
+# Framework: Spring, JDBC, Servlet, etc.
+
+atoms:
+# ============================================================================
+# Sources - Untrusted Input
+# ============================================================================
+- id: input.http.servlet
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  severity: high
+  description: Servlet HTTP request input
+  match:
+  - base_type: javax.servlet.http.HttpServletRequest
+    call: getParameter
+  - base_type: javax.servlet.http.HttpServletRequest
+    call: getHeader
+  - base_type: jakarta.servlet.http.HttpServletRequest
+    call: getParameter
+  - base_type: jakarta.servlet.http.HttpServletRequest
+    call: getHeader
+
+- id: input.http.spring
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  severity: high
+  description: Spring MVC request input
+  match:
+  - base_type: org.springframework.web.bind.annotation.RequestParam
+  - base_type: org.springframework.web.bind.annotation.PathVariable
+  - base_type: org.springframework.web.bind.annotation.RequestBody
+  - base_type: org.springframework.web.bind.annotation.RequestHeader
+
+- id: input.file.read
+  kind: source
+  tags:
+  - untrusted
+  - file
+  - io
+  severity: medium
+  description: File read operations
+  match:
+  - base_type: java.io.FileReader
+    call: read
+  - base_type: java.io.BufferedReader
+    call: readLine
+  - base_type: java.nio.file.Files
+    call: readAllBytes
+  - base_type: java.nio.file.Files
+    call: readString
+
+- id: input.env
+  kind: source
+  tags:
+  - untrusted
+  - env
+  - config
+  severity: medium
+  description: Environment variables
+  match:
+  - call: System.getenv
+  - call: System.getProperty
+
+# ============================================================================
+# Sinks - SQL Injection (CWE-89)
+# ============================================================================
+- id: sink.sql.jdbc.statement
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - jdbc
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [jdbc]
+  description: JDBC Statement execution (vulnerable)
+  match:
+  - base_type: java.sql.Statement
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: java.sql.Statement
+    call: executeQuery
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: java.sql.Statement
+    call: executeUpdate
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sql.jdbc.connection
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - jdbc
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [jdbc]
+  description: JDBC Connection direct query
+  match:
+  - base_type: java.sql.Connection
+    call: createStatement
+  - base_type: java.sql.Connection
+    call: prepareCall
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sql.hibernate
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - hibernate
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [hibernate]
+  description: Hibernate HQL injection
+  match:
+  - base_type: org.hibernate.Session
+    call: createQuery
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: org.hibernate.Session
+    call: createSQLQuery
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sql.jpa
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - jpa
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [jpa]
+  description: JPA JPQL injection
+  match:
+  - base_type: javax.persistence.EntityManager
+    call: createQuery
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: javax.persistence.EntityManager
+    call: createNativeQuery
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sql.mybatis
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - mybatis
+  severity: critical
+  cwe: ["CWE-89"]
+  owasp: "A03:2021-Injection"
+  frameworks: [mybatis]
+  description: MyBatis SQL injection
+  match:
+  - base_type: org.apache.ibatis.session.SqlSession
+    call: selectList
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - Command Injection (CWE-78)
+# ============================================================================
+- id: sink.command.runtime
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  description: Runtime command execution
+  match:
+  - base_type: java.lang.Runtime
+    call: exec
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.command.processbuilder
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: critical
+  cwe: ["CWE-78"]
+  owasp: "A03:2021-Injection"
+  description: ProcessBuilder command execution
+  match:
+  - base_type: java.lang.ProcessBuilder
+    call: command
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - XSS (CWE-79)
+# ============================================================================
+- id: sink.xss.servlet.writer
+  kind: sink
+  tags:
+  - xss
+  - web
+  - html
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A03:2021-Injection"
+  frameworks: [servlet]
+  description: Servlet response writer
+  match:
+  - base_type: javax.servlet.http.HttpServletResponse
+    call: getWriter
+  - base_type: java.io.PrintWriter
+    call: write
+    constraints:
+      arg_type: not_const
+  - base_type: java.io.PrintWriter
+    call: println
+    constraints:
+      arg_type: not_const
+
+- id: sink.xss.jsp
+  kind: sink
+  tags:
+  - xss
+  - web
+  - jsp
+  severity: high
+  cwe: ["CWE-79"]
+  owasp: "A03:2021-Injection"
+  frameworks: [jsp]
+  description: JSP output
+  match:
+  - call: out.print
+    constraints:
+      arg_type: not_const
+  - call: out.println
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - Path Traversal (CWE-22)
+# ============================================================================
+- id: sink.path.file
+  kind: sink
+  tags:
+  - traversal
+  - file
+  - path
+  severity: high
+  cwe: ["CWE-22"]
+  owasp: "A01:2021-Broken Access Control"
+  description: File operations
+  match:
+  - base_type: java.io.File
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: java.io.FileInputStream
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: java.io.FileOutputStream
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: java.nio.file.Paths
+    call: get
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - Deserialization (CWE-502)
+# ============================================================================
+- id: sink.deserialize.objectinputstream
+  kind: sink
+  tags:
+  - deserialize
+  - rce
+  - dangerous
+  severity: critical
+  cwe: ["CWE-502"]
+  owasp: "A08:2021-Software and Data Integrity Failures"
+  description: Java deserialization (CWE-502)
+  match:
+  - base_type: java.io.ObjectInputStream
+    call: readObject
+  - call: readObject
+
+- id: sink.deserialize.xml
+  kind: sink
+  tags:
+  - deserialize
+  - xxe
+  - xml
+  severity: critical
+  cwe: ["CWE-502", "CWE-611"]
+  owasp: "A08:2021-Software and Data Integrity Failures"
+  description: XML deserialization
+  match:
+  - base_type: javax.xml.bind.Unmarshaller
+    call: unmarshal
+  - base_type: com.thoughtworks.xstream.XStream
+    call: fromXML
+
+# ============================================================================
+# Sinks - XXE (CWE-611)
+# ============================================================================
+- id: sink.xxe.documentbuilder
+  kind: sink
+  tags:
+  - xxe
+  - xml
+  severity: critical
+  cwe: ["CWE-611"]
+  owasp: "A05:2021-Security Misconfiguration"
+  description: XXE via DocumentBuilder
+  match:
+  - base_type: javax.xml.parsers.DocumentBuilder
+    call: parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.xxe.saxparser
+  kind: sink
+  tags:
+  - xxe
+  - xml
+  severity: critical
+  cwe: ["CWE-611"]
+  owasp: "A05:2021-Security Misconfiguration"
+  description: XXE via SAXParser
+  match:
+  - base_type: javax.xml.parsers.SAXParser
+    call: parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - SSRF (CWE-918)
+# ============================================================================
+- id: sink.ssrf.url
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  cwe: ["CWE-918"]
+  owasp: "A10:2021-Server-Side Request Forgery"
+  description: SSRF via URL
+  match:
+  - base_type: java.net.URL
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: java.net.URL
+    call: openConnection
+  - base_type: java.net.URLConnection
+    call: connect
+
+- id: sink.ssrf.httpclient
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  cwe: ["CWE-918"]
+  owasp: "A10:2021-Server-Side Request Forgery"
+  frameworks: [apache-httpclient]
+  description: SSRF via HttpClient
+  match:
+  - base_type: org.apache.http.client.HttpClient
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - LDAP Injection (CWE-90)
+# ============================================================================
+- id: sink.ldap.search
+  kind: sink
+  tags:
+  - injection
+  - ldap
+  severity: critical
+  cwe: ["CWE-90"]
+  owasp: "A03:2021-Injection"
+  description: LDAP injection
+  match:
+  - base_type: javax.naming.directory.DirContext
+    call: search
+    args: [1]
+    constraints:
+      arg_type: not_const
+
+# ============================================================================
+# Sinks - Reflection (CWE-470)
+# ============================================================================
+- id: sink.reflection.forname
+  kind: sink
+  tags:
+  - reflection
+  - rce
+  - dangerous
+  severity: high
+  cwe: ["CWE-470"]
+  owasp: "A03:2021-Injection"
+  description: Class.forName with user input
+  match:
+  - call: Class.forName
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+- id: sink.reflection.newinstance
+  kind: sink
+  tags:
+  - reflection
+  - rce
+  - dangerous
+  severity: high
+  cwe: ["CWE-470"]
+  owasp: "A03:2021-Injection"
+  description: Reflection instantiation
+  match:
+  - base_type: java.lang.Class
+    call: newInstance
+
+# ============================================================================
+# Sanitizers
+# ============================================================================
+- id: barrier.sql.preparedstatement
+  kind: sanitizer
+  tags:
+  - safety
+  - db
+  - sql
+  description: PreparedStatement (safe)
+  scope: return
+  match:
+  - base_type: java.sql.Connection
+    call: prepareStatement
+    scope: return
+  - base_type: java.sql.PreparedStatement
+    call: setString
+  - base_type: java.sql.PreparedStatement
+    call: setInt
+
+- id: barrier.xss.escape
+  kind: sanitizer
+  tags:
+  - safety
+  - xss
+  - html
+  description: HTML escaping
+  scope: return
+  match:
+  - call: StringEscapeUtils.escapeHtml
+    scope: return
+  - call: HtmlUtils.htmlEscape
+    scope: return
+
+- id: barrier.path.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - path
+  - file
+  description: Path validation
+  scope: return
+  match:
+  - base_type: java.io.File
+    call: getCanonicalPath
+    scope: return
+  - base_type: java.nio.file.Path
+    call: normalize
+    scope: return
+
+- id: barrier.url.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - url
+  - validation
+  description: URL validation
+  scope: return
+  match:
+  - base_type: java.net.URI
+    call: create
+    scope: return
+
+# ============================================================================
+# Propagators
+# ============================================================================
+- id: prop.string
+  kind: propagator
+  tags:
+  - flow
+  - string
+  description: String operations
+  match:
+  - base_type: java.lang.String
+    call: concat
+    from_args: [0]
+    to: return
+  - base_type: java.lang.String
+    call: format
+    from_args: [0]
+    to: return
+  - base_type: java.lang.String
+    call: replace
+    from_args: [0]
+    to: return
+  - base_type: java.lang.StringBuilder
+    call: append
+    from_args: [0]
+    to: base
+
+- id: prop.collection
+  kind: propagator
+  tags:
+  - flow
+  - collection
+  description: Collection operations
+  match:
+  - base_type: java.util.List
+    call: add
+    from_args: [0]
+    to: base
+  - base_type: java.util.Map
+    call: put
+    from_args: [1]
+    to: base
+

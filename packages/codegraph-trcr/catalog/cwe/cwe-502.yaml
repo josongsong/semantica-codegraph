@@ -1,0 +1,156 @@
+# CWE-502: Deserialization of Untrusted Data
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/502.html
+
+metadata:
+  cwe_id: CWE-502
+  name: "Deserialization of Untrusted Data"
+  severity: critical
+  owasp: "A08:2021-Software and Data Integrity Failures"
+  category: "Injection"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  mitre_abstraction: base
+  likelihood_of_exploit: high
+
+  references:
+    - https://cwe.mitre.org/data/definitions/502.html
+    - https://owasp.org/Top10/A08_2021-Software_and_Data_Integrity_Failures/
+
+description: |
+  The application deserializes untrusted data without sufficiently verifying that the
+  resulting data will be valid. This can result in arbitrary code execution.
+
+sources:
+  - id: input.http.flask
+    description: "Flask HTTP request body"
+    patterns:
+      - flask.Request.get_data
+      - flask.Request.data
+
+  - id: input.http.django
+    description: "Django HTTP request body"
+    patterns:
+      - django.http.HttpRequest.body
+
+  - id: input.file
+    description: "File read operations"
+    patterns:
+      - call: open
+
+sinks:
+  - id: sink.deserialize.pickle
+    description: "pickle.loads() - RCE risk"
+    patterns:
+      - call: pickle.loads
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - call: pickle.load
+        args: [0]
+
+  - id: sink.deserialize.yaml
+    description: "yaml.load() - RCE risk"
+    patterns:
+      - call: yaml.load
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+  - id: sink.deserialize.marshal
+    description: "marshal.loads() - RCE risk"
+    patterns:
+      - call: marshal.loads
+        args: [0]
+
+sanitizers:
+  - id: barrier.deserialize.json
+    description: "JSON (safe)"
+    patterns:
+      - json.loads
+      - json.load
+
+  - id: barrier.deserialize.yaml_safe
+    description: "yaml.safe_load (safe)"
+    patterns:
+      - yaml.safe_load
+
+  - id: barrier.deserialize.validation
+    description: "Signature validation"
+    patterns:
+      - hmac.verify()
+      - signature.verify()
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.deserialize.pickle
+      - id: sink.deserialize.yaml
+      - id: sink.deserialize.marshal
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: safe_deserialize
+
+validation:
+  min_test_cases: 6
+  required_scenarios:
+    - pickle_loads
+    - yaml_load
+    - json_safe
+    - yaml_safe_load
+
+  min_precision: 0.90
+  min_recall: 0.85
+  max_false_positive_rate: 0.10
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE502_Insecure_Deserialization"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - bad_03_jsonpickle.py
+      - good_01.py
+      - good_02.py
+      - good_03_json.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: pickle.loads on untrusted data
+      data = request.get_data()
+      session = pickle.loads(data)
+
+  safe:
+    - |
+      # GOOD: JSON (safe)
+      data = request.get_data()
+      session = json.loads(data)
+
+fix:
+  priority: 1
+  effort: low
+
+  recommendations:
+    - title: "Use JSON instead of pickle"
+      severity: best
+      example: |
+        data = json.loads(request_data)
+
+    - title: "Use yaml.safe_load"
+      severity: recommended
+      example: |
+        data = yaml.safe_load(file)
+
+    - title: "Add signature validation"
+      severity: fallback
+      example: |
+        verify_signature(data, signature)
+        obj = pickle.loads(data)

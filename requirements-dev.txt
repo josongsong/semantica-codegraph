@@ -1,0 +1,26 @@
+# 로컬 개발용 Dependencies
+# 로컬에서 semantica-task-engine을 editable로 설치
+
+-e /Users/songmin/Documents/code-jo/platform-codes/semantica-task-engine/python-sdk
+
+# 사용법:
+# 로컬 개발: pip install -r requirements-dev.txt
+# 원격 빌드: pip install -e . (pyproject.toml의 Git URL 사용)
+
+# ========================================================================
+# CLI/UI Dependencies (v2 추가)
+# ========================================================================
+
+# CLI (Typer + Rich)
+typer>=0.9.0
+rich>=13.7.0
+
+# Web UI (Streamlit)
+streamlit>=1.29.0
+plotly>=5.18.0
+streamlit-ace>=0.1.1
+
+# API 추가 기능
+pyyaml>=6.0.1
+
+# Performance (cProfile, tracemalloc은 Python 내장 모듈)

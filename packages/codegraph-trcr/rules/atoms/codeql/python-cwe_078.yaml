@@ -1,0 +1,38 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_078.CommandInjection
+  kind: sink
+  tags: ['cwe_078', 'CommandInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-078"]
+  description: Using externally controlled strings in a command line may allow a malicious
+  match:
+  -     call: CommandInjection
+
+- id: sink.cwe_078.UnsafeShellCommandConstruction
+  kind: sink
+  tags: ['cwe_078', 'UnsafeShellCommandConstruction', 'vulnerability']
+  severity: high
+  cwe: ["CWE-078"]
+  description: Using externally controlled strings in a command line may allow a malicious
+  match:
+  -     call: UnsafeShellCommandConstruction
+
+- id: sink.cwe_078.CommandInjection
+  kind: sink
+  tags: ['cwe_078', 'CommandInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-078"]
+  description: Using externally controlled strings in a command line may allow a malicious
+  match:
+  -     call: CommandInjection
+
+- id: sink.cwe_078.UnsafeShellCommandConstruction
+  kind: sink
+  tags: ['cwe_078', 'UnsafeShellCommandConstruction', 'vulnerability']
+  severity: high
+  cwe: ["CWE-078"]
+  description: Using externally controlled strings in a command line may allow a malicious
+  match:
+  -     call: UnsafeShellCommandConstruction

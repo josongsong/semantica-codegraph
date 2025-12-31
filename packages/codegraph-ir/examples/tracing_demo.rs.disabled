@@ -1,0 +1,89 @@
+//! Tracing Demo - SOTA 2025 Observability
+//!
+//! This example demonstrates how to use tracing to monitor
+//! the L1-L5 pipeline execution with structured logging.
+//!
+//! Run with:
+//! ```bash
+//! RUST_LOG=codegraph_ir=debug cargo run --example tracing_demo --features python
+//! ```
+
+use codegraph_ir::pipeline::end_to_end_config::{
+    CacheConfig, IndexingMode, ParallelConfig, RepoInfo, StageControl,
+};
+use codegraph_ir::pipeline::{E2EOrchestrator, E2EPipelineConfig};
+use std::path::PathBuf;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize tracing subscriber
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "codegraph_ir=debug".into()),
+        )
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_target(true)
+                .with_thread_ids(true)
+                .with_file(true)
+                .with_line_number(true)
+                .with_ansi(true)
+                .pretty(),
+        )
+        .init();
+
+    tracing::info!("Starting tracing demo");
+
+    // Create pipeline configuration
+    let config = E2EPipelineConfig {
+        repo_info: RepoInfo {
+            repo_root: PathBuf::from("/tmp/test_repo"),
+            repo_name: "tracing_demo".to_string(),
+            file_paths: Some(vec![PathBuf::from("example.py")]),
+            language_filter: None,
+        },
+        cache_config: CacheConfig {
+            enable_cache: false,
+            cache_dir: None,
+            cache_ttl_seconds: 3600,
+        },
+        parallel_config: ParallelConfig {
+            num_workers: 4,
+            batch_size: 100,
+        },
+        stages: StageControl {
+            enable_l1: true,
+            enable_l2: true,
+            enable_l3: true,
+            enable_l4: true,
+            enable_l5: true,
+        },
+        mode: IndexingMode::Full,
+        mmap_threshold_bytes: 1024 * 1024, // 1MB
+    };
+
+    // Create orchestrator
+    let orchestrator = E2EOrchestrator::new(config);
+
+    // Execute pipeline - tracing will automatically log all stages
+    tracing::info!("Executing pipeline...");
+    match orchestrator.execute() {
+        Ok(result) => {
+            tracing::info!(
+                nodes_count = result.nodes.len(),
+                edges_count = result.edges.len(),
+                chunks_count = result.chunks.len(),
+                occurrences_count = result.occurrences.len(),
+                "Pipeline completed successfully"
+            );
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "Pipeline execution failed");
+            return Err(e.into());
+        }
+    }
+
+    tracing::info!("Tracing demo completed");
+    Ok(())
+}

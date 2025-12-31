@@ -1,0 +1,76 @@
+# Sanitizer Detection Patterns Configuration
+#
+# L11 SOTA: 하드코딩 제거, 설정 기반 패턴 관리
+#
+# Usage:
+#   detector = SemanticSanitizerDetector.from_config("sanitizer_patterns.yaml")
+
+# Fallback patterns (name-based heuristics, LOW confidence)
+fallback_patterns:
+  - sanitize
+  - escape
+  - clean
+  - validate
+  - purify
+  - scrub
+  - filter
+  - encode
+  - normalize
+
+# Known safe string operations (HIGH confidence)
+safe_string_ops:
+  - replace
+  - strip
+  - lower
+  - upper
+  - translate
+  - encode
+  - decode
+  - format
+  - escape
+  - quote
+
+# SQL-specific safe operations
+sql_safe_ops:
+  - parameterize
+  - bind
+  - prepare
+  - escape_sql
+  - quote_identifier
+
+# XSS-specific safe operations
+xss_safe_ops:
+  - escape_html
+  - encode_html
+  - sanitize_html
+  - encode_uri
+  - encode_uri_component
+
+# Dangerous operations (negative indicators)
+dangerous_ops:
+  - exec
+  - eval
+  - compile
+  - __import__
+  - os.system
+  - subprocess.call
+  - subprocess.run
+  - subprocess.Popen
+  - commands.getoutput
+  - pickle.loads
+  - yaml.load
+  - marshal.loads
+
+# Confidence thresholds
+confidence:
+  very_high: 0.95
+  high: 0.85
+  medium: 0.70
+  low: 0.50
+  none: 0.0
+
+# Analysis limits (performance safeguards)
+limits:
+  max_cfg_nodes: 10000
+  max_dfg_nodes: 10000
+  max_analysis_time_ms: 5000

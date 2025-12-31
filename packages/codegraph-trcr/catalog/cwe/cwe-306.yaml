@@ -1,0 +1,114 @@
+# CWE-306: Missing Authentication for Critical Function
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/306.html
+
+metadata:
+  cwe_id: CWE-306
+  name: "Missing Authentication for Critical Function"
+  severity: critical
+  owasp: "A01:2021-Broken Access Control"
+  category: "Access Control"
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+  mitre_abstraction: base
+  likelihood_of_exploit: high
+  references:
+    - https://cwe.mitre.org/data/definitions/306.html
+    - https://owasp.org/www-community/vulnerabilities/Missing_Authentication_for_Critical_Function
+
+description: |
+  The software does not perform any authentication for functionality that
+  requires a provable user identity or consumes a significant amount of resources.
+
+sources:
+  - id: source.critical_operation
+    description: "Critical operations requiring authentication"
+    patterns:
+      - context: admin_operation
+      - context: data_modification
+      - context: financial_transaction
+
+sinks:
+  - id: sink.critical.admin
+    description: "Administrative functions without auth check"
+    patterns:
+      - call: delete_user
+      - call: modify_permissions
+      - call: reset_password
+      - call: create_admin
+
+  - id: sink.critical.data
+    description: "Data modification without auth"
+    patterns:
+      - call: delete_all
+      - call: bulk_update
+      - call: export_data
+
+sanitizers:
+  - id: barrier.auth.required
+    description: "Authentication checks"
+    patterns:
+      - decorator: login_required
+      - decorator: authentication_required
+      - call: verify_authentication
+      - call: is_authenticated
+      - call: current_user.is_authenticated
+
+policy:
+  grammar:
+    WHEN:
+      tag: critical_function
+    FLOWS:
+      - id: sink.critical.admin
+      - id: sink.critical.data
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: authentication
+
+validation:
+  min_test_cases: 6
+  min_precision: 0.90
+  min_recall: 0.85
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE306_Missing_Authentication"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: Admin endpoint without authentication
+      @app.route('/admin/delete_user/<id>')
+      def delete_user(id):
+          User.query.get(id).delete()
+
+  safe:
+    - |
+      # GOOD: Authentication required
+      @app.route('/admin/delete_user/<id>')
+      @login_required
+      def delete_user(id):
+          if current_user.is_admin:
+              User.query.get(id).delete()
+
+fix:
+  priority: 1
+  effort: low
+  recommendations:
+    - title: "Add authentication decorator"
+      severity: best
+      example: |
+        from flask_login import login_required
+
+        @app.route('/admin/action')
+        @login_required
+        def admin_action():
+            ...

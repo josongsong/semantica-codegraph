@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_352.CSRFProtectionDisabled
+  kind: sink
+  tags: ['cwe_352', 'CSRFProtectionDisabled', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-352"]
+  description: Disabling or weakening CSRF protection may make the application
+  match:
+  -     call: CSRFProtectionDisabled
+
+- id: sink.cwe_352.CSRFProtectionDisabled
+  kind: sink
+  tags: ['cwe_352', 'CSRFProtectionDisabled', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-352"]
+  description: Disabling or weakening CSRF protection may make the application
+  match:
+  -     call: CSRFProtectionDisabled

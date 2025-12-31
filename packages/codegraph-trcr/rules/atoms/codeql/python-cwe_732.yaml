@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_732.WeakFilePermissions
+  kind: sink
+  tags: ['cwe_732', 'WeakFilePermissions', 'vulnerability']
+  severity: high
+  cwe: ["CWE-732"]
+  description: Allowing files to be readable or writable by users other than the owner may allow sensitive informat
+  match:
+  -     call: WeakFilePermissions
+
+- id: sink.cwe_732.WeakFilePermissions
+  kind: sink
+  tags: ['cwe_732', 'WeakFilePermissions', 'vulnerability']
+  severity: high
+  cwe: ["CWE-732"]
+  description: Allowing files to be readable or writable by users other than the owner may allow sensitive informat
+  match:
+  -     call: WeakFilePermissions

@@ -1,0 +1,212 @@
+# CWE-352: Cross-Site Request Forgery (CSRF)
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/352.html
+
+metadata:
+  cwe_id: CWE-352
+  name: "Cross-Site Request Forgery (CSRF)"
+  severity: high
+  owasp: "A01:2021-Broken Access Control"
+  category: "Access Control"
+
+  # Status
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  # Classification
+  mitre_abstraction: compound
+  likelihood_of_exploit: high
+
+  # References
+  references:
+    - https://cwe.mitre.org/data/definitions/352.html
+    - https://owasp.org/www-community/attacks/csrf
+    - https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
+
+description: |
+  The web application does not, or can not, sufficiently verify whether a well-formed,
+  valid, consistent request was intentionally provided by the user who submitted the request.
+
+  CSRF attacks exploit the trust that a site has in a user's browser. When a user is
+  authenticated to a web application, their browser stores the authentication credentials
+  (usually in cookies). A malicious site can then force the user's browser to make requests
+  to the vulnerable application, using those stored credentials.
+
+# ============================================================================
+# Detection Pattern
+# ============================================================================
+
+sources:
+  - id: source.http.state_change
+    description: "HTTP requests that cause state changes"
+    patterns:
+      - flask.Request.form
+      - flask.Request.json
+      - django.http.HttpRequest.POST
+      - fastapi.Request.body
+
+sinks:
+  - id: sink.state_change.database
+    description: "Database modifications"
+    patterns:
+      - base_type: django.db.models.Model
+        call: save
+      - base_type: django.db.models.Model
+        call: delete
+      - base_type: django.db.models.QuerySet
+        call: update
+      - base_type: django.db.models.QuerySet
+        call: delete
+      - base_type: sqlalchemy.orm.session.Session
+        call: commit
+
+  - id: sink.state_change.user
+    description: "User account modifications"
+    patterns:
+      - base_type: django.contrib.auth.models.User
+        call: set_password
+      - base_type: django.contrib.auth.models.User
+        call: save
+      - call: change_password
+      - call: update_profile
+
+sanitizers:
+  - id: barrier.csrf.token_check
+    description: "CSRF token validation"
+    patterns:
+      - call: csrf_protect
+      - call: validate_csrf_token
+      - call: check_csrf_token
+      - base_type: django.middleware.csrf.CsrfViewMiddleware
+
+  - id: barrier.csrf.decorator
+    description: "CSRF protection decorators"
+    patterns:
+      - decorator: csrf_protect
+      - decorator: requires_csrf_token
+      - decorator: ensure_csrf_cookie
+
+  - id: barrier.csrf.samesite
+    description: "SameSite cookie attribute"
+    patterns:
+      - set_cookie:
+          kwargs:
+            samesite: ["Strict", "Lax"]
+
+# ============================================================================
+# Taint Flow Policy
+# ============================================================================
+
+policy:
+  grammar:
+    WHEN:
+      tag: http_state_change
+    FLOWS:
+      - id: sink.state_change.database
+      - id: sink.state_change.user
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: csrf
+
+# ============================================================================
+# Validation Requirements
+# ============================================================================
+
+validation:
+  min_test_cases: 8
+  required_scenarios:
+    - post_without_token
+    - get_state_change
+    - post_with_token
+    - csrf_exempt_justified
+
+  min_precision: 0.85
+  min_recall: 0.80
+  max_false_positive_rate: 0.15
+
+# ============================================================================
+# Test Suite Mapping
+# ============================================================================
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE352_CSRF"
+    cases:
+      - bad_01.py  # POST without CSRF token
+      - bad_02.py  # GET for state change
+      - bad_03.py  # Missing middleware
+      - good_01.py # With CSRF token
+      - good_02.py # csrf_protect decorator
+      - good_03.py # SameSite cookie
+
+# ============================================================================
+# Examples
+# ============================================================================
+
+examples:
+  vulnerable:
+    - |
+      # BAD: POST without CSRF protection
+      @app.route('/transfer', methods=['POST'])
+      def transfer_money():
+          amount = request.form['amount']
+          to_account = request.form['to']
+          do_transfer(amount, to_account)  # No CSRF check!
+
+    - |
+      # BAD: GET request causing state change
+      @app.route('/delete/<int:id>')
+      def delete_item(id):
+          Item.query.get(id).delete()  # State change via GET!
+
+  safe:
+    - |
+      # GOOD: With CSRF token validation
+      @app.route('/transfer', methods=['POST'])
+      @csrf_protect
+      def transfer_money():
+          validate_csrf_token(request.form['csrf_token'])
+          amount = request.form['amount']
+          to_account = request.form['to']
+          do_transfer(amount, to_account)
+
+    - |
+      # GOOD: Django with built-in CSRF
+      from django.views.decorators.csrf import csrf_protect
+
+      @csrf_protect
+      def transfer_view(request):
+          if request.method == 'POST':
+              amount = request.POST['amount']
+              do_transfer(amount, request.user)
+
+# ============================================================================
+# Fix Recommendations
+# ============================================================================
+
+fix:
+  priority: 1
+  effort: low
+
+  recommendations:
+    - title: "Use framework CSRF protection"
+      severity: best
+      example: |
+        # Django: Enable CsrfViewMiddleware in MIDDLEWARE
+        # Flask: Use Flask-WTF or manual token validation
+
+    - title: "Add CSRF token to forms"
+      severity: recommended
+      example: |
+        <form method="POST">
+          {% csrf_token %}
+          <input type="text" name="amount">
+        </form>
+
+    - title: "Use SameSite cookies"
+      severity: recommended
+      example: |
+        response.set_cookie('session', value, samesite='Strict')

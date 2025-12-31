@@ -1,0 +1,59 @@
+# Python XSS (Cross-Site Scripting) Sinks
+# CWE-79: XSS
+# OWASP: A03:2021-Injection
+
+atoms:
+# =============================================================================
+# Flask HTML Output
+# =============================================================================
+- id: sink.html.flask
+  kind: sink
+  tags: [xss, web, html, flask]
+  severity: high
+  cwe: ["CWE-79"]
+  description: Flask HTML output
+  match:
+  - call: render_template_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: flask.render_template_string
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# MarkupSafe
+# =============================================================================
+- id: sink.html.markup
+  kind: sink
+  tags: [xss, web, html]
+  severity: high
+  cwe: ["CWE-79"]
+  description: MarkupSafe Markup - marks string as safe HTML (XSS risk)
+  match:
+  - call: Markup
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: markupsafe.Markup
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# Django HTML Output
+# =============================================================================
+- id: sink.html.django
+  kind: sink
+  tags: [xss, web, html, django]
+  severity: high
+  cwe: ["CWE-79"]
+  description: Django HTML output
+  match:
+  - base_type: django.http.HttpResponse
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - base_type: django.template.Template
+    call: render

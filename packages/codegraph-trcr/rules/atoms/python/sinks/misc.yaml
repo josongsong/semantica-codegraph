@@ -1,0 +1,308 @@
+# Python Miscellaneous Security Sinks
+# Various CWEs
+
+atoms:
+# =============================================================================
+# CWE-1333: ReDoS
+# =============================================================================
+- id: sink.redos.compile
+  kind: sink
+  tags: [redos, dos, regex]
+  severity: medium
+  cwe: ["CWE-1333"]
+  description: User-controlled regex pattern (ReDoS)
+  match:
+  - call: re.compile
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: re.search
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: re.match
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: re.findall
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: re.sub
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# CWE-117: Log Injection
+# =============================================================================
+- id: sink.log.injection
+  kind: sink
+  tags: [injection, log, monitoring]
+  severity: medium
+  cwe: ["CWE-117"]
+  description: Log injection via unescaped input
+  match:
+  - call: logging.info
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logging.warning
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logging.error
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logging.debug
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logging.critical
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logger.info
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logger.warning
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: logger.error
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# CWE-347: JWT Verification Bypass
+# =============================================================================
+- id: sink.jwt.none_algorithm
+  kind: sink
+  tags: [jwt, authentication, bypass]
+  severity: critical
+  cwe: ["CWE-347"]
+  description: JWT none algorithm vulnerability
+  match:
+  - call: jwt.decode
+    kwargs: [verify]
+    constraints:
+      kwarg_verify: false
+  - call: jwt.decode
+    kwargs: [options]
+
+# =============================================================================
+# CWE-943: GraphQL Injection
+# =============================================================================
+- id: sink.graphql.query
+  kind: sink
+  tags: [injection, graphql, api]
+  severity: high
+  cwe: ["CWE-943"]
+  description: GraphQL query injection
+  match:
+  - call: graphql_sync
+    args: [1]
+    constraints:
+      arg_type: not_const
+  - base_type: graphene.Schema
+    call: execute
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: execute_graphql
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# CWE-113: HTTP Header Injection
+# =============================================================================
+- id: sink.header.injection
+  kind: sink
+  tags: [injection, http, header]
+  severity: high
+  cwe: ["CWE-113"]
+  description: HTTP header injection
+  match:
+  - base_type: flask.Response
+    write: headers
+    constraints:
+      arg_type: not_const
+  - base_type: django.http.HttpResponse
+    write: headers
+    constraints:
+      arg_type: not_const
+  - call: response.headers.__setitem__
+    args: [1]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# CWE-798: Hardcoded Secrets
+# =============================================================================
+- id: sink.hardcoded_secret
+  kind: sink
+  tags: [secret, hardcoded, credential]
+  severity: critical
+  cwe: ["CWE-798"]
+  description: Hardcoded secrets in source code
+  match:
+  - call: set_password
+    args: [0]
+    constraints:
+      arg_type: const_string
+  - call: authenticate
+    kwargs: [password]
+    constraints:
+      arg_type: const_string
+
+- id: sink.secret.config
+  kind: sink
+  tags: [secret, hardcoded, config]
+  severity: high
+  cwe: ["CWE-798"]
+  description: Hardcoded secret in configuration
+  match:
+  - call: os.environ.setdefault
+    args: [1]
+    constraints:
+      arg_type: const
+  - call: settings.configure
+    kwargs: [SECRET_KEY]
+    constraints:
+      arg_type: const
+  - call: app.config.update
+    kwargs: [SECRET_KEY, DATABASE_PASSWORD, API_KEY]
+    constraints:
+      arg_type: const
+
+# =============================================================================
+# CWE-330: Weak Random
+# =============================================================================
+- id: sink.random.weak
+  kind: sink
+  tags: [random, weak, predictable]
+  severity: medium
+  cwe: ["CWE-330"]
+  description: Weak random number generator
+  match:
+  - call: random.random
+  - call: random.randint
+  - call: random.choice
+  - call: random.shuffle
+
+- id: sink.random.seed
+  kind: sink
+  tags: [random, seed, predictable]
+  severity: medium
+  cwe: ["CWE-330"]
+  description: Random seed with predictable value
+  match:
+  - call: random.seed
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# CWE-327: Weak Cryptography
+# =============================================================================
+- id: sink.crypto.weak_algorithm
+  kind: sink
+  tags: [crypto, weak, deprecated]
+  severity: high
+  cwe: ["CWE-327"]
+  description: Weak cryptographic algorithms
+  match:
+  - call: hashlib.md5
+  - call: hashlib.sha1
+  - call: Crypto.Cipher.DES.new
+  - call: Crypto.Cipher.ARC4.new
+  - call: Crypto.Cipher.Blowfish.new
+
+# =============================================================================
+# Access Control
+# =============================================================================
+- id: sink.idor.db_query
+  kind: sink
+  tags: [access_control, idor, db]
+  severity: high
+  cwe: ["CWE-639"]
+  description: Database query with user-controlled ID
+  match:
+  - base_type: django.db.models.Manager
+    call: get
+    kwargs: [id, pk]
+    constraints:
+      arg_type: not_const
+  - base_type: django.db.models.QuerySet
+    call: filter
+    kwargs: [id, pk]
+    constraints:
+      arg_type: not_const
+  - base_type: sqlalchemy.orm.query.Query
+    call: filter_by
+    kwargs: [id]
+    constraints:
+      arg_type: not_const
+
+- id: sink.sensitive_operation
+  kind: sink
+  tags: [access_control, sensitive]
+  severity: high
+  cwe: ["CWE-284"]
+  description: Sensitive operations requiring authentication
+  match:
+  - base_type: django.db.models.Model
+    call: delete
+  - base_type: django.db.models.QuerySet
+    call: delete
+  - call: os.remove
+  - call: shutil.rmtree
+
+- id: sink.privilege_operation
+  kind: sink
+  tags: [access_control, privilege]
+  severity: high
+  cwe: ["CWE-269"]
+  description: Operations requiring authorization
+  match:
+  - base_type: django.contrib.auth.models.User
+    call: set_password
+  - base_type: django.contrib.auth.models.User
+    call: save
+  - call: os.chmod
+  - call: os.chown
+
+# =============================================================================
+# Information Leakage
+# =============================================================================
+- id: sink.info_leak.logging
+  kind: sink
+  tags: [info_leak, logging, exposure]
+  severity: medium
+  cwe: ["CWE-532"]
+  description: Sensitive data in logs
+  match:
+  - call: logging.info
+    args: [0]
+  - call: logging.debug
+    args: [0]
+  - call: logging.warning
+    args: [0]
+  - call: print
+    args: [0]
+
+- id: sink.error.full_exception
+  kind: sink
+  tags: [error, exception, leak]
+  severity: medium
+  cwe: ["CWE-209"]
+  description: Full exception details exposed
+  match:
+  - call: traceback.format_exc
+  - call: sys.exc_info
+  - base_type: flask.Flask
+    write: debug

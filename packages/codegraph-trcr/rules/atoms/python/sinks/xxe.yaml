@@ -1,0 +1,53 @@
+# Python XXE (XML External Entity) Sinks
+# CWE-611: XXE
+# OWASP: A05:2021-Security Misconfiguration
+
+atoms:
+# =============================================================================
+# lxml
+# =============================================================================
+- id: sink.xxe.lxml
+  kind: sink
+  tags: [xxe, xml, lxml]
+  severity: critical
+  cwe: ["CWE-611"]
+  description: lxml XML parsing (XXE vulnerable without configuration)
+  match:
+  - base_type: lxml.etree._ElementTree
+    call: parse
+    args: [0]
+  - call: lxml.etree.parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: lxml.etree.fromstring
+    args: [0]
+    constraints:
+      arg_type: not_const
+
+# =============================================================================
+# Python stdlib XML
+# =============================================================================
+- id: sink.xxe.xml
+  kind: sink
+  tags: [xxe, xml, stdlib]
+  severity: critical
+  cwe: ["CWE-611"]
+  description: Python stdlib XML parsing (XXE vulnerable by default)
+  match:
+  - call: xml.etree.ElementTree.parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: xml.etree.ElementTree.fromstring
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: xml.dom.minidom.parse
+    args: [0]
+    constraints:
+      arg_type: not_const
+  - call: xml.dom.minidom.parseString
+    args: [0]
+    constraints:
+      arg_type: not_const

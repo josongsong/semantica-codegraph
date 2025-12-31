@@ -1,0 +1,730 @@
+# Python Security Policies
+#
+# Taint analysis rules for Python applications.
+
+policies:
+  - id: "sql-injection"
+    name: "SQL Injection"
+    severity: critical
+    cwe: "CWE-89"
+    owasp: "A03:2021-Injection"
+    description: "Detects SQL injection vulnerabilities from untrusted input to SQL sinks"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.sql.sqlite3
+        - id: sink.sql.psycopg2
+        - id: sink.sql.mysql
+        - id: sink.sql.pymysql
+        - id: sink.sql.sqlalchemy
+        - id: sink.sql.generic
+        - id: sink.sql.django_raw
+        - id: sink.sql.django_extra
+        - id: sink.sql.django_rawsql
+        - id: sink.sql.django_cursor
+        - id: sink.sql.sqlalchemy_orm
+        - id: sink.sql.peewee
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: sql
+
+  - id: "command-injection"
+    name: "Command Injection"
+    severity: critical
+    cwe: "CWE-78"
+    owasp: "A03:2021-Injection"
+    description: "Detects command injection from untrusted input to shell execution"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.command.subprocess
+        - id: sink.command.os
+        - id: sink.command.ssh
+        - id: sink.command.asyncio
+        - id: sink.command.shell
+        - id: sink.command.fabric
+        - id: sink.insecure.subprocess
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: command
+
+  - id: "command-injection-generic"
+    name: "Command Injection (Generic)"
+    severity: critical
+    cwe: "CWE-77"
+    owasp: "A03:2021-Injection"
+    description: "Detects generic command injection patterns"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.command.os
+        - id: sink.command.subprocess
+        - id: sink.code.eval
+        - id: sink.code.exec
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: command
+
+  - id: "code-injection"
+    name: "Code Injection"
+    severity: critical
+    cwe: "CWE-94"
+    owasp: "A03:2021-Injection"
+    description: "Detects code injection via eval/exec from untrusted input"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.code.eval
+        - id: sink.code.exec
+        - id: sink.code.importlib
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: code
+
+  - id: "xss"
+    name: "Cross-Site Scripting (XSS)"
+    severity: high
+    cwe: "CWE-79"
+    owasp: "A03:2021-Injection"
+    description: "Detects XSS vulnerabilities in web responses"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.html.flask
+        - id: sink.html.django
+        - id: sink.html.markup
+        - id: sink.html.django_template
+        - id: sink.html.django_response
+        - id: sink.html.jinja2
+        - id: sink.html.jinja2_unsafe
+        - id: sink.html.mako
+        - id: sink.ssti
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: html
+
+  - id: "path-traversal"
+    name: "Path Traversal"
+    severity: high
+    cwe: "CWE-22"
+    owasp: "A01:2021-Broken Access Control"
+    description: "Detects path traversal from user input to file operations"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.path.traversal
+        - id: sink.path.tarfile
+        - id: sink.path.zipfile
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: path
+
+  - id: "ssrf"
+    name: "Server-Side Request Forgery (SSRF)"
+    severity: high
+    cwe: "CWE-918"
+    owasp: "A10:2021-Server-Side Request Forgery"
+    description: "Detects SSRF from user input to HTTP requests"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.ssrf.requests
+        - id: sink.ssrf.urllib
+        - id: sink.ssrf.httpx
+        - id: sink.ssrf.aiohttp
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: url
+
+  - id: "deserialization"
+    name: "Insecure Deserialization"
+    severity: critical
+    cwe: "CWE-502"
+    owasp: "A08:2021-Software and Data Integrity Failures"
+    description: "Detects unsafe deserialization of untrusted data"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.deserialize.pickle
+        - id: sink.deserialize.yaml
+        - id: sink.deserialize.marshal
+        - id: sink.deserialize.shelve
+        - id: sink.deserialize.jsonpickle
+        - id: sink.deserialize.dill
+        - id: sink.deserialize.cloudpickle
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: serialize
+
+  - id: "ldap-injection"
+    name: "LDAP Injection"
+    severity: high
+    cwe: "CWE-90"
+    owasp: "A03:2021-Injection"
+    description: "Detects LDAP injection from untrusted input"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.ldap
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: ldap
+
+  - id: "eval-injection"
+    name: "Eval Injection"
+    severity: critical
+    cwe: "CWE-95"
+    owasp: "A03:2021-Injection"
+    description: "Detects dangerous eval() with untrusted input"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.code.eval
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: code
+
+  - id: "xpath-injection"
+    name: "XPath Injection"
+    severity: high
+    cwe: "CWE-643"
+    owasp: "A03:2021-Injection"
+    description: "Detects XPath injection from untrusted input"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.xpath
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: xpath
+
+  - id: "idor"
+    name: "Insecure Direct Object Reference"
+    severity: high
+    cwe: "CWE-639"
+    owasp: "A01:2021-Broken Access Control"
+    description: "Detects direct object access without authorization check"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.idor.db_query
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: authorization
+
+  - id: "missing-access-control"
+    name: "Missing Access Control"
+    severity: high
+    cwe: "CWE-284"
+    owasp: "A01:2021-Broken Access Control"
+    description: "Detects sensitive operations without authentication"
+    grammar:
+      WHEN:
+        tag: public_endpoint
+      FLOWS:
+        - id: sink.sensitive_operation
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: authentication
+
+  - id: "incorrect-authorization"
+    name: "Incorrect Authorization"
+    severity: high
+    cwe: "CWE-863"
+    owasp: "A01:2021-Broken Access Control"
+    description: "Detects incorrect authorization logic"
+    grammar:
+      WHEN:
+        tag: user_controlled
+      FLOWS:
+        - id: sink.privilege_operation
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: authorization_check
+
+  - id: "weak-crypto"
+    name: "Weak Cryptographic Algorithm"
+    severity: high
+    cwe: "CWE-327"
+    owasp: "A02:2021-Cryptographic Failures"
+    description: "Detects use of weak crypto algorithms (MD5, SHA1, DES)"
+    grammar:
+      WHEN:
+        tag: sensitive_data
+      FLOWS:
+        - id: sink.crypto.weak_algorithm
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: strong_crypto
+
+  - id: "hardcoded-credentials"
+    name: "Hardcoded Credentials"
+    severity: critical
+    cwe: "CWE-798"
+    owasp: "A07:2021-Identification and Authentication Failures"
+    description: "Detects hardcoded passwords, API keys, secrets"
+    grammar:
+      WHEN:
+        tag: literal_string
+      FLOWS:
+        - id: sink.hardcoded_secret
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: config_file
+
+  - id: "weak-rng"
+    name: "Weak Random Number Generator"
+    severity: medium
+    cwe: "CWE-330"
+    owasp: "A02:2021-Cryptographic Failures"
+    description: "Detects use of predictable random() for security"
+    grammar:
+      WHEN:
+        tag: security_sensitive
+      FLOWS:
+        - id: sink.random.weak
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: crypto_random
+
+  - id: "weak-prng"
+    name: "Weak Pseudo-Random Number Generator"
+    severity: medium
+    cwe: "CWE-338"
+    owasp: "A02:2021-Cryptographic Failures"
+    description: "Detects predictable random seed"
+    grammar:
+      WHEN:
+        tag: user_controlled
+      FLOWS:
+        - id: sink.random.seed
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: crypto_random
+
+  - id: "info-exposure"
+    name: "Information Exposure"
+    severity: medium
+    cwe: "CWE-200"
+    owasp: "A04:2021-Insecure Design"
+    description: "Detects sensitive information exposure in logs/output"
+    grammar:
+      WHEN:
+        tag: sensitive_data
+      FLOWS:
+        - id: sink.info_leak.logging
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: redaction
+
+  - id: "error-message-leak"
+    name: "Error Message Information Leak"
+    severity: medium
+    cwe: "CWE-209"
+    owasp: "A04:2021-Insecure Design"
+    description: "Detects full error details exposed to user"
+    grammar:
+      WHEN:
+        tag: exception
+      FLOWS:
+        - id: sink.error.full_exception
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: error_sanitizer
+
+  - id: "csrf"
+    name: "Cross-Site Request Forgery"
+    severity: high
+    cwe: "CWE-352"
+    owasp: "A01:2021-Broken Access Control"
+    description: "Detects state-changing operations without CSRF protection"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.csrf.state_change
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: csrf
+
+  - id: "input-validation"
+    name: "Improper Input Validation"
+    severity: medium
+    cwe: "CWE-20"
+    owasp: "A03:2021-Injection"
+    description: "Detects missing input validation"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.dangerous_operation
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: validation
+
+  - id: "file-permission"
+    name: "Incorrect Permission Assignment"
+    severity: medium
+    cwe: "CWE-732"
+    owasp: "A01:2021-Broken Access Control"
+    description: "Detects weak file permissions"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.permission.weak
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: permission
+
+  - id: "file-upload"
+    name: "Unrestricted File Upload"
+    severity: high
+    cwe: "CWE-434"
+    owasp: "A04:2021-Insecure Design"
+    description: "Detects file upload without validation"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.upload.dangerous
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: upload_validation
+
+  - id: "integer-overflow"
+    name: "Integer Overflow"
+    severity: medium
+    cwe: "CWE-190"
+    owasp: "A04:2021-Insecure Design"
+    description: "Detects unbounded numeric operations"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.numeric.unbounded
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: bounds_check
+
+  - id: "authentication"
+    name: "Improper Authentication"
+    severity: critical
+    cwe: "CWE-287"
+    owasp: "A07:2021-Identification and Authentication Failures"
+    description: "Detects authentication bypass"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.auth.bypass
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: authentication
+
+  - id: "xxe"
+    name: "XML External Entity (XXE)"
+    severity: critical
+    cwe: "CWE-611"
+    owasp: "A05:2021-Security Misconfiguration"
+    description: "Detects XXE vulnerabilities from untrusted XML input"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.xxe.lxml
+        - id: sink.xxe.xml
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: xxe
+
+  - id: "nosql-injection"
+    name: "NoSQL Injection"
+    severity: critical
+    cwe: "CWE-943"
+    owasp: "A03:2021-Injection"
+    description: "Detects NoSQL injection from untrusted input to database queries"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.nosql.mongodb
+        - id: sink.nosql.redis
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: nosql
+
+  - id: "missing-authentication"
+    name: "Missing Authentication for Critical Function"
+    severity: critical
+    cwe: "CWE-306"
+    owasp: "A07:2021-Identification and Authentication Failures"
+    description: "Detects critical functions accessible without authentication"
+    grammar:
+      WHEN:
+        tag: public_endpoint
+      FLOWS:
+        - id: sink.sensitive_operation
+        - id: sink.privilege_operation
+        - id: sink.csrf.state_change
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: authentication
+
+  - id: "missing-authorization"
+    name: "Missing Authorization"
+    severity: high
+    cwe: "CWE-862"
+    owasp: "A01:2021-Broken Access Control"
+    description: "Detects resource access without authorization check"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.idor.db_query
+        - id: sink.privilege_operation
+        - id: sink.sensitive_operation
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: authorization
+
+  - id: "ssti"
+    name: "Server-Side Template Injection"
+    severity: critical
+    cwe: "CWE-1336"
+    owasp: "A03:2021-Injection"
+    description: "Detects template injection from untrusted input"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.ssti
+        - id: sink.html.flask
+        - id: sink.html.jinja2
+        - id: sink.html.mako
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: html
+
+  - id: "redos"
+    name: "Regular Expression Denial of Service"
+    severity: medium
+    cwe: "CWE-1333"
+    owasp: "A04:2021-Insecure Design"
+    description: "Detects user-controlled regex patterns (ReDoS risk)"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.redos
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: regex
+
+  - id: "graphql-injection"
+    name: "GraphQL Injection"
+    severity: high
+    cwe: "CWE-943"
+    owasp: "A03:2021-Injection"
+    description: "Detects GraphQL query injection from untrusted input"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.graphql.query
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: graphql
+
+  - id: "jwt-verification-bypass"
+    name: "JWT Verification Bypass"
+    severity: critical
+    cwe: "CWE-347"
+    owasp: "A07:2021-Identification and Authentication Failures"
+    description: "Detects JWT decode without proper signature verification"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.jwt.unsafe
+        - id: sink.jwt.none_algorithm
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: jwt
+
+  - id: "log-injection"
+    name: "Log Injection"
+    severity: medium
+    cwe: "CWE-117"
+    owasp: "A09:2021-Security Logging and Monitoring Failures"
+    description: "Detects log injection via unescaped user input"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.log.injection
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: log
+
+  - id: "race-condition-toctou"
+    name: "TOCTOU Race Condition"
+    severity: medium
+    cwe: "CWE-362"
+    owasp: "A04:2021-Insecure Design"
+    description: "Detects time-of-check to time-of-use race conditions"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.race.toctou
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: atomic
+
+  - id: "privilege-escalation"
+    name: "Improper Privilege Management"
+    severity: critical
+    cwe: "CWE-269"
+    owasp: "A01:2021-Broken Access Control"
+    description: "Detects privilege escalation via user-controlled values"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.privilege.escalation
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: privilege
+
+  - id: "incorrect-default-permissions"
+    name: "Incorrect Default Permissions"
+    severity: medium
+    cwe: "CWE-276"
+    owasp: "A01:2021-Broken Access Control"
+    description: "Detects files created with overly permissive permissions"
+    grammar:
+      WHEN:
+        tag: untrusted
+      FLOWS:
+        - id: sink.permission.default
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: permission
+
+  - id: "insecure-ssl-configuration"
+    name: "Insecure SSL/TLS Configuration"
+    severity: high
+    cwe: "CWE-295"
+    owasp: "A06:2021-Vulnerable and Outdated Components"
+    description: "Detects insecure SSL/TLS settings (disabled verification, weak protocols)"
+    grammar:
+      WHEN:
+        tag: any
+      FLOWS:
+        - id: sink.insecure.ssl
+        - id: sink.insecure.requests
+        - id: sink.insecure.urllib3
+        - id: sink.insecure.paramiko
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: ssl
+
+  - id: "deprecated-crypto"
+    name: "Use of Deprecated Cryptographic Functions"
+    severity: high
+    cwe: "CWE-327"
+    owasp: "A06:2021-Vulnerable and Outdated Components"
+    description: "Detects use of deprecated/weak cryptographic algorithms"
+    grammar:
+      WHEN:
+        tag: any
+      FLOWS:
+        - id: sink.deprecated.crypto
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: strong_crypto
+
+  - id: "insecure-xml-parsing"
+    name: "Insecure XML Parsing"
+    severity: medium
+    cwe: "CWE-611"
+    owasp: "A06:2021-Vulnerable and Outdated Components"
+    description: "Detects use of stdlib XML parsers without defusedxml"
+    grammar:
+      WHEN:
+        tag: any
+      FLOWS:
+        - id: sink.deprecated.xml
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: xxe
+
+  - id: "debug-mode-enabled"
+    name: "Debug Mode Enabled in Production"
+    severity: high
+    cwe: "CWE-489"
+    owasp: "A05:2021-Security Misconfiguration"
+    description: "Detects debug mode enabled which may expose sensitive information"
+    grammar:
+      WHEN:
+        tag: any
+      FLOWS:
+        - id: sink.insecure.debug
+      BLOCK:
+        UNLESS:
+          kind: sanitizer
+          tag: production

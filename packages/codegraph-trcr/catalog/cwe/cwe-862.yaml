@@ -1,0 +1,231 @@
+# CWE-862: Missing Authorization
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/862.html
+
+metadata:
+  cwe_id: CWE-862
+  name: "Missing Authorization"
+  severity: high
+  owasp: "A01:2021-Broken Access Control"
+  category: "Access Control"
+
+  # Status
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  # Classification
+  mitre_abstraction: class
+  likelihood_of_exploit: high
+
+  # References
+  references:
+    - https://cwe.mitre.org/data/definitions/862.html
+    - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/05-Authorization_Testing/02-Testing_for_Bypassing_Authorization_Schema
+    - https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html
+
+description: |
+  The software does not perform an authorization check when an actor attempts
+  to access a resource or perform an action.
+
+  When access control checks are not applied, users can access data or perform
+  actions that they should not be allowed to. This can lead to a wide range of
+  problems including information disclosure, denial of service, and arbitrary
+  code execution.
+
+# ============================================================================
+# Detection Pattern
+# ============================================================================
+
+sources:
+  - id: source.user_controlled_id
+    description: "User-controlled resource identifiers"
+    patterns:
+      - flask.Request.args.get
+      - flask.Request.form.get
+      - django.http.HttpRequest.GET
+      - django.http.HttpRequest.POST
+      - fastapi.Path
+      - fastapi.Query
+
+sinks:
+  - id: sink.resource.access
+    description: "Direct resource access without authorization"
+    patterns:
+      - base_type: django.db.models.Manager
+        call: get
+        kwargs: [id, pk]
+      - base_type: django.db.models.QuerySet
+        call: filter
+        kwargs: [id, pk, user_id]
+      - base_type: sqlalchemy.orm.Query
+        call: filter_by
+        kwargs: [id]
+      - base_type: sqlalchemy.orm.Query
+        call: get
+
+  - id: sink.resource.modify
+    description: "Resource modification without authorization"
+    patterns:
+      - base_type: django.db.models.Model
+        call: save
+      - base_type: django.db.models.Model
+        call: delete
+      - base_type: django.db.models.QuerySet
+        call: update
+      - base_type: django.db.models.QuerySet
+        call: delete
+
+  - id: sink.sensitive_data
+    description: "Access to sensitive data"
+    patterns:
+      - call: get_user_data
+      - call: get_account_info
+      - call: read_private_file
+
+sanitizers:
+  - id: barrier.authz.permission_check
+    description: "Permission/Authorization checks"
+    patterns:
+      - call: check_permission
+      - call: has_permission
+      - call: require_permission
+      - call: user_has_perm
+      - call: check_object_permission
+
+  - id: barrier.authz.ownership_check
+    description: "Resource ownership verification"
+    patterns:
+      - call: check_ownership
+      - call: is_owner
+      - call: verify_ownership
+      - condition: "resource.owner == request.user"
+      - condition: "resource.user_id == current_user.id"
+
+  - id: barrier.authz.decorator
+    description: "Authorization decorators"
+    patterns:
+      - decorator: permission_required
+      - decorator: user_passes_test
+      - decorator: login_required
+      - decorator: require_role
+
+# ============================================================================
+# Taint Flow Policy
+# ============================================================================
+
+policy:
+  grammar:
+    WHEN:
+      tag: user_controlled
+    FLOWS:
+      - id: sink.resource.access
+      - id: sink.resource.modify
+      - id: sink.sensitive_data
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: authorization
+
+# ============================================================================
+# Validation Requirements
+# ============================================================================
+
+validation:
+  min_test_cases: 10
+  required_scenarios:
+    - direct_object_access
+    - missing_owner_check
+    - idor_attack
+    - with_permission_check
+    - with_ownership_check
+
+  min_precision: 0.80
+  min_recall: 0.85
+  max_false_positive_rate: 0.20
+
+# ============================================================================
+# Test Suite Mapping
+# ============================================================================
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE862_Missing_Authorization"
+    cases:
+      - bad_01.py  # Direct DB access
+      - bad_02.py  # IDOR vulnerability
+      - bad_03.py  # Missing owner check
+      - good_01.py # With permission check
+      - good_02.py # With ownership check
+      - good_03.py # With decorator
+
+# ============================================================================
+# Examples
+# ============================================================================
+
+examples:
+  vulnerable:
+    - |
+      # BAD: Direct object access without authorization
+      @app.route('/user/<int:user_id>')
+      def get_user(user_id):
+          user = User.query.get(user_id)  # No authorization check!
+          return jsonify(user.to_dict())
+
+    - |
+      # BAD: IDOR - can access any user's data
+      @app.route('/documents/<int:doc_id>')
+      def get_document(doc_id):
+          doc = Document.query.get(doc_id)  # Missing owner check
+          return doc.content
+
+  safe:
+    - |
+      # GOOD: With ownership check
+      @app.route('/user/<int:user_id>')
+      @login_required
+      def get_user(user_id):
+          if current_user.id != user_id and not current_user.is_admin:
+              return "Forbidden", 403
+          user = User.query.get(user_id)
+          return jsonify(user.to_dict())
+
+    - |
+      # GOOD: With permission check
+      @app.route('/documents/<int:doc_id>')
+      @login_required
+      def get_document(doc_id):
+          doc = Document.query.get(doc_id)
+          if not check_permission(current_user, doc, 'read'):
+              return "Forbidden", 403
+          return doc.content
+
+# ============================================================================
+# Fix Recommendations
+# ============================================================================
+
+fix:
+  priority: 1
+  effort: medium
+
+  recommendations:
+    - title: "Implement ownership checks"
+      severity: best
+      example: |
+        if resource.owner_id != current_user.id:
+            raise PermissionDenied()
+
+    - title: "Use permission decorators"
+      severity: recommended
+      example: |
+        @permission_required('resource.view')
+        def view_resource(resource_id):
+            ...
+
+    - title: "Centralize authorization logic"
+      severity: recommended
+      example: |
+        class ResourcePolicy:
+            def can_view(self, user, resource):
+                return resource.owner == user or user.is_admin

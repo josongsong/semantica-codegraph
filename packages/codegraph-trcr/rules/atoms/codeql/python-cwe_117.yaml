@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_117.LogInjection
+  kind: sink
+  tags: ['cwe_117', 'LogInjection', 'vulnerability']
+  severity: high
+  cwe: ["CWE-117"]
+  description: Building log entries from user-controlled data is vulnerable to
+  match:
+  -     call: LogInjection
+
+- id: sink.cwe_117.LogInjection
+  kind: sink
+  tags: ['cwe_117', 'LogInjection', 'vulnerability']
+  severity: high
+  cwe: ["CWE-117"]
+  description: Building log entries from user-controlled data is vulnerable to
+  match:
+  -     call: LogInjection

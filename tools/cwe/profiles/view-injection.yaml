@@ -1,0 +1,130 @@
+# View: Injection Attacks
+#
+# OWASP Top 10 A03:2021-Injection 관련 CWE 통합 View
+
+metadata:
+  view_id: view-injection
+  name: "Injection Attacks"
+  version: "1.0.0"
+  owasp: "A03:2021-Injection"
+  priority: critical
+
+description: |
+  Injection flaws occur when untrusted data is sent to an interpreter
+  as part of a command or query.
+
+# ============================================================================
+# Included CWEs
+# ============================================================================
+
+cwes:
+  # SQL Injection
+  - cwe_id: CWE-89
+    weight: 1.0
+    required: true
+
+  # OS Command Injection
+  - cwe_id: CWE-78
+    weight: 1.0
+    required: true
+
+  # XSS
+  - cwe_id: CWE-79
+    weight: 0.9
+    required: true
+
+  # Code Injection
+  - cwe_id: CWE-94
+    weight: 1.0
+    required: true
+
+  # Eval Injection
+  - cwe_id: CWE-95
+    weight: 0.9
+    required: false
+
+  # XPath Injection
+  - cwe_id: CWE-643
+    weight: 0.7
+    required: false
+
+  # LDAP Injection
+  - cwe_id: CWE-90
+    weight: 0.6
+    required: false
+
+# ============================================================================
+# Execution Configuration
+# ============================================================================
+
+execution:
+  languages:
+    - python
+    - typescript
+    - java
+
+  modes:
+    - path_sensitive
+    - context_sensitive
+
+  performance:
+    timeout_per_file: 30s
+    max_path_depth: 20
+    max_vulnerabilities: 100
+
+# ============================================================================
+# Acceptance Criteria
+# ============================================================================
+
+acceptance:
+  # Overall metrics
+  min_precision: 0.85
+  min_recall: 0.80
+  max_false_positive_rate: 0.15
+
+  # Per-CWE requirements
+  per_cwe:
+    CWE-89:
+      min_recall: 0.90
+      max_fp_rate: 0.10
+    CWE-78:
+      min_recall: 0.85
+      max_fp_rate: 0.10
+    CWE-79:
+      min_recall: 0.80
+      max_fp_rate: 0.15
+
+# ============================================================================
+# Test Suite Selection
+# ============================================================================
+
+test_suites:
+  - source: juliet
+    cwes: [CWE-89, CWE-78, CWE-79, CWE-94]
+    weight: 0.7
+
+  - source: owasp
+    cwes: [CWE-89, CWE-79]
+    weight: 0.3
+
+# ============================================================================
+# CI Configuration
+# ============================================================================
+
+ci:
+  run_on:
+    - pull_request
+    - push_to_main
+
+  triggers:
+    - path: "src/**/taint/**"
+      run: full
+    - path: "cwe/catalog/cwe-89.yaml"
+      run: cwe-89
+    - path: "cwe/catalog/**"
+      run: full
+
+  reporting:
+    format: markdown
+    summary: true
+    details: on_failure

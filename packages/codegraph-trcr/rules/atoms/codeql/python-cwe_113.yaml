@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_113.HeaderInjection
+  kind: sink
+  tags: ['cwe_113', 'HeaderInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-113"]
+  description: Writing user input directly to an HTTP header
+  match:
+  -     call: HeaderInjection
+
+- id: sink.cwe_113.HeaderInjection
+  kind: sink
+  tags: ['cwe_113', 'HeaderInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-113"]
+  description: Writing user input directly to an HTTP header
+  match:
+  -     call: HeaderInjection

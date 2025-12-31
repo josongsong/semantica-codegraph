@@ -1,0 +1,278 @@
+flowchart TD
+    %% ==========================================
+    %% 🎨 Visual Styling
+    %% ==========================================
+    classDef user fill:#212121,stroke:#000,stroke-width:3px,color:#fff,font-weight:bold
+    classDef interface fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef queue fill:#673ab7,stroke:#311b92,stroke-width:2px,color:#fff
+    classDef input fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
+    classDef brain fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef env fill:#fff8e1,stroke:#ff6f00,stroke-width:2px,color:#000
+    classDef action fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef tool fill:#ffccbc,stroke:#bf360c,stroke-width:2px,stroke-dasharray: 2 2,color:#000
+    classDef verify fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef delivery fill:#fafafa,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,shape:diamond,color:#000
+    classDef bg fill:#eceff1,stroke:#546e7a,stroke-width:1px,stroke-dasharray: 3 3,color:#000
+    classDef danger fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    classDef store fill:#37474f,stroke:#000,stroke-width:2px,color:#fff
+    classDef vault fill:#455a64,stroke:#263238,stroke-width:2px,color:#fff
+    classDef doc fill:#00897b,stroke:#004d40,stroke-width:2px,color:#fff
+    classDef tele fill:#263238,stroke:#fff,stroke-width:1px,stroke-dasharray: 5 5
+
+    %% ==========================================
+    %% L0: INTERFACE & ORCHESTRATION
+    %% ==========================================
+    subgraph L0 ["🖥️ Layer 0: Interface & Orchestration"]
+        USER([👤 User Dev]):::user
+
+        %% [New] API Gateway & Auth
+        GATEWAY[API Gateway Auth Rate Limit]:::interface
+
+        SESSION[Session State Context Manager]:::interface
+        BOARD[Task Board Kanban View]:::interface
+        NOTIFY[Notification Service Email Slack]:::interface
+
+        JOB_QUEUE[Async Job Queue Redis]:::queue
+        WORKER[Background Worker]:::queue
+
+        USER <--> GATEWAY
+        GATEWAY <--> SESSION
+        SESSION <--> BOARD
+        SESSION <--> NOTIFY
+        NOTIFY -.-> USER
+
+        SESSION -- Enqueue --> JOB_QUEUE
+        JOB_QUEUE -- Consume --> WORKER
+        WORKER -.->|Update Status| SESSION
+    end
+
+    %% ==========================================
+    %% INFRASTRUCTURE
+    %% ==========================================
+    subgraph INFRA ["🔐 Infrastructure Services"]
+        VAULT[Secret Vault AWS SM]:::vault
+    end
+
+    %% ==========================================
+    %% L1: BACKGROUND & INTELLIGENCE
+    %% ==========================================
+    subgraph L1 ["🔬 Layer 1: Core Intelligence"]
+        WATCHER[File Watcher]:::bg
+
+        %% [New] Knowledge Graph
+        KG_BUILDER[Knowledge Graph Builder]:::bg
+        INDEXER[Vector Indexer]:::bg
+
+        %% [New] Root Cause Analysis
+        RCA_AGENT[RCA Agent Failure Analyst]:::bg
+
+        EXP_STORE[(🧠 Experience Store)]:::store
+
+        subgraph DEEP_ANALYSIS ["Deep Code Analysis"]
+            AST_CFG[AST CFG Parser]:::bg
+            PDG[PDG Engine]:::bg
+            SLICER[Code Slicer]:::bg
+            IMPACT[Impact Calculator]:::bg
+        end
+
+        WATCHER --> INDEXER & KG_BUILDER
+        WATCHER --> AST_CFG --> PDG --> SLICER --> IMPACT
+        INDEXER & KG_BUILDER -.-> EXP_STORE
+
+        %% RCA Loop
+        RCA_AGENT --> EXP_STORE
+    end
+
+    %% ==========================================
+    %% L2: INPUT & SAFETY GATE
+    %% ==========================================
+    subgraph L2 ["🛡️ Layer 2: Safety & Budget"]
+        PII_PROMPT[Prompt Secret PII Scrub]:::danger
+        LICENSE_PROMPT[Prompt License Check]:::danger
+        CTX_FUSION[Context Fusion]:::input
+
+        subgraph OPTIMIZER ["Optimization Strategy"]
+            CACHE{KV Cache Hit?}:::decision
+            CACHE_TYPE{Action Required?}:::decision
+            BUDGET_OPT[💰 Budget Optimizer]:::input
+        end
+
+        ROUTER{Model Router}:::decision
+
+        WORKER --> PII_PROMPT --> LICENSE_PROMPT --> CTX_FUSION
+        CTX_FUSION --> CACHE
+
+        CACHE -- No --> BUDGET_OPT --> ROUTER
+        CACHE -- Yes --> CACHE_TYPE
+
+        CACHE_TYPE -- Text Only --> SESSION
+        CACHE_TYPE -- Code Action --> SANDBOX
+
+        BUDGET_OPT -- Propose Reduction --> SESSION
+    end
+
+    %% ==========================================
+    %% L3: BRAIN REASONING
+    %% ==========================================
+    subgraph L3 ["🧠 Layer 3: Reasoning Engine"]
+        FAST_LLM[Fast LLM Direct]:::brain
+
+        subgraph LATS_ENGINE ["🌲 LATS Engine MCTS"]
+            ROOT(Root):::brain
+            SELECT[Selection]:::brain
+            EXPAND[Expansion]:::brain
+            SIMUL[Simulation]:::brain
+            BACKPROP[Backprop]:::brain
+
+            ROOT --> SELECT --> EXPAND --> SIMUL --> BACKPROP --> SELECT
+        end
+
+        RETRIEVAL[🔍 Retrieval Engine Lexical Graph]:::brain
+        TG[TaskGraph Planner]:::brain
+
+        ROUTER -- Simple --> FAST_LLM
+        ROUTER -- Complex --> LATS_ENGINE
+
+        EXP_STORE -.-> RETRIEVAL & LATS_ENGINE
+
+        INDEXER & KG_BUILDER -.-> RETRIEVAL
+
+        FAST_LLM -.-> RETRIEVAL
+        FAST_LLM --> TG
+        LATS_ENGINE --> RETRIEVAL --> TG
+        TG -.-> BOARD
+    end
+
+    %% ==========================================
+    %% L4: ENVIRONMENT PREP
+    %% ==========================================
+    subgraph L4 ["⚙️ Layer 4: Env & Git Prep"]
+        SANDBOX[Sandbox Manager Docker Venv]:::env
+        ENV_OK{Env Ready?}:::decision
+        ENV_FIX[Env Repair Agent]:::env
+
+        %% [New] Garbage Collector
+        GC[Garbage Collector Resource Cleanup]:::env
+
+        GIT_CHK{Git Clean?}:::decision
+        BRANCH_STRAT[Branch Strategy]:::env
+        GIT_FIX[Conflict Resolver]:::env
+
+        TG --> SANDBOX --> ENV_OK
+        ENV_OK -- Fail --> ENV_FIX --> SANDBOX
+        ENV_OK -- Ready --> GIT_CHK
+
+        GIT_CHK -- Conflict --> GIT_FIX
+        GIT_CHK -- Clean --> BRANCH_STRAT
+
+        VAULT -.->|Inject Secrets| SANDBOX
+        SANDBOX -.-> GC
+    end
+
+    %% ==========================================
+    %% L5: EXECUTION SWARM
+    %% ==========================================
+    subgraph L5 ["⚡ Layer 5: Execution Swarm"]
+        DANGER_GATE{Dangerous Action?}:::decision
+        AGENTS[Coding Agents Swarm]:::action
+
+        subgraph TOOL_ARSENAL ["🛠️ Tool Chain"]
+            MCP_HOST[MCP Host Static Tools]:::tool
+            DYN_TOOL[Tool Creator Runtime]:::tool
+            DOCS[Docs Search]:::tool
+            LSP[LSP Terminal]:::tool
+        end
+
+        BRANCH_STRAT --> DANGER_GATE
+        DANGER_GATE -- Safe --> AGENTS
+        DANGER_GATE -- Blocked --> SESSION
+
+        AGENTS <--> MCP_HOST & DYN_TOOL
+        MCP_HOST <--> DOCS & LSP
+
+        LINT_CHK{Lint Type OK?}:::decision
+        QUICK_FIX[Quick Fix Agent]:::action
+
+        AGENTS --> LINT_CHK
+        LINT_CHK -- Fail --> QUICK_FIX --> AGENTS
+    end
+
+    %% ==========================================
+    %% L6: DEEP VERIFICATION
+    %% ==========================================
+    subgraph L6 ["📊 Layer 6: Deep Verification"]
+        MERGER[Code Merger]:::verify
+        CODE_SCAN[🛡️ Code Secret License Scan]:::danger
+
+        subgraph TEST_ENGINE ["🧪 Test Engine"]
+            TEST_STRAT[Test Strategy]:::verify
+            TEST_GEN[Test Generator]:::verify
+            TEST_RUN[Integration Test]:::verify
+        end
+
+        subgraph SCORING ["Risk Scoring"]
+            SEMANTIC[Semantic Delta]:::verify
+            RISK_CALC[Impact Analysis]:::verify
+        end
+
+        VISUAL_CHK{UI Broken?}:::decision
+        UI_FIX[UI Fix Agent]:::verify
+
+        RED_TEAM[Red Team Hacker]:::verify
+        BLUE_TEAM[Blue Team Patcher]:::verify
+
+        CONV[🔄 Convergence Monitor]:::verify
+
+        LINT_CHK -- Pass --> MERGER --> CODE_SCAN
+        CODE_SCAN -- Pass --> SEMANTIC & RISK_CALC
+
+        SEMANTIC & RISK_CALC --> TEST_STRAT --> TEST_GEN --> TEST_RUN
+
+        CODE_SCAN -- Fail --> AGENTS
+        TEST_RUN -- Pass --> VISUAL_CHK
+        TEST_RUN -- Fail --> CONV
+
+        VISUAL_CHK -- Yes --> UI_FIX --> MERGER
+        VISUAL_CHK -- No --> RED_TEAM
+
+        RED_TEAM -- Vuln --> BLUE_TEAM --> MERGER
+        RED_TEAM -- Safe --> DOC_AGENT
+
+        CONV -- Retry --> AGENTS
+        CONV -- Give Up --> RCA_AGENT
+    end
+
+    %% ==========================================
+    %% L7: DELIVERY & OPS
+    %% ==========================================
+    subgraph L7 ["🚀 Layer 7: Delivery & Ops"]
+        DOC_AGENT[📄 Doc Updater]:::doc
+        PR_MAKER[PR Generator]:::delivery
+        CI_CHK{Remote CI Pass?}:::decision
+        STAGE_TEST[Staging Canary]:::delivery
+        HUMAN_REV[Human Review]:::delivery
+        DEPLOY((Deploy)):::delivery
+
+        DOC_AGENT --> PR_MAKER --> CI_CHK
+        CI_CHK -- Fail --> AGENTS
+        CI_CHK -- Pass --> STAGE_TEST
+
+        STAGE_TEST -- Pass --> HUMAN_REV
+        STAGE_TEST -- Fail --> AGENTS
+
+        HUMAN_REV == Approve ==> DEPLOY
+        HUMAN_REV -. Reject .-> SESSION
+    end
+
+    %% ==========================================
+    %% FEEDBACK LOOPS
+    %% ==========================================
+    DEPLOY -.->|Success Pattern| EXP_STORE
+
+    %% Failure Analysis Loop
+    TEST_RUN & CI_CHK & RED_TEAM & CONV -.->|Raw Failure Data| RCA_AGENT
+
+    %% Telemetry
+    TELEMETRY[(📊 Telemetry Metrics)]:::tele
+    L0 & L1 & L2 & L3 & L4 & L5 & L6 & L7 -.-> TELEMETRY

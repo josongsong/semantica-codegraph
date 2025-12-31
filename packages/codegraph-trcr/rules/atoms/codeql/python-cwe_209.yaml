@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_209.StackTraceExposure
+  kind: sink
+  tags: ['cwe_209', 'StackTraceExposure', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-209"]
+  description: Leaking information about an exception, such as messages and stack traces, to an
+  match:
+  -     call: StackTraceExposure
+
+- id: sink.cwe_209.StackTraceExposure
+  kind: sink
+  tags: ['cwe_209', 'StackTraceExposure', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-209"]
+  description: Leaking information about an exception, such as messages and stack traces, to an
+  match:
+  -     call: StackTraceExposure

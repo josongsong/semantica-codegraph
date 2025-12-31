@@ -1,0 +1,105 @@
+# Thorough Preset Configuration
+# Use for: Security audits, nightly scans, comprehensive analysis
+# Performance: >60s latency, >10GB memory
+
+version: 1
+preset: thorough
+
+stages:
+  # All stages enabled
+  parsing: true
+  chunking: true
+  cross_file: true
+  cfg: true
+  dfg: true
+  pdg: true
+  type_inference: true
+
+  # All advanced analyses
+  taint: true
+  pta: true
+  clone: true
+  repomap: true
+  effects: true
+
+overrides:
+  # Deep taint analysis
+  taint:
+    max_depth: 50
+    max_paths: 5000
+    use_points_to: true  # Requires PTA
+    field_sensitive: true
+    use_ssa: true
+    detect_sanitizers: true
+    enable_interprocedural: true
+    worklist_max_iterations: 500
+
+  # Flow-insensitive PTA (flow-sensitive too expensive)
+  pta:
+    mode: flow_insensitive
+    max_iterations: 500
+    field_sensitive: true
+    context_sensitive: 2
+    enable_cycle_elimination: true
+    use_cache: true
+
+  # Comprehensive clone detection (all types)
+  clone:
+    min_tokens: 30
+    min_lines: 5
+    type1:
+      enable_exact_matching: true
+    type2:
+      enable_normalization: true
+    type3:
+      max_gap_ratio: 0.3
+      enable_gapped_detection: true
+    type4:
+      enable_semantic_clones: true
+      embedding_threshold: 0.85
+
+  # Larger chunks for better context
+  chunking:
+    max_chunk_tokens: 1024
+    overlap_tokens: 128
+    enable_semantic_split: true
+    min_chunk_tokens: 100
+
+  # Comprehensive lexical search
+  lexical:
+    enable_fuzzy: true
+    fuzzy_distance: 2
+    enable_ngram: true
+    ngram_size: 3
+    boost_exact_match: 3.0
+
+  # High-precision PageRank
+  pagerank:
+    damping_factor: 0.85
+    max_iterations: 200
+    convergence_threshold: 0.0000001
+    enable_personalization: true
+
+  # High parallelism (if resources available)
+  parallel:
+    workers: 0  # 0 = num_cpus
+    batch_size: 200
+    enable_rayon: true
+
+  # Large caches for comprehensive analysis
+  cache:
+    enable_background_l2_writes: true
+    l0:
+      max_entries: 50000
+      enable_bloom_filter: true
+      expected_items: 500000
+      false_positive_rate: 0.001
+    l1:
+      max_entries: 5000
+      max_bytes: 2147483648  # 2GB
+      ttl_seconds: 7200  # 2 hours
+    l2:
+      cache_dir: ".cache/codegraph"
+      max_disk_bytes: 53687091200  # 50GB
+      enable_compression: true
+      enable_mmap: true

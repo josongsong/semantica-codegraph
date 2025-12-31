@@ -1,0 +1,131 @@
+# Clippy Configuration for Semantica Codegraph
+# SOTA-level strict linting rules (Stanford/BigTech L11)
+
+# ═══════════════════════════════════════════════════════════════
+# Strictness Level
+# ═══════════════════════════════════════════════════════════════
+
+# Enable pedantic lints (style, performance, complexity)
+pedantic = true
+
+# Enable nursery lints (experimental but useful)
+nursery = false  # Too noisy, enable selectively
+
+# ═══════════════════════════════════════════════════════════════
+# Allow List (Overly Strict Rules)
+# ═══════════════════════════════════════════════════════════════
+
+# Documentation can be improved incrementally
+missing-errors-doc = "allow"
+missing-panics-doc = "allow"
+
+# Sometimes module inception makes sense
+module-name-repetitions = "allow"
+
+# Inline formatting is sometimes clearer
+single-match-else = "allow"
+
+# Similar names are fine if they're in different contexts
+similar-names = "allow"
+
+# Too many arguments is sometimes necessary for configuration
+too-many-arguments = "allow"
+
+# ═══════════════════════════════════════════════════════════════
+# Deny List (Critical Production Rules)
+# ═══════════════════════════════════════════════════════════════
+
+# NEVER use unwrap/expect in production code
+unwrap-used = "deny"
+expect-used = "deny"
+
+# NEVER use panic! in library code
+panic = "warn"  # warn instead of deny (allow in tests)
+
+# NEVER leave TODO/FIXME in production
+todo = "deny"
+unimplemented = "deny"
+
+# Correctness lints
+correctness = "deny"
+
+# Performance lints
+perf = "deny"
+
+# Style lints
+style = "warn"
+
+# Complexity lints
+complexity = "warn"
+
+# ═══════════════════════════════════════════════════════════════
+# Specific Lint Configuration
+# ═══════════════════════════════════════════════════════════════
+
+# Require explicit return types for public functions
+missing-const-for-fn = "warn"
+
+# Require explicit Copy implementations
+expl-impl-clone-on-copy = "warn"
+
+# Prevent inefficient string operations
+inefficient-to-string = "deny"
+
+# Require Error trait implementation
+impl-trait-in-params = "allow"
+
+# Allow large error enums (common in Rust)
+result-large-err = "allow"
+
+# ═══════════════════════════════════════════════════════════════
+# Performance Optimizations
+# ═══════════════════════════════════════════════════════════════
+
+# Warn about inefficient clones
+clone-on-ref-ptr = "warn"
+
+# Warn about unnecessary allocations
+unnecessary-wraps = "warn"
+
+# Warn about slow operations
+large-stack-arrays = "warn"
+large-const-arrays = "warn"
+
+# ═══════════════════════════════════════════════════════════════
+# Safety and Correctness
+# ═══════════════════════════════════════════════════════════════
+
+# Warn about potential bugs
+suspicious = "deny"
+
+# Warn about unsafe code (audit required)
+not-unsafe-ptr-arg-deref = "deny"
+
+# Warn about incorrect trait implementations
+incorrect-clone-impl-on-copy-type = "deny"
+
+# ═══════════════════════════════════════════════════════════════
+# Code Quality
+# ═══════════════════════════════════════════════════════════════
+
+# Require documentation for public APIs
+missing-docs-in-private-items = "allow"  # Only public APIs
+
+# Require examples in documentation
+missing-doc-code-examples = "allow"  # Too strict
+
+# Prefer explicit types over inference in public APIs
+implicit-hasher = "warn"
+
+# ═══════════════════════════════════════════════════════════════
+# Project-Specific Overrides
+# ═══════════════════════════════════════════════════════════════
+
+# Tree-sitter uses raw pointers extensively (unavoidable)
+# Allow in specific modules only
+
+# PyO3 uses specific patterns that trigger clippy warnings
+# Allow in Python binding code
+
+# Test code can use unwrap/expect
+# Configured via #[cfg(test)] attributes in code

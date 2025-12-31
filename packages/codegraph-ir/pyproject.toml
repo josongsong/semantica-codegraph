@@ -1,0 +1,14 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "codegraph-ir"
+version = "0.1.0"
+description = "SOTA Code Analysis Engine - IR Generation & Static Analysis"
+requires-python = ">=3.11"
+
+[tool.maturin]
+module-name = "codegraph_ir"
+features = ["python"]
+

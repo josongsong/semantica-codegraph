@@ -1,0 +1,71 @@
+# View: Web XSS and Client-Side Injection
+#
+# OWASP A03:2021-Injection - XSS focused view
+
+metadata:
+  view_id: view-web-xss
+  name: "Web XSS and Client-Side Injection Attacks"
+  version: "1.0.0"
+  owasp: "A03:2021-Injection"
+  priority: high
+
+description: |
+  Cross-site scripting and related client-side injection vulnerabilities.
+  Focus on XSS, template injection, and DOM-based attacks.
+
+cwes:
+  # Primary: XSS
+  - cwe_id: CWE-79
+    rank: 2
+    name: "Cross-site Scripting"
+    weight: 1.0
+    required: true
+
+  # Related injections
+  - cwe_id: CWE-94
+    name: "Code Injection"
+    weight: 0.8
+    required: true
+
+execution:
+  languages:
+    - python
+
+  modes:
+    - path_sensitive
+    - context_sensitive
+
+  performance:
+    timeout_per_file: 30s
+    max_path_depth: 20
+
+acceptance:
+  min_precision: 0.92
+  min_recall: 0.87
+  max_false_positive_rate: 0.08
+
+  per_cwe:
+    CWE-79:
+      min_precision: 0.92
+      min_recall: 0.87
+      max_fp_rate: 0.08
+
+test_suites:
+  - source: juliet
+    cwes: [CWE-79, CWE-94]
+    weight: 1.0
+
+ci:
+  run_on:
+    - pull_request
+    - push_to_main
+
+  triggers:
+    - path: "src/**/taint/**"
+      run: full
+    - path: "cwe/catalog/cwe-79.yaml"
+      run: full
+
+  reporting:
+    format: markdown
+    summary: true

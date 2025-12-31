@@ -1,0 +1,109 @@
+# CWE-190: Integer Overflow or Wraparound
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/190.html
+
+metadata:
+  cwe_id: CWE-190
+  name: "Integer Overflow or Wraparound"
+  severity: high
+  owasp: "A03:2021-Injection"
+  category: "Numeric Errors"
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+  mitre_abstraction: base
+  likelihood_of_exploit: medium
+  references:
+    - https://cwe.mitre.org/data/definitions/190.html
+    - https://cwe.mitre.org/data/definitions/191.html
+
+description: |
+  The software performs a calculation that can produce an integer overflow
+  or wraparound, when the logic assumes that the resulting value will
+  always be larger than the original value.
+
+sources:
+  - id: source.user_numeric
+    description: "User-provided numeric input"
+    patterns:
+      - call: int
+        args: [request.args]
+      - call: int
+        args: [request.form]
+      - call: float
+        args: [user_input]
+
+sinks:
+  - id: sink.numeric.allocation
+    description: "Memory allocation with user size"
+    patterns:
+      - call: bytearray
+        args: [0]
+      - call: ctypes.create_string_buffer
+      - call: numpy.zeros
+
+  - id: sink.numeric.index
+    description: "Array indexing with user value"
+    patterns:
+      - subscript: user_controlled_index
+      - slice: user_controlled_bounds
+
+sanitizers:
+  - id: barrier.numeric.bounds
+    description: "Bounds checking"
+    patterns:
+      - condition: value < MAX_SIZE
+      - condition: 0 <= value <= MAX
+      - call: min
+      - call: max
+
+policy:
+  grammar:
+    WHEN:
+      tag: user_numeric
+    FLOWS:
+      - id: sink.numeric.allocation
+      - id: sink.numeric.index
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: bounds_check
+
+validation:
+  min_test_cases: 6
+  min_precision: 0.80
+  min_recall: 0.75
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE190_Integer_Overflow"
+    cases:
+      - bad_01.py
+      - bad_02.py
+      - good_01.py
+      - good_02.py
+
+examples:
+  vulnerable:
+    - |
+      # BAD: No bounds check on user input
+      size = int(request.args.get('size'))
+      buffer = bytearray(size)
+
+  safe:
+    - |
+      # GOOD: Bounds checking
+      size = int(request.args.get('size'))
+      if 0 < size <= MAX_BUFFER_SIZE:
+          buffer = bytearray(size)
+
+fix:
+  priority: 2
+  effort: medium
+  recommendations:
+    - title: "Add bounds checking"
+      severity: best
+      example: |
+        MAX_SIZE = 1024 * 1024  # 1MB
+        size = min(max(0, user_size), MAX_SIZE)

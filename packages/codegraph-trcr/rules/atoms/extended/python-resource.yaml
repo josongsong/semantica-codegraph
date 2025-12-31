@@ -1,0 +1,457 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.resource.file_descriptor_leak
+  kind: sink
+  tags: ['resource', 'file_descriptor_leak', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-772"]
+  description: Resource File Descriptor Leak
+  match:
+  -     call: open
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.dos_regex
+  kind: sink
+  tags: ['resource', 'dos_regex', 'vulnerability']
+  severity: high
+  cwe: ["CWE-1333"]
+  description: Resource Dos Regex
+  match:
+  -     base_type: re
+        call: compile
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: match
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: search
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.unbounded_allocation
+  kind: sink
+  tags: ['resource', 'unbounded_allocation', 'vulnerability']
+  severity: high
+  cwe: ["CWE-400"]
+  description: Resource Unbounded Allocation
+  match:
+  -     call: list
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: dict
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: set
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.connection_leak
+  kind: sink
+  tags: ['resource', 'connection_leak', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-404"]
+  description: Resource Connection Leak
+  match:
+  -     call: connect
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: socket
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.unbounded_loop
+  kind: sink
+  tags: ['resource', 'unbounded_loop', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-835"]
+  description: Resource Unbounded Loop
+  match:
+  -     call: while
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.file_descriptor_leak
+  kind: sink
+  tags: ['resource', 'file_descriptor_leak', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-772"]
+  description: Resource File Descriptor Leak
+  match:
+  -     call: open
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: io
+        call: open
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.memory_leak
+  kind: sink
+  tags: ['resource', 'memory_leak', 'vulnerability']
+  severity: high
+  cwe: ["CWE-401"]
+  description: Resource Memory Leak
+  match:
+  -     base_type: array
+        call: array
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: bytearray
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.connection_leak
+  kind: sink
+  tags: ['resource', 'connection_leak', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-404"]
+  description: Resource Connection Leak
+  match:
+  -     base_type: socket
+        call: socket
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: http.client
+        call: HTTPConnection
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.dos_regex
+  kind: sink
+  tags: ['resource', 'dos_regex', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1333"]
+  owasp: "A03:2021-Injection"
+  description: Resource Dos Regex
+  match:
+  -     base_type: re
+        call: compile
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: match
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: search
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: findall
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.dos_zip
+  kind: sink
+  tags: ['resource', 'dos_zip', 'vulnerability']
+  severity: high
+  cwe: ["CWE-409"]
+  description: Resource Dos Zip
+  match:
+  -     base_type: zipfile
+        call: ZipFile
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: tarfile
+        call: open
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.dos_xml
+  kind: sink
+  tags: ['resource', 'dos_xml', 'vulnerability']
+  severity: high
+  cwe: ["CWE-776"]
+  description: Resource Dos Xml
+  match:
+  -     base_type: xml.etree.ElementTree
+        call: parse
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: xml.dom.minidom
+        call: parse
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.unbounded_allocation
+  kind: sink
+  tags: ['resource', 'unbounded_allocation', 'vulnerability']
+  severity: high
+  cwe: ["CWE-770"]
+  description: Resource Unbounded Allocation
+  match:
+  -     call: list
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: dict
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: set
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: bytes
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.unbounded_loop
+  kind: sink
+  tags: ['resource', 'unbounded_loop', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-835"]
+  description: Resource Unbounded Loop
+  match:
+  -     call: while
+  -     base_type: itertools
+        call: cycle
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.unbounded_recursion
+  kind: sink
+  tags: ['resource', 'unbounded_recursion', 'vulnerability']
+  severity: high
+  cwe: ["CWE-674"]
+  description: Resource Unbounded Recursion
+  match:
+  -     base_type: sys
+        call: setrecursionlimit
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.thread_exhaustion
+  kind: sink
+  tags: ['resource', 'thread_exhaustion', 'vulnerability']
+  severity: high
+  cwe: ["CWE-400"]
+  description: Resource Thread Exhaustion
+  match:
+  -     base_type: threading
+        call: Thread
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: multiprocessing
+        call: Process
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.file_descriptor_leak
+  kind: sink
+  tags: ['resource', 'file_descriptor_leak', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-772"]
+  description: Resource File Descriptor Leak
+  match:
+  -     call: open
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: io
+        call: open
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.memory_leak
+  kind: sink
+  tags: ['resource', 'memory_leak', 'vulnerability']
+  severity: high
+  cwe: ["CWE-401"]
+  description: Resource Memory Leak
+  match:
+  -     base_type: array
+        call: array
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: bytearray
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.connection_leak
+  kind: sink
+  tags: ['resource', 'connection_leak', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-404"]
+  description: Resource Connection Leak
+  match:
+  -     base_type: socket
+        call: socket
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: http.client
+        call: HTTPConnection
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.dos_regex
+  kind: sink
+  tags: ['resource', 'dos_regex', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-1333"]
+  owasp: "A03:2021-Injection"
+  description: Resource Dos Regex
+  match:
+  -     base_type: re
+        call: compile
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: match
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: search
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: re
+        call: findall
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.dos_zip
+  kind: sink
+  tags: ['resource', 'dos_zip', 'vulnerability']
+  severity: high
+  cwe: ["CWE-409"]
+  description: Resource Dos Zip
+  match:
+  -     base_type: zipfile
+        call: ZipFile
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: tarfile
+        call: open
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.dos_xml
+  kind: sink
+  tags: ['resource', 'dos_xml', 'vulnerability']
+  severity: high
+  cwe: ["CWE-776"]
+  description: Resource Dos Xml
+  match:
+  -     base_type: xml.etree.ElementTree
+        call: parse
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: xml.dom.minidom
+        call: parse
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.unbounded_allocation
+  kind: sink
+  tags: ['resource', 'unbounded_allocation', 'vulnerability']
+  severity: high
+  cwe: ["CWE-770"]
+  description: Resource Unbounded Allocation
+  match:
+  -     call: list
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: dict
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: set
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: bytes
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.unbounded_loop
+  kind: sink
+  tags: ['resource', 'unbounded_loop', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-835"]
+  description: Resource Unbounded Loop
+  match:
+  -     call: while
+  -     base_type: itertools
+        call: cycle
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.unbounded_recursion
+  kind: sink
+  tags: ['resource', 'unbounded_recursion', 'vulnerability']
+  severity: high
+  cwe: ["CWE-674"]
+  description: Resource Unbounded Recursion
+  match:
+  -     base_type: sys
+        call: setrecursionlimit
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.resource.thread_exhaustion
+  kind: sink
+  tags: ['resource', 'thread_exhaustion', 'vulnerability']
+  severity: high
+  cwe: ["CWE-400"]
+  description: Resource Thread Exhaustion
+  match:
+  -     base_type: threading
+        call: Thread
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: multiprocessing
+        call: Process
+        args: [0]
+        constraints:
+          arg_type: not_const

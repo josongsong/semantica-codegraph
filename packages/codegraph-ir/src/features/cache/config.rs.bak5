@@ -1,0 +1,137 @@
+//! Configuration for cache system
+
+use std::path::PathBuf;
+use std::time::Duration;
+
+/// Session Cache Configuration (L0)
+#[derive(Debug, Clone)]
+pub struct SessionCacheConfig {
+    /// Maximum number of entries (default: 10,000)
+    pub max_entries: usize,
+
+    /// Enable Bloom filter (default: true)
+    pub enable_bloom_filter: bool,
+
+    /// Bloom filter capacity (default: 10,000)
+    pub bloom_capacity: usize,
+
+    /// Bloom filter false positive rate (default: 0.01)
+    pub bloom_fp_rate: f64,
+}
+
+impl Default for SessionCacheConfig {
+    fn default() -> Self {
+        Self {
+            max_entries: 10_000,
+            enable_bloom_filter: true,
+            bloom_capacity: 10_000,
+            bloom_fp_rate: 0.01,
+        }
+    }
+}
+
+/// Adaptive Cache Configuration (L1)
+#[derive(Debug, Clone)]
+pub struct AdaptiveCacheConfig {
+    /// Maximum number of entries (default: 1,000)
+    pub max_entries: u64,
+
+    /// Maximum memory in bytes (default: 512MB)
+    pub max_bytes: u64,
+
+    /// Time-to-live (default: 1 hour)
+    pub ttl: Duration,
+
+    /// Enable eviction listener for debugging (default: false)
+    pub enable_eviction_listener: bool,
+}
+
+impl Default for AdaptiveCacheConfig {
+    fn default() -> Self {
+        Self {
+            max_entries: 1_000,
+            max_bytes: 512 * 1024 * 1024, // 512MB
+            ttl: Duration::from_secs(3600), // 1 hour
+            enable_eviction_listener: false,
+        }
+    }
+}
+
+/// Disk Cache Configuration (L2)
+#[derive(Debug, Clone)]
+pub struct DiskCacheConfig {
+    /// Cache directory (default: ~/.cache/codegraph/ir)
+    pub cache_dir: PathBuf,
+
+    /// Enable compression (default: true, lz4)
+    pub enable_compression: bool,
+
+    /// Enable RocksDB index (default: false, file-based fallback)
+    pub enable_rocksdb: bool,
+}
+
+impl Default for DiskCacheConfig {
+    fn default() -> Self {
+        let cache_dir = dirs::home_dir()
+            .unwrap_or_else(|| PathBuf::from("."))
+            .join(".cache")
+            .join("codegraph")
+            .join("ir");
+
+        Self {
+            cache_dir,
+            enable_compression: true,
+            enable_rocksdb: false,
+        }
+    }
+}
+
+/// Tiered Cache Configuration (L0 + L1 + L2)
+#[derive(Debug, Clone)]
+pub struct TieredCacheConfig {
+    pub l0: SessionCacheConfig,
+    pub l1: AdaptiveCacheConfig,
+    pub l2: DiskCacheConfig,
+
+    /// Enable background L2 writes (default: true)
+    /// When true, L2 writes happen asynchronously; when false, they block
+    pub enable_background_l2_writes: bool,
+}
+
+impl Default for TieredCacheConfig {
+    fn default() -> Self {
+        Self {
+            l0: SessionCacheConfig::default(),
+            l1: AdaptiveCacheConfig::default(),
+            l2: DiskCacheConfig::default(),
+            enable_background_l2_writes: true,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_configs() {
+        let session_config = SessionCacheConfig::default();
+        assert_eq!(session_config.max_entries, 10_000);
+        assert!(session_config.enable_bloom_filter);
+
+        let adaptive_config = AdaptiveCacheConfig::default();
+        assert_eq!(adaptive_config.max_entries, 1_000);
+        assert_eq!(adaptive_config.max_bytes, 512 * 1024 * 1024);
+
+        let disk_config = DiskCacheConfig::default();
+        assert!(disk_config.cache_dir.to_string_lossy().contains("codegraph"));
+        assert!(disk_config.enable_compression);
+    }
+
+    #[test]
+    fn test_tiered_config() {
+        let config = TieredCacheConfig::default();
+        assert_eq!(config.l0.max_entries, 10_000);
+        assert_eq!(config.l1.max_entries, 1_000);
+    }
+}

@@ -1,0 +1,294 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.crypto.weak_key_size
+  kind: sink
+  tags: ['crypto', 'weak_key_size', 'vulnerability']
+  severity: high
+  cwe: ["CWE-326"]
+  owasp: "A02:2021-Cryptographic Failures"
+  description: Crypto Weak Key Size
+  match:
+  -     base_type: RSA
+        call: generate
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: DSA
+        call: generate
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: Crypto.PublicKey.RSA
+        call: generate
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.crypto.ecb_mode
+  kind: sink
+  tags: ['crypto', 'ecb_mode', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  owasp: "A02:2021-Cryptographic Failures"
+  description: Crypto Ecb Mode
+  match:
+  -     base_type: AES
+        read: MODE_ECB
+  -     base_type: Crypto.Cipher.AES
+        call: new
+        args: [1]
+        constraints:
+          arg_type: not_const
+
+- id: sink.crypto.static_iv
+  kind: sink
+  tags: ['crypto', 'static_iv', 'vulnerability']
+  severity: high
+  cwe: ["CWE-329"]
+  description: Crypto Static Iv
+  match:
+  -     base_type: Crypto.Cipher.AES
+        call: new
+        args: [2]
+        constraints:
+          arg_type: not_const
+
+- id: sink.crypto.no_integrity_check
+  kind: sink
+  tags: ['crypto', 'no_integrity_check', 'vulnerability']
+  severity: high
+  cwe: ["CWE-354"]
+  description: Crypto No Integrity Check
+  match:
+  -     base_type: Crypto.Cipher.AES
+        read: MODE_CBC
+  -     base_type: Crypto.Cipher.AES
+        read: MODE_CTR
+
+- id: sink.crypto.weak_padding
+  kind: sink
+  tags: ['crypto', 'weak_padding', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-326"]
+  description: Crypto Weak Padding
+  match:
+  -     base_type: Crypto.Util.Padding
+        call: pad
+        args: [1]
+        constraints:
+          arg_type: not_const
+
+- id: sink.crypto.null_cipher
+  kind: sink
+  tags: ['crypto', 'null_cipher', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  description: Crypto Null Cipher
+  match:
+  -     base_type: ssl
+        read: OP_NO_COMPRESSION
+
+- id: sink.random.predictable_seed
+  kind: sink
+  tags: ['random', 'predictable_seed', 'vulnerability']
+  severity: high
+  cwe: ["CWE-330"]
+  description: Random Predictable Seed
+  match:
+  -     base_type: random
+        call: seed
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.random.timestamp_seed
+  kind: sink
+  tags: ['random', 'timestamp_seed', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-338"]
+  description: Random Timestamp Seed
+  match:
+  -     base_type: time
+        call: time
+  -     base_type: datetime
+        call: now
+
+- id: barrier.crypto.aes_gcm
+  kind: sanitizer
+  tags: ['crypto', 'aes_gcm', 'safety']
+  severity: high
+  description: Crypto Aes Gcm
+  match:
+  -     base_type: Crypto.Cipher.AES
+        read: MODE_GCM
+  -     base_type: cryptography.hazmat.primitives.ciphers.modes
+        read: GCM
+
+- id: barrier.crypto.key_derivation
+  kind: sanitizer
+  tags: ['crypto', 'key_derivation', 'safety']
+  severity: high
+  description: Crypto Key Derivation
+  match:
+  -     base_type: hashlib
+        call: pbkdf2_hmac
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: bcrypt
+        call: hashpw
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: argon2
+        call: hash_password
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.crypto.weak_key_size
+  kind: sink
+  tags: ['crypto', 'weak_key_size', 'vulnerability']
+  severity: high
+  cwe: ["CWE-326"]
+  owasp: "A02:2021-Cryptographic Failures"
+  description: Crypto Weak Key Size
+  match:
+  -     base_type: RSA
+        call: generate
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: DSA
+        call: generate
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: Crypto.PublicKey.RSA
+        call: generate
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.crypto.ecb_mode
+  kind: sink
+  tags: ['crypto', 'ecb_mode', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  owasp: "A02:2021-Cryptographic Failures"
+  description: Crypto Ecb Mode
+  match:
+  -     base_type: AES
+        read: MODE_ECB
+  -     base_type: Crypto.Cipher.AES
+        call: new
+        args: [1]
+        constraints:
+          arg_type: not_const
+
+- id: sink.crypto.static_iv
+  kind: sink
+  tags: ['crypto', 'static_iv', 'vulnerability']
+  severity: high
+  cwe: ["CWE-329"]
+  description: Crypto Static Iv
+  match:
+  -     base_type: Crypto.Cipher.AES
+        call: new
+        args: [2]
+        constraints:
+          arg_type: not_const
+
+- id: sink.crypto.no_integrity_check
+  kind: sink
+  tags: ['crypto', 'no_integrity_check', 'vulnerability']
+  severity: high
+  cwe: ["CWE-354"]
+  description: Crypto No Integrity Check
+  match:
+  -     base_type: Crypto.Cipher.AES
+        read: MODE_CBC
+  -     base_type: Crypto.Cipher.AES
+        read: MODE_CTR
+
+- id: sink.crypto.weak_padding
+  kind: sink
+  tags: ['crypto', 'weak_padding', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-326"]
+  description: Crypto Weak Padding
+  match:
+  -     base_type: Crypto.Util.Padding
+        call: pad
+        args: [1]
+        constraints:
+          arg_type: not_const
+
+- id: sink.crypto.null_cipher
+  kind: sink
+  tags: ['crypto', 'null_cipher', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-327"]
+  description: Crypto Null Cipher
+  match:
+  -     base_type: ssl
+        read: OP_NO_COMPRESSION
+
+- id: sink.random.predictable_seed
+  kind: sink
+  tags: ['random', 'predictable_seed', 'vulnerability']
+  severity: high
+  cwe: ["CWE-330"]
+  description: Random Predictable Seed
+  match:
+  -     base_type: random
+        call: seed
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.random.timestamp_seed
+  kind: sink
+  tags: ['random', 'timestamp_seed', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-338"]
+  description: Random Timestamp Seed
+  match:
+  -     base_type: time
+        call: time
+  -     base_type: datetime
+        call: now
+
+- id: barrier.crypto.aes_gcm
+  kind: sanitizer
+  tags: ['crypto', 'aes_gcm', 'safety']
+  severity: high
+  description: Crypto Aes Gcm
+  match:
+  -     base_type: Crypto.Cipher.AES
+        read: MODE_GCM
+  -     base_type: cryptography.hazmat.primitives.ciphers.modes
+        read: GCM
+
+- id: barrier.crypto.key_derivation
+  kind: sanitizer
+  tags: ['crypto', 'key_derivation', 'safety']
+  severity: high
+  description: Crypto Key Derivation
+  match:
+  -     base_type: hashlib
+        call: pbkdf2_hmac
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: bcrypt
+        call: hashpw
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: argon2
+        call: hash_password
+        args: [0]
+        constraints:
+          arg_type: not_const

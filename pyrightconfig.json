@@ -1,0 +1,31 @@
+{
+  "include": [
+    "src",
+    "server"
+  ],
+  "exclude": [
+    "htmlcov",
+    ".pytest_cache",
+    ".vscode",
+    "_docs",
+    "_docs_legacy",
+    "_temp_test",
+    "benchmark/_external_benchmark",
+    "migrations",
+    "tests",
+    "benchmark",
+    "cwe",
+    "scripts",
+    "examples",
+    "**/test_*.py",
+    "**/*_test.py",
+    "**/__pycache__"
+  ],
+  "typeCheckingMode": "off",
+  "pythonVersion": "3.10",
+  "venvPath": ".",
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": "none",
+  "useLibraryCodeForTypes": true,
+  "analyzeUnannotatedFunctions": false
+}

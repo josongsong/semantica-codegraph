@@ -1,0 +1,97 @@
+# CWE-200: Exposure of Sensitive Information to an Unauthorized Actor
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/200.html
+
+metadata:
+  cwe_id: CWE-200
+  name: "Exposure of Sensitive Information to an Unauthorized Actor"
+  severity: medium
+  owasp: "A01:2021-Broken Access Control"
+  category: "Information Disclosure"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-20"
+
+  mitre_abstraction: class
+  likelihood_of_exploit: medium
+
+  references:
+    - https://cwe.mitre.org/data/definitions/200.html
+    - https://owasp.org/Top10/A01_2021-Broken_Access_Control/
+
+description: |
+  The product exposes sensitive information to an actor that is not explicitly
+  authorized to have access to that information.
+
+sources:
+  - id: source.sensitive.password
+    description: "Password or secret values"
+    patterns:
+      - attr: password
+      - attr: secret
+      - attr: api_key
+      - attr: token
+
+  - id: source.sensitive.pii
+    description: "Personally identifiable information"
+    patterns:
+      - attr: ssn
+      - attr: credit_card
+      - attr: email
+      - attr: phone
+
+sinks:
+  - id: sink.disclosure.log
+    description: "Logging sensitive data"
+    patterns:
+      - call: logging.debug
+        args: [0]
+      - call: logging.info
+        args: [0]
+      - call: logging.warning
+        args: [0]
+      - call: logging.error
+        args: [0]
+      - call: print
+        args: [0]
+
+  - id: sink.disclosure.response
+    description: "Sending sensitive data in response"
+    patterns:
+      - call: flask.jsonify
+        args: [0]
+      - call: HttpResponse
+        args: [0]
+
+sanitizers:
+  - id: barrier.disclosure.redact
+    description: "Data redaction"
+    patterns:
+      - redact()
+      - mask()
+      - anonymize()
+
+policy:
+  grammar:
+    WHEN:
+      tag: sensitive
+    FLOWS:
+      - id: sink.disclosure.log
+      - id: sink.disclosure.response
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: redact
+
+validation:
+  min_test_cases: 4
+  min_precision: 0.85
+  min_recall: 0.80
+
+test_suite:
+  directory: "test-suite/CWE200_Information_Exposure"
+  cases:
+    - bad_01.py
+    - good_01.py

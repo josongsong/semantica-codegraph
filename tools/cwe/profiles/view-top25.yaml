@@ -1,0 +1,256 @@
+# View: CWE Top 25 Most Dangerous
+#
+# MITRE CWE Top 25 기반 핵심 취약점 View
+# Reference: https://cwe.mitre.org/top25/
+
+metadata:
+  view_id: view-top25
+  name: "CWE Top 25 Most Dangerous Software Weaknesses"
+  version: "2024"
+  priority: critical
+  last_updated: "2025-12-18"
+
+description: |
+  The 2024 CWE Top 25 list is a demonstrative list of the most common and
+  impactful software weaknesses. Full 25/25 coverage achieved.
+
+# ============================================================================
+# Top 25 CWEs (Full Coverage)
+# ============================================================================
+
+cwes:
+  # Rank 1
+  - cwe_id: CWE-89
+    rank: 1
+    name: "SQL Injection"
+    score: 50.0
+    weight: 1.0
+    required: true
+
+  # Rank 2
+  - cwe_id: CWE-79
+    rank: 2
+    name: "Cross-site Scripting"
+    score: 45.5
+    weight: 1.0
+    required: true
+
+  # Rank 3
+  - cwe_id: CWE-78
+    rank: 3
+    name: "OS Command Injection"
+    score: 42.0
+    weight: 1.0
+    required: true
+
+  # Rank 4
+  - cwe_id: CWE-20
+    rank: 4
+    name: "Improper Input Validation"
+    score: 40.0
+    weight: 1.0
+    required: true
+
+  # Rank 5
+  - cwe_id: CWE-352
+    rank: 5
+    name: "Cross-Site Request Forgery (CSRF)"
+    score: 38.0
+    weight: 1.0
+    required: true
+
+  # Rank 6
+  - cwe_id: CWE-22
+    rank: 6
+    name: "Path Traversal"
+    score: 35.0
+    weight: 0.9
+    required: true
+
+  # Rank 7
+  - cwe_id: CWE-287
+    rank: 7
+    name: "Improper Authentication"
+    score: 33.0
+    weight: 0.9
+    required: true
+
+  # Rank 8
+  - cwe_id: CWE-502
+    rank: 8
+    name: "Deserialization of Untrusted Data"
+    score: 30.0
+    weight: 0.9
+    required: true
+
+  # Rank 9
+  - cwe_id: CWE-862
+    rank: 9
+    name: "Missing Authorization"
+    score: 28.0
+    weight: 0.9
+    required: true
+
+  # Rank 10
+  - cwe_id: CWE-77
+    rank: 10
+    name: "Command Injection"
+    score: 27.0
+    weight: 0.9
+    required: true
+
+  # Rank 11
+  - cwe_id: CWE-306
+    rank: 11
+    name: "Missing Authentication for Critical Function"
+    score: 26.0
+    weight: 0.8
+    required: true
+
+  # Rank 12
+  - cwe_id: CWE-190
+    rank: 12
+    name: "Integer Overflow or Wraparound"
+    score: 25.5
+    weight: 0.8
+    required: true
+
+  # Rank 13
+  - cwe_id: CWE-863
+    rank: 13
+    name: "Incorrect Authorization"
+    score: 25.0
+    weight: 0.8
+    required: true
+
+  # Rank 14
+  - cwe_id: CWE-94
+    rank: 14
+    name: "Code Injection"
+    score: 24.5
+    weight: 0.8
+    required: true
+
+  # Rank 15
+  - cwe_id: CWE-434
+    rank: 15
+    name: "Unrestricted Upload of File with Dangerous Type"
+    score: 24.0
+    weight: 0.8
+    required: true
+
+  # Rank 16
+  - cwe_id: CWE-90
+    rank: 16
+    name: "LDAP Injection"
+    score: 23.0
+    weight: 0.7
+    required: true
+
+  # Rank 17
+  - cwe_id: CWE-643
+    rank: 17
+    name: "XPath Injection"
+    score: 22.0
+    weight: 0.7
+    required: true
+
+  # Rank 18
+  - cwe_id: CWE-328
+    rank: 18
+    name: "Use of Weak Hash"
+    score: 21.0
+    weight: 0.7
+    required: true
+
+  # Rank 19
+  - cwe_id: CWE-918
+    rank: 19
+    name: "Server-Side Request Forgery (SSRF)"
+    score: 20.0
+    weight: 0.7
+    required: true
+
+  # Rank 20
+  - cwe_id: CWE-330
+    rank: 20
+    name: "Use of Insufficiently Random Values"
+    score: 19.0
+    weight: 0.7
+    required: true
+
+  # Rank 21
+  - cwe_id: CWE-732
+    rank: 21
+    name: "Incorrect Permission Assignment"
+    score: 18.0
+    weight: 0.6
+    required: true
+
+  # Rank 22
+  - cwe_id: CWE-209
+    rank: 22
+    name: "Information Exposure Through Error Message"
+    score: 17.0
+    weight: 0.6
+    required: true
+
+  # Rank 23
+  - cwe_id: CWE-327
+    rank: 23
+    name: "Use of Broken Crypto Algorithm"
+    score: 16.0
+    weight: 0.6
+    required: false
+
+  # Rank 24
+  - cwe_id: CWE-798
+    rank: 24
+    name: "Hardcoded Credentials"
+    score: 15.0
+    weight: 0.6
+    required: false
+
+  # Rank 25
+  - cwe_id: CWE-611
+    rank: 25
+    name: "XML External Entity (XXE)"
+    score: 14.0
+    weight: 0.6
+    required: false
+
+execution:
+  languages:
+    - python
+    - java
+    - javascript
+    - typescript
+
+  modes:
+    - path_sensitive
+    - context_sensitive
+
+  performance:
+    timeout_per_file: 60s
+    max_path_depth: 30
+
+acceptance:
+  min_precision: 0.90
+  min_recall: 0.85
+  max_false_positive_rate: 0.10
+
+  # 가중 평균 (rank 기반)
+  weighted_score_threshold: 0.87
+
+test_suites:
+  - source: juliet
+    weight: 0.6
+  - source: owasp
+    weight: 0.4
+
+ci:
+  run_on:
+    - pull_request_large
+    - weekly_regression
+
+  timeout: 30m

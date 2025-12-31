@@ -1,0 +1,714 @@
+//! Edge types for IR
+//!
+//! Represents relationships between nodes.
+//! Matches Python Edge dataclass.
+
+use super::edge_context::{ControlFlowContext, ReadWriteContext};
+use super::span::Span;
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+use serde::{Deserialize, Serialize};
+
+/// Edge kind (matches Python EdgeKind enum exactly)
+///
+/// PyO3-enabled: Can be created directly from Python
+///
+/// SOTA Multi-Language Support:
+/// - Structural edges (Contains, Defines)
+/// - Type relationships (Implements, Extends, Overrides)
+/// - Language-specific edges (Rust traits, Kotlin delegation, Go channels)
+#[cfg_attr(feature = "python", pyclass)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum EdgeKind {
+    // ═══════════════════════════════════════════════════════════════════
+    // Structural
+    // ═══════════════════════════════════════════════════════════════════
+    /// Parent contains child (File → Function, Class → Method)
+    Contains,
+    /// Symbol defines another (variable definition)
+    Defines,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Call/Usage (Data + Control Flow)
+    // ═══════════════════════════════════════════════════════════════════
+    /// Function/method call
+    Calls,
+    /// Method/function invocation (alternative to Calls)
+    Invokes,
+    /// Read from variable/field
+    Reads,
+    /// Write to variable/field
+    Writes,
+    /// General reference to symbol
+    References,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Data Flow (RFC-071 primitives)
+    // ═══════════════════════════════════════════════════════════════════
+    /// Data flows from source to target
+    DataFlow,
+    /// Control flows from source to target
+    ControlFlow,
+    /// True branch of conditional
+    TrueBranch,
+    /// False branch of conditional
+    FalseBranch,
+    /// Definition-Use relationship
+    DefUse,
+    /// Type annotation
+    TypeAnnotation,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Type/Inheritance (OOP + Generics)
+    // ═══════════════════════════════════════════════════════════════════
+    /// Import dependency
+    Imports,
+    /// Class inheritance (Python, Java, Kotlin)
+    Inherits,
+    /// Interface implementation (Java: implements, Go: implicit)
+    Implements,
+    /// Type extension (TypeScript extends, Kotlin: base class)
+    Extends,
+    /// Method override
+    Overrides,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Annotations/Decorators
+    // ═══════════════════════════════════════════════════════════════════
+    /// Java/Kotlin annotation (@Override, @Entity)
+    AnnotatedWith,
+    /// Python/TypeScript decorator (@decorator)
+    DecoratedWith,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Generics
+    // ═══════════════════════════════════════════════════════════════════
+    /// Generic bound (T extends Base, T: Clone)
+    BoundedBy,
+    /// Type argument usage (List<String>)
+    TypeArgumentOf,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Exception Flow
+    // ═══════════════════════════════════════════════════════════════════
+    /// Method throws exception
+    Throws,
+    /// Catch block handles exception
+    Catches,
+    /// Finally block (always executed)
+    Finally,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Closure/Capture
+    // ═══════════════════════════════════════════════════════════════════
+    /// Closure captures variable
+    Captures,
+    /// Variable shadows outer scope
+    Shadows,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Instantiation
+    // ═══════════════════════════════════════════════════════════════════
+    /// Object instantiation (new, constructor call)
+    Instantiates,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Rust-specific
+    // ═══════════════════════════════════════════════════════════════════
+    /// Trait implementation (impl Trait for Type)
+    ImplementsTrait,
+    /// Borrow reference (&T, &mut T)
+    BorrowsFrom,
+    /// Lifetime annotation ('a)
+    LifetimeOf,
+    /// Macro expansion
+    MacroExpands,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Kotlin-specific
+    // ═══════════════════════════════════════════════════════════════════
+    /// Kotlin delegation (by)
+    DelegatesTo,
+    /// Coroutine suspension point
+    SuspendsTo,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Go-specific
+    // ═══════════════════════════════════════════════════════════════════
+    /// Channel send operation (ch <- value)
+    ChannelSend,
+    /// Channel receive operation (<- ch)
+    ChannelReceive,
+    /// Goroutine spawn (go func())
+    SpawnsGoroutine,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CFG-specific (backward compatibility)
+    // ═══════════════════════════════════════════════════════════════════
+    /// Sequential control flow (CFG next)
+    CfgNext,
+    /// Conditional branch (CFG branch)
+    CfgBranch,
+    /// Loop back edge (CFG loop)
+    CfgLoop,
+    /// Exception handler edge (CFG handler)
+    CfgHandler,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Symbol References
+    // ═══════════════════════════════════════════════════════════════════
+    /// References a type
+    ReferencesType,
+    /// References a symbol
+    ReferencesSymbol,
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Web/Framework-specific
+    // ═══════════════════════════════════════════════════════════════════
+    /// Decorator application (Python @decorator)
+    Decorates,
+    /// HTTP route handler
+    RouteHandler,
+    /// Handles HTTP request
+    HandlesRequest,
+    /// Uses repository/service
+    UsesRepository,
+}
+
+impl EdgeKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            // Structural
+            EdgeKind::Contains => "CONTAINS",
+            EdgeKind::Defines => "DEFINES",
+            // Call/Usage
+            EdgeKind::Calls => "CALLS",
+            EdgeKind::Invokes => "INVOKES",
+            EdgeKind::Reads => "READS",
+            EdgeKind::Writes => "WRITES",
+            EdgeKind::References => "REFERENCES",
+            // Data Flow (RFC-071)
+            EdgeKind::DataFlow => "DATA_FLOW",
+            EdgeKind::ControlFlow => "CONTROL_FLOW",
+            EdgeKind::TrueBranch => "TRUE_BRANCH",
+            EdgeKind::FalseBranch => "FALSE_BRANCH",
+            EdgeKind::DefUse => "DEF_USE",
+            EdgeKind::TypeAnnotation => "TYPE_ANNOTATION",
+            // Type/Inheritance
+            EdgeKind::Imports => "IMPORTS",
+            EdgeKind::Inherits => "INHERITS",
+            EdgeKind::Implements => "IMPLEMENTS",
+            EdgeKind::Extends => "EXTENDS",
+            EdgeKind::Overrides => "OVERRIDES",
+            // Annotations/Decorators
+            EdgeKind::AnnotatedWith => "ANNOTATED_WITH",
+            EdgeKind::DecoratedWith => "DECORATED_WITH",
+            // Generics
+            EdgeKind::BoundedBy => "BOUNDED_BY",
+            EdgeKind::TypeArgumentOf => "TYPE_ARGUMENT_OF",
+            // Exception Flow
+            EdgeKind::Throws => "THROWS",
+            EdgeKind::Catches => "CATCHES",
+            // Closure/Capture
+            EdgeKind::Captures => "CAPTURES",
+            EdgeKind::Shadows => "SHADOWS",
+            // Instantiation
+            EdgeKind::Instantiates => "INSTANTIATES",
+            // Rust-specific
+            EdgeKind::ImplementsTrait => "IMPLEMENTS_TRAIT",
+            EdgeKind::BorrowsFrom => "BORROWS_FROM",
+            EdgeKind::LifetimeOf => "LIFETIME_OF",
+            EdgeKind::MacroExpands => "MACRO_EXPANDS",
+            // Kotlin-specific
+            EdgeKind::DelegatesTo => "DELEGATES_TO",
+            EdgeKind::SuspendsTo => "SUSPENDS_TO",
+            // Go-specific
+            EdgeKind::ChannelSend => "CHANNEL_SEND",
+            EdgeKind::ChannelReceive => "CHANNEL_RECEIVE",
+            EdgeKind::SpawnsGoroutine => "SPAWNS_GOROUTINE",
+            // CFG-specific
+            EdgeKind::CfgNext => "CFG_NEXT",
+            EdgeKind::CfgBranch => "CFG_BRANCH",
+            EdgeKind::CfgLoop => "CFG_LOOP",
+            EdgeKind::CfgHandler => "CFG_HANDLER",
+            // Symbol References
+            EdgeKind::ReferencesType => "REFERENCES_TYPE",
+            EdgeKind::ReferencesSymbol => "REFERENCES_SYMBOL",
+            // Web/Framework
+            EdgeKind::Decorates => "DECORATES",
+            EdgeKind::RouteHandler => "ROUTE_HANDLER",
+            EdgeKind::HandlesRequest => "HANDLES_REQUEST",
+            EdgeKind::UsesRepository => "USES_REPOSITORY",
+            // Control Flow
+            EdgeKind::Finally => "FINALLY",
+        }
+    }
+
+    /// Is this a structural edge (part of code structure)?
+    pub fn is_structural(&self) -> bool {
+        matches!(self, EdgeKind::Contains | EdgeKind::Defines)
+    }
+
+    /// Is this a data flow edge?
+    pub fn is_data_flow(&self) -> bool {
+        matches!(
+            self,
+            EdgeKind::DataFlow
+                | EdgeKind::DefUse
+                | EdgeKind::Reads
+                | EdgeKind::Writes
+                | EdgeKind::Defines
+                | EdgeKind::Captures
+                | EdgeKind::ChannelSend
+                | EdgeKind::ChannelReceive
+        )
+    }
+
+    /// Is this a control flow edge?
+    pub fn is_control_flow(&self) -> bool {
+        matches!(
+            self,
+            EdgeKind::ControlFlow
+                | EdgeKind::TrueBranch
+                | EdgeKind::FalseBranch
+                | EdgeKind::Calls
+                | EdgeKind::Invokes
+                | EdgeKind::SpawnsGoroutine
+                | EdgeKind::SuspendsTo
+        )
+    }
+
+    /// Is this a type relationship edge?
+    pub fn is_type_relationship(&self) -> bool {
+        matches!(
+            self,
+            EdgeKind::Inherits
+                | EdgeKind::Implements
+                | EdgeKind::ImplementsTrait
+                | EdgeKind::Extends
+                | EdgeKind::Overrides
+                | EdgeKind::BoundedBy
+                | EdgeKind::TypeArgumentOf
+        )
+    }
+
+    /// Is this a language-specific edge?
+    pub fn is_language_specific(&self) -> bool {
+        matches!(
+            self,
+            // Rust
+            EdgeKind::ImplementsTrait
+                | EdgeKind::BorrowsFrom
+                | EdgeKind::LifetimeOf
+                | EdgeKind::MacroExpands
+            // Kotlin
+                | EdgeKind::DelegatesTo
+                | EdgeKind::SuspendsTo
+            // Go
+                | EdgeKind::ChannelSend
+                | EdgeKind::ChannelReceive
+                | EdgeKind::SpawnsGoroutine
+        )
+    }
+
+    /// Parse from string (for deserialization)
+    pub fn from_str(s: &str) -> Self {
+        match s.to_uppercase().as_str() {
+            "CONTAINS" => EdgeKind::Contains,
+            "DEFINES" => EdgeKind::Defines,
+            "CALLS" => EdgeKind::Calls,
+            "INVOKES" => EdgeKind::Invokes,
+            "READS" => EdgeKind::Reads,
+            "WRITES" => EdgeKind::Writes,
+            "REFERENCES" => EdgeKind::References,
+            "DATA_FLOW" | "DATAFLOW" => EdgeKind::DataFlow,
+            "CONTROL_FLOW" | "CONTROLFLOW" => EdgeKind::ControlFlow,
+            "TRUE_BRANCH" | "TRUEBRANCH" => EdgeKind::TrueBranch,
+            "FALSE_BRANCH" | "FALSEBRANCH" => EdgeKind::FalseBranch,
+            "DEF_USE" | "DEFUSE" => EdgeKind::DefUse,
+            "TYPE_ANNOTATION" | "TYPEANNOTATION" => EdgeKind::TypeAnnotation,
+            "IMPORTS" => EdgeKind::Imports,
+            "INHERITS" => EdgeKind::Inherits,
+            "IMPLEMENTS" => EdgeKind::Implements,
+            "EXTENDS" => EdgeKind::Extends,
+            "OVERRIDES" => EdgeKind::Overrides,
+            "ANNOTATED_WITH" => EdgeKind::AnnotatedWith,
+            "DECORATED_WITH" => EdgeKind::DecoratedWith,
+            "BOUNDED_BY" => EdgeKind::BoundedBy,
+            "TYPE_ARGUMENT_OF" => EdgeKind::TypeArgumentOf,
+            "THROWS" => EdgeKind::Throws,
+            "CATCHES" => EdgeKind::Catches,
+            "CAPTURES" => EdgeKind::Captures,
+            "SHADOWS" => EdgeKind::Shadows,
+            "INSTANTIATES" => EdgeKind::Instantiates,
+            "IMPLEMENTS_TRAIT" => EdgeKind::ImplementsTrait,
+            "BORROWS_FROM" => EdgeKind::BorrowsFrom,
+            "LIFETIME_OF" => EdgeKind::LifetimeOf,
+            "MACRO_EXPANDS" => EdgeKind::MacroExpands,
+            "DELEGATES_TO" => EdgeKind::DelegatesTo,
+            "SUSPENDS_TO" => EdgeKind::SuspendsTo,
+            "CHANNEL_SEND" => EdgeKind::ChannelSend,
+            "CHANNEL_RECEIVE" => EdgeKind::ChannelReceive,
+            "SPAWNS_GOROUTINE" => EdgeKind::SpawnsGoroutine,
+            // CFG-specific
+            "CFG_NEXT" => EdgeKind::CfgNext,
+            "CFG_BRANCH" => EdgeKind::CfgBranch,
+            "CFG_LOOP" => EdgeKind::CfgLoop,
+            "CFG_HANDLER" => EdgeKind::CfgHandler,
+            // Symbol References
+            "REFERENCES_TYPE" => EdgeKind::ReferencesType,
+            "REFERENCES_SYMBOL" => EdgeKind::ReferencesSymbol,
+            // Web/Framework
+            "DECORATES" => EdgeKind::Decorates,
+            "ROUTE_HANDLER" => EdgeKind::RouteHandler,
+            "HANDLES_REQUEST" => EdgeKind::HandlesRequest,
+            "USES_REPOSITORY" => EdgeKind::UsesRepository,
+            // Control Flow
+            "FINALLY" => EdgeKind::Finally,
+            _ => EdgeKind::References, // Default fallback
+        }
+    }
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl EdgeKind {
+    pub fn __str__(&self) -> String {
+        self.as_str().to_string()
+    }
+
+    pub fn __repr__(&self) -> String {
+        format!("EdgeKind.{}", self.as_str())
+    }
+}
+
+/// IR Edge (matches Python Edge dataclass)
+///
+/// PyO3-enabled: Can be created directly from Python
+#[cfg_attr(feature = "python", pyclass)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Edge {
+    pub source_id: String,
+
+    pub target_id: String,
+
+    pub kind: EdgeKind,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub span: Option<Span>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<EdgeMetadata>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attrs: Option<ahash::HashMap<String, serde_json::Value>>,
+}
+
+/// Additional edge metadata
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct EdgeMetadata {
+    /// For CALLS: arguments passed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub arguments: Option<Vec<String>>,
+
+    /// For READS/WRITES: context (e.g., "assignment", "return")
+    ///
+    /// **DEPRECATED since 2.0.0**: Use `rw_context` instead for type safety
+    ///
+    /// **Migration**:
+    /// ```text
+    /// // Old (string-based, error-prone)
+    /// edge.metadata.context = Some("assignment".to_string());
+    ///
+    /// // New (type-safe)
+    /// edge.metadata.rw_context = Some(ReadWriteContext::Assignment);
+    ///
+    /// // Migration helper
+    /// let ctx = edge.metadata.context
+    ///     .as_ref()
+    ///     .map(|s| ReadWriteContext::from_str(s))
+    ///     .unwrap_or(ReadWriteContext::Other);
+    /// ```
+    #[deprecated(
+        since = "2.0.0",
+        note = "Use `rw_context` (ReadWriteContext enum) instead. Migration: ReadWriteContext::from_str(&context)"
+    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context: Option<String>,
+
+    /// For READS/WRITES: strongly-typed read/write context
+    /// Replaces the string-based `context` field with type-safe enum
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rw_context: Option<ReadWriteContext>,
+
+    /// For CONTROL_FLOW edges: strongly-typed control flow context
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cf_context: Option<ControlFlowContext>,
+
+    /// For IMPORTS: import alias
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alias: Option<String>,
+
+    /// Is this edge conditional?
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_conditional: Option<bool>,
+}
+
+impl EdgeMetadata {
+    /// Create metadata with read/write context (type-safe)
+    pub fn with_rw_context(rw_context: ReadWriteContext) -> Self {
+        Self {
+            rw_context: Some(rw_context),
+            ..Default::default()
+        }
+    }
+
+    /// Create metadata with control flow context (type-safe)
+    pub fn with_cf_context(cf_context: ControlFlowContext) -> Self {
+        Self {
+            cf_context: Some(cf_context),
+            ..Default::default()
+        }
+    }
+
+    /// Create metadata from legacy string context (backward compatibility)
+    pub fn from_context_string(context: impl Into<String>) -> Self {
+        let ctx_str = context.into();
+        Self {
+            context: Some(ctx_str.clone()),
+            rw_context: Some(ReadWriteContext::from_str(&ctx_str)),
+            ..Default::default()
+        }
+    }
+
+    /// Get the read/write context, falling back to parsing the string context
+    pub fn get_rw_context(&self) -> Option<ReadWriteContext> {
+        self.rw_context
+            .or_else(|| self.context.as_ref().map(|s| ReadWriteContext::from_str(s)))
+    }
+
+    /// Get the control flow context
+    pub fn get_cf_context(&self) -> Option<ControlFlowContext> {
+        self.cf_context
+    }
+}
+
+impl Edge {
+    /// Create a new Edge
+    pub fn new(source_id: String, target_id: String, kind: EdgeKind) -> Self {
+        Self {
+            source_id,
+            target_id,
+            kind,
+            span: None,
+            metadata: None,
+            attrs: None,
+        }
+    }
+
+    pub fn with_span(mut self, span: Span) -> Self {
+        self.span = Some(span);
+        self
+    }
+
+    pub fn with_metadata(mut self, metadata: EdgeMetadata) -> Self {
+        self.metadata = Some(metadata);
+        self
+    }
+
+    /// Add read/write context to edge metadata (type-safe)
+    pub fn with_rw_context(mut self, rw_context: ReadWriteContext) -> Self {
+        let mut metadata = self.metadata.take().unwrap_or_default();
+        metadata.rw_context = Some(rw_context);
+        self.metadata = Some(metadata);
+        self
+    }
+
+    /// Add control flow context to edge metadata (type-safe)
+    pub fn with_cf_context(mut self, cf_context: ControlFlowContext) -> Self {
+        let mut metadata = self.metadata.take().unwrap_or_default();
+        metadata.cf_context = Some(cf_context);
+        self.metadata = Some(metadata);
+        self
+    }
+
+    /// Create a CONTAINS edge
+    pub fn contains(parent_id: impl Into<String>, child_id: impl Into<String>) -> Self {
+        Self::new(parent_id.into(), child_id.into(), EdgeKind::Contains)
+    }
+
+    /// Create a CALLS edge
+    pub fn calls(caller_id: impl Into<String>, callee_id: impl Into<String>) -> Self {
+        Self::new(caller_id.into(), callee_id.into(), EdgeKind::Calls)
+    }
+
+    /// Create a READS edge
+    pub fn reads(reader_id: impl Into<String>, variable: impl Into<String>) -> Self {
+        Self::new(reader_id.into(), variable.into(), EdgeKind::Reads)
+    }
+
+    /// Create a WRITES edge
+    pub fn writes(writer_id: impl Into<String>, variable: impl Into<String>) -> Self {
+        Self::new(writer_id.into(), variable.into(), EdgeKind::Writes)
+    }
+
+    /// Create an INHERITS edge
+    pub fn inherits(child_id: impl Into<String>, parent_id: impl Into<String>) -> Self {
+        Self::new(child_id.into(), parent_id.into(), EdgeKind::Inherits)
+    }
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl Edge {
+    /// Create a new Edge from Python
+    #[new]
+    fn py_new(source_id: String, target_id: String, kind: EdgeKind) -> Self {
+        Self::new(source_id, target_id, kind)
+    }
+
+    pub fn __repr__(&self) -> String {
+        format!(
+            "Edge({} --{:?}--> {})",
+            self.source_id, self.kind, self.target_id
+        )
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Display Implementation
+// ═══════════════════════════════════════════════════════════════════════════
+
+impl std::fmt::Display for EdgeKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_edge_kind_as_str() {
+        assert_eq!(EdgeKind::Contains.as_str(), "CONTAINS");
+        assert_eq!(EdgeKind::Calls.as_str(), "CALLS");
+    }
+
+    #[test]
+    fn test_edge_construction() {
+        let edge = Edge::contains("parent", "child");
+        assert_eq!(edge.source_id, "parent");
+        assert_eq!(edge.target_id, "child");
+        assert_eq!(edge.kind, EdgeKind::Contains);
+    }
+
+    #[test]
+    fn test_edge_metadata_with_rw_context() {
+        let metadata = EdgeMetadata::with_rw_context(ReadWriteContext::Assignment);
+        assert_eq!(metadata.rw_context, Some(ReadWriteContext::Assignment));
+        assert_eq!(
+            metadata.get_rw_context(),
+            Some(ReadWriteContext::Assignment)
+        );
+    }
+
+    #[test]
+    fn test_edge_metadata_with_cf_context() {
+        let metadata = EdgeMetadata::with_cf_context(ControlFlowContext::TrueBranch);
+        assert_eq!(metadata.cf_context, Some(ControlFlowContext::TrueBranch));
+        assert_eq!(
+            metadata.get_cf_context(),
+            Some(ControlFlowContext::TrueBranch)
+        );
+    }
+
+    #[test]
+    fn test_edge_metadata_from_context_string() {
+        let metadata = EdgeMetadata::from_context_string("assignment");
+        assert_eq!(metadata.context, Some("assignment".to_string()));
+        assert_eq!(metadata.rw_context, Some(ReadWriteContext::Assignment));
+        assert_eq!(
+            metadata.get_rw_context(),
+            Some(ReadWriteContext::Assignment)
+        );
+    }
+
+    #[test]
+    fn test_edge_metadata_get_rw_context_fallback() {
+        // Legacy string context only
+        #[allow(deprecated)]
+        let metadata = EdgeMetadata {
+            context: Some("return".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(metadata.get_rw_context(), Some(ReadWriteContext::Return));
+    }
+
+    #[test]
+    fn test_edge_with_rw_context() {
+        let edge = Edge::reads("func1", "var_x").with_rw_context(ReadWriteContext::Assignment);
+
+        assert_eq!(edge.kind, EdgeKind::Reads);
+        assert!(edge.metadata.is_some());
+        assert_eq!(
+            edge.metadata.unwrap().rw_context,
+            Some(ReadWriteContext::Assignment)
+        );
+    }
+
+    #[test]
+    fn test_edge_with_cf_context() {
+        let edge = Edge::new(
+            "block1".to_string(),
+            "block2".to_string(),
+            EdgeKind::ControlFlow,
+        )
+        .with_cf_context(ControlFlowContext::TrueBranch);
+
+        assert_eq!(edge.kind, EdgeKind::ControlFlow);
+        assert!(edge.metadata.is_some());
+        assert_eq!(
+            edge.metadata.unwrap().cf_context,
+            Some(ControlFlowContext::TrueBranch)
+        );
+    }
+
+    #[test]
+    fn test_edge_metadata_serde() {
+        let metadata = EdgeMetadata {
+            rw_context: Some(ReadWriteContext::Assignment),
+            cf_context: Some(ControlFlowContext::Sequential),
+            arguments: Some(vec!["arg1".to_string(), "arg2".to_string()]),
+            ..Default::default()
+        };
+
+        let json = serde_json::to_string(&metadata).unwrap();
+        let parsed: EdgeMetadata = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.rw_context, Some(ReadWriteContext::Assignment));
+        assert_eq!(parsed.cf_context, Some(ControlFlowContext::Sequential));
+        assert_eq!(
+            parsed.arguments,
+            Some(vec!["arg1".to_string(), "arg2".to_string()])
+        );
+    }
+
+    #[test]
+    fn test_backward_compatibility_string_context() {
+        // Old code using string context should still work
+        #[allow(deprecated)]
+        let metadata = EdgeMetadata {
+            context: Some("argument_passing".to_string()),
+            arguments: Some(vec!["x".to_string()]),
+            ..Default::default()
+        };
+
+        // Should parse to enum when accessed via get_rw_context()
+        assert_eq!(
+            metadata.get_rw_context(),
+            Some(ReadWriteContext::ArgumentPassing)
+        );
+    }
+}

@@ -1,0 +1,133 @@
+# Python Taint Propagators
+# Rules for how taint flows through operations
+
+atoms:
+# =============================================================================
+# String Operations
+# =============================================================================
+- id: prop.string.format
+  kind: propagator
+  tags: [flow, string]
+  description: String formatting propagates taint
+  match:
+  - base_type: str
+    call: format
+    from_args: [0]
+    to: return
+  - base_type: str
+    call: __mod__
+    from_args: [0, 1]
+    to: return
+  - base_type: str
+    call: __add__
+    from_args: [0, 1]
+    to: return
+  - base_type: str
+    call: join
+    from_args: [0]
+    to: return
+  - base_type: str
+    call: replace
+    from_args: [0]
+    to: return
+
+- id: prop.string.fstring
+  kind: propagator
+  tags: [flow, string]
+  description: F-string formatting (special case)
+  match:
+  - call: __format__
+    from_args: [0]
+    to: return
+
+# =============================================================================
+# Collection Operations
+# =============================================================================
+- id: prop.list
+  kind: propagator
+  tags: [flow, collection]
+  description: List operations propagate taint
+  match:
+  - base_type: list
+    call: append
+    from_args: [0]
+    to: base
+  - base_type: list
+    call: extend
+    from_args: [0]
+    to: base
+  - base_type: list
+    call: insert
+    from_args: [1]
+    to: base
+  - base_type: list
+    call: __getitem__
+    from_args: [0]
+    to: return
+  - base_type: list
+    call: __setitem__
+    from_args: [1]
+    to: base
+
+- id: prop.dict
+  kind: propagator
+  tags: [flow, collection]
+  description: Dict operations propagate taint
+  match:
+  - base_type: dict
+    call: __setitem__
+    from_args: [1]
+    to: base
+  - base_type: dict
+    call: __getitem__
+    from_args: [0]
+    to: return
+  - base_type: dict
+    call: get
+    from_args: [0]
+    to: return
+  - base_type: dict
+    call: update
+    from_args: [0]
+    to: base
+  - base_type: dict
+    call: setdefault
+    from_args: [1]
+    to: base
+
+- id: prop.set
+  kind: propagator
+  tags: [flow, collection]
+  description: Set operations propagate taint
+  match:
+  - base_type: set
+    call: add
+    from_args: [0]
+    to: base
+  - base_type: set
+    call: update
+    from_args: [0]
+    to: base
+
+# =============================================================================
+# JSON Serialization
+# =============================================================================
+- id: prop.json
+  kind: propagator
+  tags: [flow, serialization]
+  description: JSON operations propagate taint
+  match:
+  - call: json.loads
+    from_args: [0]
+    to: return
+  - call: json.dumps
+    from_args: [0]
+    to: return
+  - base_type: json.JSONDecoder
+    call: decode
+    from_args: [0]
+    to: return
+  - base_type: json.JSONEncoder
+    call: encode
+    from_args: [0]
+    to: return

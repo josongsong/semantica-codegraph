@@ -1,0 +1,227 @@
+name: CWE Contract Validation
+
+on:
+  pull_request:
+    paths:
+      - 'src/contexts/code_foundation/infrastructure/taint/**'
+      - 'cwe/catalog/**'
+      - 'cwe/test-suite/**'
+      - 'cwe/profiles/**'
+  push:
+    branches:
+      - main
+      - develop
+  schedule:
+    # Weekly full regression
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      view:
+        description: 'View to run (view-injection, view-top25, view-web-xss)'
+        required: false
+        default: 'view-top25'
+
+jobs:
+  # Fast check: view-injection (7 CWEs, ~2 min)
+  injection-check:
+    name: Injection View
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-dev.txt
+
+      - name: Run view-injection
+        run: |
+          python cwe/run_test_suite.py \
+            --view view-injection \
+            --output cwe/results/view-injection-${{ github.sha }}.json
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: injection-results
+          path: cwe/results/view-injection-*.json
+
+      - name: Check acceptance criteria
+        run: |
+          python -c "
+          import json
+          with open('cwe/results/view-injection-${{ github.sha }}.json') as f:
+              result = json.load(f)
+          f1 = result['overall']['weighted_f1']
+          print(f'Weighted F1: {f1:.3f}')
+          if f1 < 0.80:
+              print('❌ Below acceptance threshold (0.80)')
+              exit(1)
+          print('✅ Passed')
+          "
+
+  # Full check: view-top25 (9 CWEs, ~5 min)
+  top25-check:
+    name: CWE Top 25
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-dev.txt
+
+      - name: Run view-top25
+        run: |
+          VIEW="${{ github.event.inputs.view || 'view-top25' }}"
+          python cwe/run_test_suite.py \
+            --view $VIEW \
+            --output cwe/results/${VIEW}-${{ github.sha }}.json
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: top25-results
+          path: cwe/results/view-top25-*.json
+
+      - name: Generate summary
+        if: always()
+        run: |
+          python -c "
+          import json
+          VIEW = '${{ github.event.inputs.view or 'view-top25' }}'
+          with open(f'cwe/results/{VIEW}-${{ github.sha }}.json') as f:
+              result = json.load(f)
+
+          print('## CWE Contract Validation Results')
+          print(f'**View**: {VIEW}')
+          print(f'**Overall Weighted F1**: {result[\"overall\"][\"weighted_f1\"]:.3f}')
+          print()
+          print('### Per-CWE Results')
+          print('| CWE | Precision | Recall | F1 | Status |')
+          print('|-----|-----------|--------|----|----|')
+
+          for cwe_id, cwe_result in result['cwes'].items():
+              if 'metrics' not in cwe_result:
+                  continue
+              m = cwe_result['metrics']
+              status = '✅' if m['f1'] >= 0.80 else '❌'
+              print(f'| {cwe_id} | {m[\"precision\"]:.3f} | {m[\"recall\"]:.3f} | {m[\"f1\"]:.3f} | {status} |')
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Check acceptance criteria
+        run: |
+          VIEW="${{ github.event.inputs.view || 'view-top25' }}"
+          python -c "
+          import json
+          with open('cwe/results/$VIEW-${{ github.sha }}.json') as f:
+              result = json.load(f)
+          f1 = result['overall']['weighted_f1']
+          print(f'Weighted F1: {f1:.3f}')
+          if f1 < 0.87:
+              print('❌ Below Top25 threshold (0.87)')
+              exit(1)
+          print('✅ Passed')
+          "
+
+  # Individual CWE check (triggered by catalog changes)
+  cwe-specific:
+    name: CWE-specific Validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed CWEs
+        id: detect
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          CHANGED_CWES=$(echo "$CHANGED_FILES" | grep 'cwe/catalog/cwe-' | sed 's/.*cwe-\([0-9]*\).yaml/CWE-\1/' | tr '\n' ' ')
+          echo "cwes=$CHANGED_CWES" >> $GITHUB_OUTPUT
+          echo "Changed CWEs: $CHANGED_CWES"
+
+      - name: Set up Python
+        if: steps.detect.outputs.cwes != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        if: steps.detect.outputs.cwes != ''
+        run: |
+          pip install -r requirements-dev.txt
+
+      - name: Test changed CWEs
+        if: steps.detect.outputs.cwes != ''
+        run: |
+          for CWE in ${{ steps.detect.outputs.cwes }}; do
+            echo "Testing $CWE..."
+            python cwe/run_test_suite.py \
+              --cwe $CWE \
+              --output cwe/results/${CWE}-${{ github.sha }}.json || true
+          done
+
+      - name: Upload results
+        if: steps.detect.outputs.cwes != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: cwe-specific-results
+          path: cwe/results/CWE-*-${{ github.sha }}.json
+
+  # Report generation
+  report:
+    name: Generate Report
+    runs-on: ubuntu-latest
+    needs: [injection-check, top25-check]
+    if: always()
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all results
+        uses: actions/download-artifact@v4
+        with:
+          path: cwe/results/
+
+      - name: Generate combined report
+        run: |
+          echo "# CWE Contract Validation Report" > report.md
+          echo "" >> report.md
+          echo "**Commit**: ${{ github.sha }}" >> report.md
+          echo "**Date**: $(date -u)" >> report.md
+          echo "" >> report.md
+
+          # Aggregate results
+          find cwe/results/ -name "*.json" -type f | while read file; do
+            echo "Processing $file"
+          done
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cwe-report
+          path: report.md

@@ -1,0 +1,38 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_022.PathInjection
+  kind: sink
+  tags: ['cwe_022', 'PathInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-022"]
+  description: Accessing paths influenced by users can allow an attacker to access unexpected resources.
+  match:
+  -     call: PathInjection
+
+- id: sink.cwe_022.TarSlip
+  kind: sink
+  tags: ['cwe_022', 'TarSlip', 'vulnerability']
+  severity: high
+  cwe: ["CWE-022"]
+  description: Extracting files from a malicious tar archive without validating that the
+  match:
+  -     call: TarSlip
+
+- id: sink.cwe_022.PathInjection
+  kind: sink
+  tags: ['cwe_022', 'PathInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-022"]
+  description: Accessing paths influenced by users can allow an attacker to access unexpected resources.
+  match:
+  -     call: PathInjection
+
+- id: sink.cwe_022.TarSlip
+  kind: sink
+  tags: ['cwe_022', 'TarSlip', 'vulnerability']
+  severity: high
+  cwe: ["CWE-022"]
+  description: Extracting files from a malicious tar archive without validating that the
+  match:
+  -     call: TarSlip

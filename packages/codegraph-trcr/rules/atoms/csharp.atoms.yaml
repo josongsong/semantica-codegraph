@@ -1,0 +1,817 @@
+atoms:
+- id: input.http.aspnetcore
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  - aspnetcore
+  severity: high
+  description: ASP.NET Core HTTP request input
+  match:
+  - base_type: Microsoft.AspNetCore.Mvc.ControllerBase
+    read: Request
+  - base_type: Microsoft.AspNetCore.Http.HttpRequest
+    read: Query
+  - base_type: Microsoft.AspNetCore.Http.HttpRequest
+    read: Form
+  - base_type: Microsoft.AspNetCore.Http.HttpRequest
+    read: Headers
+  - base_type: Microsoft.AspNetCore.Http.HttpRequest
+    read: Cookies
+  - base_type: Microsoft.AspNetCore.Http.HttpRequest
+    read: Body
+  - base_type: Microsoft.AspNetCore.Http.HttpRequest
+    call: ReadAsStringAsync
+  - base_type: Microsoft.AspNetCore.Http.IQueryCollection
+    call: '[]'
+  - base_type: Microsoft.AspNetCore.Http.IFormCollection
+    call: '[]'
+  - base_type: Microsoft.AspNetCore.Routing.RouteValueDictionary
+    call: '[]'
+- id: input.http.aspnet_legacy
+  kind: source
+  tags:
+  - untrusted
+  - web
+  - http
+  severity: high
+  description: ASP.NET (legacy) HTTP request input
+  match:
+  - base_type: System.Web.HttpRequest
+    read: QueryString
+  - base_type: System.Web.HttpRequest
+    read: Form
+  - base_type: System.Web.HttpRequest
+    read: Headers
+  - base_type: System.Web.HttpRequest
+    read: Cookies
+  - base_type: System.Web.HttpRequest
+    read: Params
+  - base_type: System.Web.HttpRequest
+    read: InputStream
+  - base_type: System.Web.HttpRequest
+    call: '[]'
+  - call: Request.QueryString
+  - call: Request.Form
+  - call: Request.Params
+- id: input.file.csharp
+  kind: source
+  tags:
+  - untrusted
+  - file
+  - io
+  severity: medium
+  description: C# file read operations
+  match:
+  - call: File.ReadAllText
+  - call: File.ReadAllLines
+  - call: File.ReadAllBytes
+  - call: File.OpenRead
+  - base_type: System.IO.StreamReader
+    call: ReadToEnd
+  - base_type: System.IO.StreamReader
+    call: ReadLine
+  - base_type: System.IO.StreamReader
+    call: ReadAsync
+  - base_type: System.IO.FileStream
+    call: Read
+  - base_type: System.IO.FileStream
+    call: ReadAsync
+- id: input.env.csharp
+  kind: source
+  tags:
+  - untrusted
+  - env
+  - config
+  severity: medium
+  description: Environment variables
+  match:
+  - call: Environment.GetEnvironmentVariable
+  - call: Environment.GetEnvironmentVariables
+  - base_type: Microsoft.Extensions.Configuration.IConfiguration
+    call: '[]'
+  - base_type: Microsoft.Extensions.Configuration.IConfiguration
+    call: GetValue
+- id: input.console.csharp
+  kind: source
+  tags:
+  - untrusted
+  - stdin
+  severity: high
+  description: Console input
+  match:
+  - call: Console.ReadLine
+  - call: Console.Read
+  - call: Console.ReadKey
+- id: sink.sql.ado
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - ado
+  severity: critical
+  description: ADO.NET SQL injection
+  match:
+  - base_type: System.Data.SqlClient.SqlCommand
+    call: ExecuteReader
+  - base_type: System.Data.SqlClient.SqlCommand
+    call: ExecuteScalar
+  - base_type: System.Data.SqlClient.SqlCommand
+    call: ExecuteNonQuery
+  - base_type: System.Data.SqlClient.SqlCommand
+    write: CommandText
+    constraints:
+      arg_type: not_const
+  - call: new SqlCommand
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Microsoft.Data.SqlClient.SqlCommand
+    call: ExecuteReader
+  - base_type: Microsoft.Data.SqlClient.SqlCommand
+    call: ExecuteScalar
+  - base_type: Microsoft.Data.SqlClient.SqlCommand
+    call: ExecuteNonQuery
+  cwe: &id001
+  - CWE-89
+  owasp: A03:2021-Injection
+- id: sink.sql.entity_framework
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - ef
+  severity: critical
+  description: Entity Framework raw SQL
+  match:
+  - base_type: Microsoft.EntityFrameworkCore.DbContext
+    call: FromSqlRaw
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Microsoft.EntityFrameworkCore.DbContext
+    call: ExecuteSqlRaw
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions
+    call: ExecuteSqlRaw
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: System.Data.Entity.Database
+    call: SqlQuery
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: System.Data.Entity.Database
+    call: ExecuteSqlCommand
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+- id: sink.sql.dapper
+  kind: sink
+  tags:
+  - injection
+  - db
+  - sql
+  - dapper
+  severity: critical
+  description: Dapper SQL injection
+  match:
+  - base_type: Dapper.SqlMapper
+    call: Query
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Dapper.SqlMapper
+    call: Execute
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Query
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: QueryAsync
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id001
+  owasp: A03:2021-Injection
+- id: sink.command.process
+  kind: sink
+  tags:
+  - injection
+  - os
+  - command
+  severity: critical
+  description: Process command execution
+  match:
+  - call: Process.Start
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: System.Diagnostics.Process
+    call: Start
+  - base_type: System.Diagnostics.ProcessStartInfo
+    write: FileName
+    constraints:
+      arg_type: not_const
+  - base_type: System.Diagnostics.ProcessStartInfo
+    write: Arguments
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-78
+  owasp: A03:2021-Injection
+- id: sink.xss.aspnetcore
+  kind: sink
+  tags:
+  - xss
+  - web
+  - html
+  severity: high
+  description: ASP.NET Core XSS
+  match:
+  - call: Content
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Html.Raw
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: HtmlHelper.Raw
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Microsoft.AspNetCore.Http.HttpResponse
+    call: WriteAsync
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: &id002
+  - CWE-79
+  owasp: A03:2021-Injection
+- id: sink.xss.aspnet_legacy
+  kind: sink
+  tags:
+  - xss
+  - web
+  - html
+  severity: high
+  description: ASP.NET (legacy) XSS
+  match:
+  - base_type: System.Web.HttpResponse
+    call: Write
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Response.Write
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe: *id002
+  owasp: A03:2021-Injection
+- id: sink.path.csharp
+  kind: sink
+  tags:
+  - traversal
+  - file
+  - path
+  severity: high
+  description: File path operations
+  match:
+  - call: File.Open
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: File.OpenRead
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: File.OpenWrite
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: File.ReadAllText
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: File.WriteAllText
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: File.Delete
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: File.Copy
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: File.Move
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Directory.Delete
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: new FileStream
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: new StreamReader
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: new StreamWriter
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-22
+  owasp: A01:2021-Broken Access Control
+- id: sink.ssrf.httpclient
+  kind: sink
+  tags:
+  - ssrf
+  - http
+  - network
+  severity: critical
+  description: HttpClient SSRF
+  match:
+  - base_type: System.Net.Http.HttpClient
+    call: GetAsync
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: System.Net.Http.HttpClient
+    call: PostAsync
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: System.Net.Http.HttpClient
+    call: SendAsync
+  - base_type: System.Net.Http.HttpClient
+    call: GetStringAsync
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: System.Net.WebClient
+    call: DownloadString
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: System.Net.WebClient
+    call: DownloadData
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: WebRequest.Create
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-918
+  owasp: A10:2021-Server-Side Request Forgery
+- id: sink.deserialize.csharp
+  kind: sink
+  tags:
+  - deserialize
+  - rce
+  - dangerous
+  severity: critical
+  description: C# insecure deserialization
+  match:
+  - base_type: System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+    call: Deserialize
+  - base_type: System.Web.UI.ObjectStateFormatter
+    call: Deserialize
+  - base_type: System.Web.UI.LosFormatter
+    call: Deserialize
+  - base_type: System.Runtime.Serialization.NetDataContractSerializer
+    call: Deserialize
+  - base_type: System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+    call: Deserialize
+  - base_type: System.Web.Script.Serialization.JavaScriptSerializer
+    call: Deserialize
+  - base_type: System.Xml.Serialization.XmlSerializer
+    call: Deserialize
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Newtonsoft.Json.JsonConvert
+    call: DeserializeObject
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-502
+  owasp: A08:2021-Software and Data Integrity Failures
+- id: sink.xxe.csharp
+  kind: sink
+  tags:
+  - xxe
+  - xml
+  severity: critical
+  description: C# XXE via XML parsing
+  match:
+  - base_type: System.Xml.XmlDocument
+    call: Load
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: System.Xml.XmlDocument
+    call: LoadXml
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: System.Xml.XmlReader
+    call: Create
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: System.Xml.XmlTextReader
+    call: Read
+  - base_type: System.Xml.Linq.XDocument
+    call: Load
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: System.Xml.Linq.XDocument
+    call: Parse
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-611
+  owasp: A05:2021-Security Misconfiguration
+- id: sink.ldap.csharp
+  kind: sink
+  tags:
+  - injection
+  - ldap
+  severity: critical
+  description: C# LDAP injection
+  match:
+  - base_type: System.DirectoryServices.DirectorySearcher
+    write: Filter
+    constraints:
+      arg_type: not_const
+  - base_type: System.DirectoryServices.DirectorySearcher
+    call: FindOne
+  - base_type: System.DirectoryServices.DirectorySearcher
+    call: FindAll
+  - call: new DirectorySearcher
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-90
+  owasp: A03:2021-Injection
+- id: sink.redirect.aspnetcore
+  kind: sink
+  tags:
+  - redirect
+  - web
+  severity: high
+  description: ASP.NET Core open redirect
+  match:
+  - call: Redirect
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: RedirectPermanent
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Microsoft.AspNetCore.Mvc.ControllerBase
+    call: Redirect
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-601
+  owasp: A01:2021-Broken Access Control
+- id: sink.redos.csharp
+  kind: sink
+  tags:
+  - redos
+  - dos
+  - regex
+  severity: medium
+  description: User-controlled regex (ReDoS)
+  match:
+  - call: new Regex
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - call: Regex.Match
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  - call: Regex.IsMatch
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  - call: Regex.Replace
+    args:
+    - 1
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-1333
+  owasp: A05:2021-Security Misconfiguration
+- id: sink.log.csharp
+  kind: sink
+  tags:
+  - log
+  - injection
+  severity: medium
+  description: Log injection
+  match:
+  - base_type: Microsoft.Extensions.Logging.ILogger
+    call: LogInformation
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Microsoft.Extensions.Logging.ILogger
+    call: LogWarning
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Microsoft.Extensions.Logging.ILogger
+    call: LogError
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: NLog.Logger
+    call: Info
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  - base_type: Serilog.ILogger
+    call: Information
+    args:
+    - 0
+    constraints:
+      arg_type: not_const
+  cwe:
+  - CWE-117
+  owasp: A09:2021-Security Logging and Monitoring Failures
+- id: barrier.sql.parameterized
+  kind: sanitizer
+  tags:
+  - safety
+  - db
+  - sql
+  description: Parameterized queries
+  scope: return
+  match:
+  - call: new SqlParameter
+    scope: return
+  - base_type: System.Data.SqlClient.SqlCommand
+    call: Parameters.Add
+    scope: return
+  - base_type: System.Data.SqlClient.SqlCommand
+    call: Parameters.AddWithValue
+    scope: return
+  - call: FromSqlInterpolated
+    scope: return
+  - call: ExecuteSqlInterpolated
+    scope: return
+- id: barrier.xss.encode
+  kind: sanitizer
+  tags:
+  - safety
+  - web
+  - html
+  description: HTML encoding
+  scope: return
+  match:
+  - call: HttpUtility.HtmlEncode
+    scope: return
+  - call: WebUtility.HtmlEncode
+    scope: return
+  - call: System.Web.HttpUtility.HtmlEncode
+    scope: return
+  - call: System.Net.WebUtility.HtmlEncode
+    scope: return
+  - base_type: System.Text.Encodings.Web.HtmlEncoder
+    call: Encode
+    scope: return
+- id: barrier.path.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - path
+  - file
+  description: Path validation
+  scope: return
+  match:
+  - call: Path.GetFullPath
+    scope: return
+  - call: Path.GetFileName
+    scope: return
+- id: barrier.url.validation
+  kind: sanitizer
+  tags:
+  - safety
+  - url
+  - validation
+  description: URL validation
+  scope: return
+  match:
+  - call: Uri.TryCreate
+    scope: return
+  - call: new Uri
+    scope: return
+  - call: Url.IsLocalUrl
+    scope: return
+- id: barrier.xxe.disable
+  kind: sanitizer
+  tags:
+  - safety
+  - xxe
+  - xml
+  description: XXE prevention
+  scope: return
+  match:
+  - base_type: System.Xml.XmlReaderSettings
+    write: DtdProcessing
+    constraints:
+      arg_value:
+      - DtdProcessing.Prohibit
+    scope: return
+- id: prop.string.csharp
+  kind: propagator
+  tags:
+  - flow
+  - string
+  description: String operations propagate taint
+  match:
+  - base_type: System.String
+    call: Concat
+    from_args:
+    - 0
+    to: return
+  - base_type: System.String
+    call: Format
+    from_args:
+    - 1
+    to: return
+  - base_type: System.String
+    call: Replace
+    from_args:
+    - 0
+    to: return
+  - base_type: System.String
+    call: Substring
+    from_args:
+    - 0
+    to: return
+  - base_type: System.String
+    call: ToLower
+    from_args:
+    - 0
+    to: return
+  - base_type: System.String
+    call: ToUpper
+    from_args:
+    - 0
+    to: return
+  - base_type: System.String
+    call: Trim
+    from_args:
+    - 0
+    to: return
+  - base_type: System.Text.StringBuilder
+    call: Append
+    from_args:
+    - 0
+    to: base
+  - base_type: System.Text.StringBuilder
+    call: AppendFormat
+    from_args:
+    - 1
+    to: base
+  - base_type: System.Text.StringBuilder
+    call: ToString
+    from_args:
+    - 0
+    to: return
+  - call: string.Format
+    from_args:
+    - 1
+    to: return
+- id: prop.collection.csharp
+  kind: propagator
+  tags:
+  - flow
+  - collection
+  description: Collection operations propagate taint
+  match:
+  - base_type: System.Collections.Generic.List
+    call: Add
+    from_args:
+    - 0
+    to: base
+  - base_type: System.Collections.Generic.List
+    call: '[]'
+    from_args:
+    - 0
+    to: return
+  - base_type: System.Collections.Generic.Dictionary
+    call: '[]'
+    from_args:
+    - 0
+    to: return
+  - base_type: System.Collections.Generic.Dictionary
+    call: TryGetValue
+    from_args:
+    - 0
+    to: return
+- id: prop.json.csharp
+  kind: propagator
+  tags:
+  - flow
+  - json
+  description: JSON operations propagate taint
+  match:
+  - call: JsonConvert.SerializeObject
+    from_args:
+    - 0
+    to: return
+  - call: JsonConvert.DeserializeObject
+    from_args:
+    - 0
+    to: return
+  - call: JsonSerializer.Serialize
+    from_args:
+    - 0
+    to: return
+  - call: JsonSerializer.Deserialize
+    from_args:
+    - 0
+    to: return

@@ -1,0 +1,276 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.session.fixation
+  kind: sink
+  tags: ['session', 'fixation', 'vulnerability']
+  severity: high
+  cwe: ["CWE-384"]
+  owasp: "A07:2021-Identification and Authentication Failures"
+  description: Session Fixation
+  match:
+  -     base_type: session
+        call: session_key
+  -     base_type: request.session
+        call: cycle_key
+
+- id: sink.session.no_timeout
+  kind: sink
+  tags: ['session', 'no_timeout', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-613"]
+  description: Session No Timeout
+  match:
+  -     read: SESSION_COOKIE_AGE
+  -     read: SESSION_EXPIRE_AT_BROWSER_CLOSE
+
+- id: sink.session.weak_token
+  kind: sink
+  tags: ['session', 'weak_token', 'vulnerability']
+  severity: high
+  cwe: ["CWE-330"]
+  description: Session Weak Token
+  match:
+  -     base_type: uuid
+        call: uuid1
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: uuid
+        call: uuid4
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.auth.missing_mfa
+  kind: sink
+  tags: ['auth', 'missing_mfa', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-308"]
+  description: Auth Missing Mfa
+  match:
+  -     call: login
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: authenticate
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.auth.password_plaintext
+  kind: sink
+  tags: ['auth', 'password_plaintext', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-256"]
+  owasp: "A02:2021-Cryptographic Failures"
+  description: Auth Password Plaintext
+  match:
+  -     call: password
+  -     call: passwd
+  -     call: pwd
+
+- id: sink.auth.no_rate_limit
+  kind: sink
+  tags: ['auth', 'no_rate_limit', 'vulnerability']
+  severity: high
+  cwe: ["CWE-307"]
+  description: Auth No Rate Limit
+  match:
+  -     call: login
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: authenticate
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: check_password
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.auth.default_credentials
+  kind: sink
+  tags: ['auth', 'default_credentials', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-798"]
+  description: Auth Default Credentials
+  match:
+  -     call: admin
+  -     call: password
+  -     call: 12345
+
+- id: sink.auth.weak_password_policy
+  kind: sink
+  tags: ['auth', 'weak_password_policy', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-521"]
+  description: Auth Weak Password Policy
+  match:
+  -     read: PASSWORD_MIN_LENGTH
+  -     read: PASSWORD_VALIDATORS
+
+- id: barrier.session.secure_cookie
+  kind: sanitizer
+  tags: ['session', 'secure_cookie', 'safety']
+  severity: high
+  description: Session Secure Cookie
+  match:
+  -     read: SESSION_COOKIE_SECURE
+  -     read: SESSION_COOKIE_HTTPONLY
+  -     read: SESSION_COOKIE_SAMESITE
+
+- id: barrier.auth.constant_time_compare
+  kind: sanitizer
+  tags: ['auth', 'constant_time_compare', 'safety']
+  severity: high
+  description: Auth Constant Time Compare
+  match:
+  -     base_type: hmac
+        call: compare_digest
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: secrets
+        call: compare_digest
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.session.fixation
+  kind: sink
+  tags: ['session', 'fixation', 'vulnerability']
+  severity: high
+  cwe: ["CWE-384"]
+  owasp: "A07:2021-Identification and Authentication Failures"
+  description: Session Fixation
+  match:
+  -     base_type: session
+        call: session_key
+  -     base_type: request.session
+        call: cycle_key
+
+- id: sink.session.no_timeout
+  kind: sink
+  tags: ['session', 'no_timeout', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-613"]
+  description: Session No Timeout
+  match:
+  -     read: SESSION_COOKIE_AGE
+  -     read: SESSION_EXPIRE_AT_BROWSER_CLOSE
+
+- id: sink.session.weak_token
+  kind: sink
+  tags: ['session', 'weak_token', 'vulnerability']
+  severity: high
+  cwe: ["CWE-330"]
+  description: Session Weak Token
+  match:
+  -     base_type: uuid
+        call: uuid1
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: uuid
+        call: uuid4
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.auth.missing_mfa
+  kind: sink
+  tags: ['auth', 'missing_mfa', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-308"]
+  description: Auth Missing Mfa
+  match:
+  -     call: login
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: authenticate
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.auth.password_plaintext
+  kind: sink
+  tags: ['auth', 'password_plaintext', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-256"]
+  owasp: "A02:2021-Cryptographic Failures"
+  description: Auth Password Plaintext
+  match:
+  -     call: password
+  -     call: passwd
+  -     call: pwd
+
+- id: sink.auth.no_rate_limit
+  kind: sink
+  tags: ['auth', 'no_rate_limit', 'vulnerability']
+  severity: high
+  cwe: ["CWE-307"]
+  description: Auth No Rate Limit
+  match:
+  -     call: login
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: authenticate
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     call: check_password
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+- id: sink.auth.default_credentials
+  kind: sink
+  tags: ['auth', 'default_credentials', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-798"]
+  description: Auth Default Credentials
+  match:
+  -     call: admin
+  -     call: password
+  -     call: 12345
+
+- id: sink.auth.weak_password_policy
+  kind: sink
+  tags: ['auth', 'weak_password_policy', 'vulnerability']
+  severity: medium
+  cwe: ["CWE-521"]
+  description: Auth Weak Password Policy
+  match:
+  -     read: PASSWORD_MIN_LENGTH
+  -     read: PASSWORD_VALIDATORS
+
+- id: barrier.session.secure_cookie
+  kind: sanitizer
+  tags: ['session', 'secure_cookie', 'safety']
+  severity: high
+  description: Session Secure Cookie
+  match:
+  -     read: SESSION_COOKIE_SECURE
+  -     read: SESSION_COOKIE_HTTPONLY
+  -     read: SESSION_COOKIE_SAMESITE
+
+- id: barrier.auth.constant_time_compare
+  kind: sanitizer
+  tags: ['auth', 'constant_time_compare', 'safety']
+  severity: high
+  description: Auth Constant Time Compare
+  match:
+  -     base_type: hmac
+        call: compare_digest
+        args: [0]
+        constraints:
+          arg_type: not_const
+  -     base_type: secrets
+        call: compare_digest
+        args: [0]
+        constraints:
+          arg_type: not_const

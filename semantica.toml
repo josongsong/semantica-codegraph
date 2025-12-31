@@ -1,0 +1,40 @@
+# Semantica Configuration
+# Project-level taint analysis control
+
+[rules]
+# Enabled policies (empty = all enabled by default)
+enabled = []
+
+# Disabled policies
+disabled = []
+
+# Severity overrides
+[rules.severity_override]
+# "sql-injection" = "high"  # Override critical → high
+
+[ignore]
+# Glob patterns to ignore
+patterns = [
+    "tests/**",
+    "*_test.py",
+    "**/__pycache__/**",
+    "**/.pytest_cache/**",
+]
+
+# Specific files to ignore
+files = [
+    # "examples/unsafe.py",
+]
+
+# Directories to ignore
+directories = [
+    "vendor/",
+    "node_modules/",
+    ".venv/",
+    "venv/",
+]
+
+[metadata]
+# Additional metadata
+project_name = "semantica-v2"
+version = "0.1.0"

@@ -1,0 +1,96 @@
+# Monorepo Configuration
+# Use for: Large monorepos (>1M LOC), microservices repositories
+# Performance: High cost, 10-60s latency, 1-10GB memory
+# Focus: Scalability with high parallelism and large caches
+
+version: 1
+preset: balanced
+
+stages:
+  # All basic stages
+  parsing: true
+  chunking: true
+  cross_file: true
+  cfg: true
+  dfg: true
+  type_inference: true
+
+  # Selective advanced analyses
+  taint: true
+  clone: true
+  repomap: true
+
+  # Disable very expensive stages
+  pta: false
+  effects: false
+
+overrides:
+  # Moderate taint for large repos
+  taint:
+    max_depth: 15
+    max_paths: 500
+    use_points_to: false
+    field_sensitive: false
+    use_ssa: false
+    detect_sanitizers: true
+    enable_interprocedural: true
+    worklist_max_iterations: 100
+
+  # Clone detection for monorepos
+  clone:
+    min_tokens: 80  # Higher threshold for large repos
+    min_lines: 10
+    type1:
+      enable_exact_matching: true
+    type2:
+      enable_normalization: true
+    type3:
+      max_gap_ratio: 0.2
+      enable_gapped_detection: true
+    type4: null  # Disable (too expensive)
+
+  # Larger chunks for better context
+  chunking:
+    max_chunk_tokens: 1024
+    overlap_tokens: 128
+    enable_semantic_split: true
+    min_chunk_tokens: 100
+
+  # Standard lexical search
+  lexical:
+    enable_fuzzy: true
+    fuzzy_distance: 2
+    enable_ngram: true
+    ngram_size: 3
+    boost_exact_match: 2.0
+
+  # PageRank for monorepo structure
+  pagerank:
+    damping_factor: 0.85
+    max_iterations: 150
+    convergence_threshold: 0.000001
+    enable_personalization: true
+
+  # High parallelism for monorepos
+  parallel:
+    workers: 16  # Adjust based on available cores
+    batch_size: 500  # Large batches for efficiency
+    enable_rayon: true
+
+  # Very large caches for monorepos
+  cache:
+    enable_background_l2_writes: true
+    l0:
+      max_entries: 200000  # Very large L0
+      enable_bloom_filter: true
+      expected_items: 2000000
+      false_positive_rate: 0.001
+    l1:
+      max_entries: 20000  # Very large L1
+      max_bytes: 4294967296  # 4GB
+      ttl_seconds: 7200  # 2 hours
+    l2:
+      cache_dir: ".cache/codegraph-monorepo"
+      max_disk_bytes: 107374182400  # 100GB
+      enable_compression: true
+      enable_mmap: true

@@ -1,0 +1,258 @@
+# CWE-20: Improper Input Validation
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/20.html
+
+metadata:
+  cwe_id: CWE-20
+  name: "Improper Input Validation"
+  severity: high
+  owasp: "A03:2021-Injection"
+  category: "Input Validation"
+
+  # Status
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-18"
+
+  # Classification
+  mitre_abstraction: class
+  likelihood_of_exploit: high
+
+  # References
+  references:
+    - https://cwe.mitre.org/data/definitions/20.html
+    - https://owasp.org/www-community/Input_Validation_Cheat_Sheet
+    - https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html
+
+description: |
+  The product receives input or data, but it does not validate or incorrectly
+  validates that the input has the properties that are required to process
+  the data safely and correctly.
+
+  Input validation is a critical defense mechanism. When input is not properly
+  validated, attackers can craft input in a form that is not expected by the
+  application, leading to various attacks.
+
+# ============================================================================
+# Detection Pattern
+# ============================================================================
+
+sources:
+  - id: source.user_input
+    description: "All user input sources"
+    patterns:
+      - call: input
+      - flask.Request.args
+      - flask.Request.form
+      - flask.Request.json
+      - django.http.HttpRequest.GET
+      - django.http.HttpRequest.POST
+      - fastapi.Query
+      - fastapi.Body
+
+sinks:
+  - id: sink.type_conversion
+    description: "Type conversions without validation"
+    patterns:
+      - call: int
+        args: [0]
+      - call: float
+        args: [0]
+      - call: eval
+        args: [0]
+
+  - id: sink.array_access
+    description: "Array/list access with user input"
+    patterns:
+      - base_type: list
+        call: __getitem__
+      - base_type: dict
+        call: __getitem__
+
+  - id: sink.file_operations
+    description: "File operations with unvalidated paths"
+    patterns:
+      - call: open
+        args: [0]
+      - call: os.path.join
+      - base_type: pathlib.Path
+
+  - id: sink.regex_operations
+    description: "Regex with user input (ReDoS)"
+    patterns:
+      - call: re.compile
+        args: [0]
+      - call: re.match
+        args: [0]
+      - call: re.search
+        args: [0]
+
+sanitizers:
+  - id: barrier.validation.type_check
+    description: "Type validation"
+    patterns:
+      - call: isinstance
+      - call: type
+      - try_except: ValueError
+      - try_except: TypeError
+
+  - id: barrier.validation.range_check
+    description: "Range/bounds validation"
+    patterns:
+      - condition: "0 <= value <= max"
+      - condition: "value in allowed_values"
+      - call: validate_range
+      - call: check_bounds
+
+  - id: barrier.validation.format_check
+    description: "Format validation"
+    patterns:
+      - call: re.match
+        args: ["^[a-zA-Z0-9]+$"]
+      - call: validate_email
+      - call: validate_url
+      - call: validators.email
+      - call: validators.url
+
+  - id: barrier.validation.schema
+    description: "Schema validation"
+    patterns:
+      - call: pydantic.BaseModel.parse_obj
+      - call: marshmallow.Schema.load
+      - call: jsonschema.validate
+      - call: cerberus.Validator.validate
+
+# ============================================================================
+# Taint Flow Policy
+# ============================================================================
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.type_conversion
+      - id: sink.array_access
+      - id: sink.file_operations
+      - id: sink.regex_operations
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: validation
+
+# ============================================================================
+# Validation Requirements
+# ============================================================================
+
+validation:
+  min_test_cases: 12
+  required_scenarios:
+    - int_without_validation
+    - array_index_unchecked
+    - email_without_regex
+    - json_without_schema
+    - with_try_except
+    - with_schema_validation
+
+  min_precision: 0.80
+  min_recall: 0.85
+  max_false_positive_rate: 0.20
+
+# ============================================================================
+# Test Suite Mapping
+# ============================================================================
+
+test_suite:
+  juliet:
+    directory: "test-suite/CWE20_Improper_Input_Validation"
+    cases:
+      - bad_01.py  # int() without validation
+      - bad_02.py  # Array access unchecked
+      - bad_03.py  # Email without validation
+      - good_01.py # With try/except
+      - good_02.py # With Pydantic schema
+      - good_03.py # With regex validation
+
+# ============================================================================
+# Examples
+# ============================================================================
+
+examples:
+  vulnerable:
+    - |
+      # BAD: int() without validation
+      @app.route('/item/<item_id>')
+      def get_item(item_id):
+          index = int(item_id)  # Can raise ValueError
+          return items[index]   # Can raise IndexError
+
+    - |
+      # BAD: Email without format validation
+      def send_newsletter(email):
+          # No validation - could be injection vector
+          send_email(email, "Newsletter")
+
+  safe:
+    - |
+      # GOOD: With try/except validation
+      @app.route('/item/<item_id>')
+      def get_item(item_id):
+          try:
+              index = int(item_id)
+              if 0 <= index < len(items):
+                  return items[index]
+          except ValueError:
+              pass
+          return "Invalid item ID", 400
+
+    - |
+      # GOOD: With Pydantic schema validation
+      from pydantic import BaseModel, EmailStr
+
+      class UserInput(BaseModel):
+          email: EmailStr
+          age: int
+
+      @app.route('/register', methods=['POST'])
+      def register():
+          data = UserInput.parse_obj(request.json)  # Validates automatically
+          create_user(data.email, data.age)
+
+# ============================================================================
+# Fix Recommendations
+# ============================================================================
+
+fix:
+  priority: 1
+  effort: low
+
+  recommendations:
+    - title: "Use schema validation"
+      severity: best
+      example: |
+        from pydantic import BaseModel, validator
+
+        class ItemRequest(BaseModel):
+            item_id: int
+
+            @validator('item_id')
+            def validate_item_id(cls, v):
+                if v < 0:
+                    raise ValueError('item_id must be positive')
+                return v
+
+    - title: "Wrap conversions in try/except"
+      severity: recommended
+      example: |
+        try:
+            value = int(user_input)
+        except ValueError:
+            return "Invalid input", 400
+
+    - title: "Use allowlists"
+      severity: recommended
+      example: |
+        ALLOWED_VALUES = ['option1', 'option2', 'option3']
+        if user_input not in ALLOWED_VALUES:
+            return "Invalid option", 400

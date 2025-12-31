@@ -1,0 +1,17 @@
+# Cursor MCP Configuration for Codegraph
+
+This project has an MCP server for semantic code analysis.
+
+## MCP Server: codegraph
+
+Location: `server/mcp_server/main.py`
+
+Tools available:
+- search: Hybrid search (chunks + symbols)
+- get_context: Get symbol context (definition, usages, callers)
+- graph_slice: Semantic slicing for bug analysis
+
+Usage:
+- Type `@codegraph` in chat to use tools
+- Example: "@codegraph search authentication logic"
+

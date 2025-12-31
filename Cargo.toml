@@ -1,0 +1,121 @@
+[workspace]
+members = [
+    "packages/codegraph-ir",
+    "packages/codegraph-storage",
+    # "packages/codegraph-orchestration",  # TODO: Fix SQLite version conflict
+]
+resolver = "2"
+
+[workspace.lints.rust]
+non_local_definitions = "allow"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("md5", "sha256"))'] }
+
+[workspace.dependencies]
+# PyO3 for Python bindings
+pyo3 = { version = "0.20", features = ["extension-module", "abi3-py311"] }
+
+# Parallel processing
+rayon = "1.8"
+
+# Tree-sitter for parsing (multi-language SOTA support)
+# Using 0.22 for Kotlin compatibility (kotlin requires >=0.21, <0.23)
+tree-sitter = "0.22"
+tree-sitter-python = "0.21"
+tree-sitter-java = "0.21"
+tree-sitter-typescript = "0.21"
+tree-sitter-kotlin = "0.3.8"
+tree-sitter-rust = "0.21"
+tree-sitter-go = "0.21"
+
+# Graph structures
+petgraph = "0.6"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Utilities
+num_cpus = "1.16"
+dashmap = "5.5"
+
+# SQLite (unified version)
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# ═══════════════════════════════════════════════════════════════
+# SOTA Build Profiles (Rust Performance Book 2024)
+# ═══════════════════════════════════════════════════════════════
+
+[profile.dev]
+# Fast compilation for development (default settings)
+opt-level = 0
+debug = true
+split-debuginfo = "unpacked"  # Faster debug info (macOS/Linux)
+incremental = true
+codegen-units = 256
+
+[profile.dev-opt]
+# Dev with optimization for performance testing
+inherits = "dev"
+opt-level = 2
+codegen-units = 16
+
+[profile.release]
+# Maximum runtime performance
+opt-level = 3
+lto = "thin"            # Thin LTO: 5-10% speedup, minimal compile overhead
+codegen-units = 1
+strip = true
+panic = "abort"         # Smaller binary, faster execution
+
+[profile.bench]
+# Benchmarking (same as release)
+inherits = "release"
+
+[profile.release-lto]
+# Release with full LTO (10-15% faster, but 2-3x slower compile)
+inherits = "release"
+lto = "fat"             # Full LTO across all crates
+codegen-units = 1
+
+# ═══════════════════════════════════════════════════════════════
+# Dependency Optimization (20-30% faster dev builds)
+# ═══════════════════════════════════════════════════════════════
+
+# Optimize ALL dependencies in dev builds
+[profile.dev.package."*"]
+opt-level = 2
+codegen-units = 16
+
+# Critical hot-path dependencies: max optimization
+[profile.dev.package.tree-sitter]
+opt-level = 3
+
+[profile.dev.package.tree-sitter-python]
+opt-level = 3
+
+[profile.dev.package.tree-sitter-java]
+opt-level = 3
+
+[profile.dev.package.tree-sitter-typescript]
+opt-level = 3
+
+[profile.dev.package.tree-sitter-kotlin]
+opt-level = 3
+
+[profile.dev.package.tree-sitter-rust]
+opt-level = 3
+
+[profile.dev.package.tree-sitter-go]
+opt-level = 3
+
+[profile.dev.package.petgraph]
+opt-level = 3
+
+[profile.dev.package.tantivy]
+opt-level = 3
+
+[profile.dev.package.rayon]
+opt-level = 3
+
+[profile.dev.package.dashmap]
+opt-level = 3

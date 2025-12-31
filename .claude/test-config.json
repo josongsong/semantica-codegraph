@@ -1,0 +1,35 @@
+{
+  "test_strategy": {
+    "auto_detect": true,
+    "priority": ["just", "nextest", "cargo"],
+    "parallel_cores": "auto",
+    "quick_test_timeout": "60s",
+    "full_test_timeout": "180s"
+  },
+  "commands": {
+    "quick": [
+      "cd packages/codegraph-ir && just test-parallel",
+      "cd packages/codegraph-ir && cargo nextest run --lib --test-threads=16 --profile fast",
+      "cd packages/codegraph-ir && cargo test --lib"
+    ],
+    "full": [
+      "cd packages/codegraph-ir && just test-all",
+      "cd packages/codegraph-ir && cargo nextest run --test-threads=16",
+      "cd packages/codegraph-ir && cargo test"
+    ],
+    "module": [
+      "cd packages/codegraph-ir && just test {MODULE}",
+      "cd packages/codegraph-ir && cargo nextest run '{MODULE}' --test-threads=16",
+      "cd packages/codegraph-ir && cargo test {MODULE}"
+    ]
+  },
+  "triggers": {
+    "on_file_change": {
+      "src/**/*.rs": "quick",
+      "tests/**/*.rs": "quick",
+      "Cargo.toml": "full"
+    },
+    "on_commit": "quick",
+    "on_pr": "full"
+  }
+}

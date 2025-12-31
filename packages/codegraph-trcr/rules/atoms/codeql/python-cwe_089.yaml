@@ -1,0 +1,20 @@
+# TRCR Rules - Auto-generated
+
+atoms:
+- id: sink.cwe_089.SqlInjection
+  kind: sink
+  tags: ['cwe_089', 'SqlInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: Building a SQL query from user-controlled sources is vulnerable to insertion of
+  match:
+  -     call: SqlInjection
+
+- id: sink.cwe_089.SqlInjection
+  kind: sink
+  tags: ['cwe_089', 'SqlInjection', 'vulnerability']
+  severity: critical
+  cwe: ["CWE-089"]
+  description: Building a SQL query from user-controlled sources is vulnerable to insertion of
+  match:
+  -     call: SqlInjection

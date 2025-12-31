@@ -1,0 +1,83 @@
+# TRCR Atom Examples
+# Shows the ACTUAL structure that runtime uses
+
+atoms:
+  # ==========================================================================
+  # SINK EXAMPLE: SQL Injection
+  # ==========================================================================
+  - id: sink.sql.sqlite3.cursor
+    kind: sink
+    tags: [injection, db, sql, sqlite]
+    severity: critical
+    description: "SQLite3 cursor.execute() SQL injection"
+
+    # Optional but useful for reports
+    cwe: ["CWE-89"]
+    owasp: "A03:2021-Injection"
+    frameworks: ["sqlite3"]
+
+    match:
+      - base_type: sqlite3.Cursor
+        call: execute
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+      - base_type: sqlite3.Connection
+        call: execute
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+  # ==========================================================================
+  # SANITIZER EXAMPLE: Parameterized Queries
+  # ==========================================================================
+  - id: barrier.sql.sqlite3.parameterized
+    kind: sanitizer
+    tags: [safety, db, sql, sqlite]
+    description: "SQLite3 parameterized query sanitization"
+    scope: return
+
+    match:
+      - base_type: sqlite3.Cursor
+        call: execute
+        constraints:
+          arg_count: 2  # Query + parameters = safe
+        scope: return
+
+  # ==========================================================================
+  # PROPAGATOR EXAMPLE: String Operations
+  # ==========================================================================
+  - id: prop.string.format.python
+    kind: propagator
+    tags: [flow, string, format]
+    description: "String formatting propagates taint"
+
+    match:
+      - call: str.format
+        from_args: [0, 1, 2, 3]
+        to: return
+
+      - base_type: str
+        call: __add__
+        from_args: [0]
+        to: return
+
+  # ==========================================================================
+  # SOURCE EXAMPLE: HTTP Input
+  # ==========================================================================
+  - id: input.http.flask.request
+    kind: source
+    tags: [untrusted, web, http, flask]
+    severity: high
+    description: "Flask HTTP request input"
+    frameworks: ["flask"]
+
+    match:
+      - call: request.args.get
+      - call: request.form.get
+      - call: request.get_json
+      - base_type: flask.Request
+        read: args
+      - base_type: flask.Request
+        read: form

@@ -1,0 +1,17 @@
+# Python Command Injection Sanitizers
+# CWE-78: Command Injection Prevention
+
+atoms:
+# =============================================================================
+# Shell Quoting
+# =============================================================================
+- id: barrier.command.quote
+  kind: sanitizer
+  tags: [safety, os, command]
+  description: Command argument quoting
+  scope: return
+  match:
+  - call: shlex.quote
+    scope: return
+  - call: pipes.quote
+    scope: return

@@ -1,0 +1,85 @@
+# CWE-74: Improper Neutralization of Special Elements in Output
+#
+# Contract-first CWE definition
+# Reference: https://cwe.mitre.org/data/definitions/74.html
+
+metadata:
+  cwe_id: CWE-74
+  name: "Improper Neutralization of Special Elements in Output Used by a Downstream Component (Injection)"
+  severity: high
+  owasp: "A03:2021-Injection"
+  category: "Injection"
+
+  status: active
+  version: "1.0.0"
+  last_updated: "2025-12-20"
+
+  mitre_abstraction: class
+  likelihood_of_exploit: high
+
+  references:
+    - https://cwe.mitre.org/data/definitions/74.html
+    - https://owasp.org/Top10/A03_2021-Injection/
+
+description: |
+  The software constructs all or part of a command, data structure, or record
+  using externally-influenced input from an upstream component, but it does not
+  neutralize or incorrectly neutralizes special elements that could modify how
+  it is parsed or interpreted when it is sent to a downstream component.
+
+sources:
+  - id: input.user
+    description: "Direct user input"
+    patterns:
+      - call: input
+      - call: builtins.input
+
+  - id: input.http
+    description: "HTTP request data"
+    patterns:
+      - flask.Request.args
+      - flask.Request.form
+      - django.http.HttpRequest.GET
+      - django.http.HttpRequest.POST
+
+sinks:
+  - id: sink.injection.generic
+    description: "Generic injection sinks"
+    patterns:
+      - call: eval
+        args: [0]
+        constraints:
+          arg_type: not_const
+      - call: exec
+        args: [0]
+        constraints:
+          arg_type: not_const
+
+sanitizers:
+  - id: barrier.injection.validate
+    description: "Input validation"
+    patterns:
+      - sanitize_input()
+      - validate()
+
+policy:
+  grammar:
+    WHEN:
+      tag: untrusted
+    FLOWS:
+      - id: sink.injection.generic
+    BLOCK:
+      UNLESS:
+        kind: sanitizer
+        tag: injection
+
+validation:
+  min_test_cases: 4
+  min_precision: 0.90
+  min_recall: 0.85
+
+test_suite:
+  directory: "test-suite/CWE74_Injection"
+  cases:
+    - bad_01.py
+    - good_01.py
